@@ -34,9 +34,18 @@
         };
     </script>
     <style>
-        :root {
-            --tblr-primary: #005eb8; /* Arbor Acres Blue */
-        }
+        /* DYNAMIC THEME COLOR (Dev vs Live) */
+        {% if config['ENV'] == 'development' %}
+            :root {
+                --tblr-primary: #d63939; /* Tabler Red */
+                --tblr-primary-rgb: 214, 57, 57;
+            }
+        {% else %}
+            :root {
+                --tblr-primary: #005eb8; /* Arbor Acres Blue */
+                --tblr-primary-rgb: 0, 94, 184;
+            }
+        {% endif %}
 
         /* iOS Safe Area Adjustments */
         header.main-header {
@@ -251,6 +260,17 @@
 
   </head>
   <body>
+      {% if config['ENV'] == 'development' %}
+    <div class="alert alert-danger text-center mb-0 rounded-0" style="border: none; padding: 0.5rem;" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-triangle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M12 9v2m0 4v.01"></path>
+            <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"></path>
+        </svg>
+        <strong>DEVELOPMENT SANDBOX</strong> — You are testing safely.
+    </div>
+    {% endif %}
+    FOR DEVELOPMENT ONLY!
     <div id="loading-overlay" class="loader-overlay" style="display:none;">
         <div class="chicken-loader">
             <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="-14 -14 128 128" class="breeder-head-svg slh-logo">
@@ -268,7 +288,11 @@
     <div class="page">
       <div class="sticky-top" style="z-index: 1030;">
       <!-- Navbar -->
-      <header class="navbar navbar-expand-lg navbar-dark d-print-none main-header" data-bs-theme="dark" style="z-index: 1030;">
+      {% if config['ENV'] == 'development' %}
+        <header class="navbar navbar-expand-lg navbar-dark bg-red d-print-none main-header" data-bs-theme="dark" style="z-index: 1030;">
+      {% else %}
+        <header class="navbar navbar-expand-lg navbar-dark d-print-none main-header" data-bs-theme="dark" style="z-index: 1030;">
+      {% endif %}
         <div class="container-fluid">
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
