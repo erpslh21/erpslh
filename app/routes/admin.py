@@ -125,6 +125,7 @@ def register_admin_routes(app):
 
         house = House.query.get_or_404(id)
         new_name = request.form.get('name').strip()
+        farm_id = request.form.get('farm_id')
 
         if not new_name:
             flash("New name is required.", "danger")
@@ -133,8 +134,14 @@ def register_admin_routes(app):
         else:
             old_name = house.name
             house.name = new_name
+
+            if farm_id:
+                house.farm_id = int(farm_id)
+            else:
+                house.farm_id = None
+
             safe_commit()
-            flash(f"Renamed House '{old_name}' to '{new_name}'.", "success")
+            flash(f"Updated House '{new_name}'.", "success")
 
         return redirect(url_for('admin_facilities'))
 
@@ -144,12 +151,17 @@ def register_admin_routes(app):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
         name = request.form.get('name').strip()
+        farm_id = request.form.get('farm_id')
+
         if not name:
             flash("House name is required.", "danger")
         elif House.query.filter_by(name=name).first():
             flash(f"House '{name}' already exists.", "warning")
         else:
-            db.session.add(House(name=name))
+            new_house = House(name=name)
+            if farm_id:
+                new_house.farm_id = int(farm_id)
+            db.session.add(new_house)
             safe_commit()
             flash(f"House '{name}' added.", "success")
 

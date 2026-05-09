@@ -2241,10 +2241,13 @@ def register_production_routes(app):
             # Find or Create House
             house = House.query.filter_by(name=house_name).first()
             if not house:
-                house = House(name=house_name)
+                house = House(name=house_name, farm_id=farm_id)
                 db.session.add(house)
                 safe_commit()
                 flash(f'Created new House: {house_name}', 'info')
+            elif not house.farm_id:
+                house.farm_id = farm_id
+                safe_commit()
 
             # Validation: Check if House has active flock
             existing_active = Flock.query.filter_by(house_id=house.id, status='Active').first()

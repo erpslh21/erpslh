@@ -1,3 +1,6 @@
+ALTER TABLE flock ADD COLUMN name VARCHAR(100);
+UPDATE flock SET name = 'Legacy Flock ' || id;
+ALTER TABLE house ADD COLUMN farm_id INTEGER REFERENCES farm(id);
 ALTER TABLE broiler_daily_log ADD COLUMN cull_count INTEGER DEFAULT 0;
 
 CREATE TABLE IF NOT EXISTS broiler_standard (
