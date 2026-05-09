@@ -1,2 +1,11 @@
-ALTER TABLE flock ADD COLUMN name VARCHAR(100);
-UPDATE flock SET name = 'Legacy Flock ' || id;
+ALTER TABLE broiler_daily_log ADD COLUMN cull_count INTEGER DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS broiler_standard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day_number INTEGER NOT NULL,
+    standard_mortality_pct REAL DEFAULT 0.0,
+    standard_bodyweight_g REAL DEFAULT 0.0,
+    standard_weight_gain_g REAL DEFAULT 0.0,
+    standard_fcr REAL DEFAULT 0.0,
+    standard_feed_intake_g REAL DEFAULT 0.0
+);
