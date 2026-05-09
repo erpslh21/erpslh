@@ -298,6 +298,75 @@ def register_admin_routes(app):
 
         return redirect(request.referrer or get_dashboard_url(current_user))
 
+    @app.route('/admin/broiler_standards', methods=['GET', 'POST'])
+    @login_required
+    def admin_broiler_standards():
+        if not current_user.role == 'Admin':
+            flash("Access Denied: Admin only.", "danger")
+            return redirect(get_dashboard_url(current_user))
+
+        if request.method == 'POST':
+            if 'file' not in request.files:
+                flash('No file part', 'danger')
+                return redirect(request.url)
+
+            file = request.files['file']
+            if file.filename == '':
+                flash('No selected file', 'danger')
+                return redirect(request.url)
+
+            if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+                try:
+                    import pandas as pd
+                    from app.models.models import BroilerStandard
+
+                    df = pd.read_excel(file, header=0)
+
+                    BroilerStandard.query.delete()
+
+                    for index, row in df.iterrows():
+                        age_days = int(row.iloc[0]) if pd.notna(row.iloc[0]) else 0
+                        water_to_feed_ratio = float(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else 0.0
+                        live_weight = float(row.iloc[2]) if len(row) > 2 and pd.notna(row.iloc[2]) else 0.0
+                        daily_gain = float(row.iloc[3]) if len(row) > 3 and pd.notna(row.iloc[3]) else 0.0
+                        avg_daily_gain = float(row.iloc[4]) if len(row) > 4 and pd.notna(row.iloc[4]) else 0.0
+                        feed_consumption = float(row.iloc[5]) if len(row) > 5 and pd.notna(row.iloc[5]) else 0.0
+                        cum_feed_consumption = float(row.iloc[6]) if len(row) > 6 and pd.notna(row.iloc[6]) else 0.0
+                        fcr = float(row.iloc[7]) if len(row) > 7 and pd.notna(row.iloc[7]) else 0.0
+                        econ_fcr = float(row.iloc[8]) if len(row) > 8 and pd.notna(row.iloc[8]) else 0.0
+                        daily_depletion_rate = float(row.iloc[9]) if len(row) > 9 and pd.notna(row.iloc[9]) else 0.0
+                        cum_depletion_rate = float(row.iloc[10]) if len(row) > 10 and pd.notna(row.iloc[10]) else 0.0
+                        pef = float(row.iloc[11]) if len(row) > 11 and pd.notna(row.iloc[11]) else 0.0
+
+                        std = BroilerStandard(
+                            age_days=age_days,
+                            water_to_feed_ratio=water_to_feed_ratio,
+                            live_weight=live_weight,
+                            daily_gain=daily_gain,
+                            avg_daily_gain=avg_daily_gain,
+                            feed_consumption=feed_consumption,
+                            cum_feed_consumption=cum_feed_consumption,
+                            fcr=fcr,
+                            econ_fcr=econ_fcr,
+                            daily_depletion_rate=daily_depletion_rate,
+                            cum_depletion_rate=cum_depletion_rate,
+                            pef=pef
+                        )
+                        db.session.add(std)
+
+                    db.session.commit()
+                    flash('Broiler standards uploaded successfully.', 'success')
+                    return redirect(url_for('admin_control_panel'))
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Error processing file: {str(e)}', 'danger')
+                    return redirect(request.url)
+            else:
+                flash('Invalid file format. Please upload an Excel file.', 'danger')
+                return redirect(request.url)
+
+        return render_template('admin/broiler_standards.html')
+
     @app.route('/admin/control-panel')
     @login_required
     def admin_control_panel():

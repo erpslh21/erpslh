@@ -554,12 +554,18 @@ class BroilerFlock(db.Model):
 
 class BroilerStandard(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    day_number = db.Column(db.Integer, nullable=False)
-    standard_mortality_pct = db.Column(db.Float, default=0.0)
-    standard_bodyweight_g = db.Column(db.Float, default=0.0)
-    standard_weight_gain_g = db.Column(db.Float, default=0.0)
-    standard_fcr = db.Column(db.Float, default=0.0)
-    standard_feed_intake_g = db.Column(db.Float, default=0.0)
+    age_days = db.Column(db.Integer, nullable=False)
+    water_to_feed_ratio = db.Column(db.Float, default=0.0)
+    live_weight = db.Column(db.Float, default=0.0)
+    daily_gain = db.Column(db.Float, default=0.0)
+    avg_daily_gain = db.Column(db.Float, default=0.0)
+    feed_consumption = db.Column(db.Float, default=0.0)
+    cum_feed_consumption = db.Column(db.Float, default=0.0)
+    fcr = db.Column(db.Float, default=0.0)
+    econ_fcr = db.Column(db.Float, default=0.0)
+    daily_depletion_rate = db.Column(db.Float, default=0.0)
+    cum_depletion_rate = db.Column(db.Float, default=0.0)
+    pef = db.Column(db.Float, default=0.0)
 
 class BroilerDailyLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)

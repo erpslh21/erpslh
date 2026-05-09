@@ -5,7 +5,7 @@ def get_broiler_standards():
     standards = BroilerStandard.query.all()
     std_map = {}
     for s in standards:
-        std_map[s.day_number] = s
+        std_map[s.age_days] = s
     return std_map
 
 def calculate_broiler_metrics(flock_id):
@@ -80,10 +80,19 @@ def calculate_broiler_metrics(flock_id):
             'balance': current_balance,
 
             # Standards
-            'standard_mortality_pct': getattr(std, 'standard_mortality_pct', 0.0) if std else 0.0,
-            'standard_bodyweight_g': getattr(std, 'standard_bodyweight_g', 0.0) if std else 0.0,
-            'standard_weight_gain_g': getattr(std, 'standard_weight_gain_g', 0.0) if std else 0.0,
-            'standard_fcr': getattr(std, 'standard_fcr', 0.0) if std else 0.0,
+            'standard_mortality_pct': getattr(std, 'daily_depletion_rate', 0.0) * 100 if std else 0.0,
+            'standard_cumulative_mortality_pct': getattr(std, 'cum_depletion_rate', 0.0) * 100 if std else 0.0,
+
+            # Placeholders from new standard
+            'water_to_feed_ratio': getattr(std, 'water_to_feed_ratio', 0.0) if std else 0.0,
+            'standard_bodyweight_g': getattr(std, 'live_weight', 0.0) if std else 0.0, # Kept key for charts, but mapped to new standard
+            'standard_weight_gain_g': getattr(std, 'daily_gain', 0.0) if std else 0.0, # Kept key for charts, mapped to new standard
+            'avg_daily_gain': getattr(std, 'avg_daily_gain', 0.0) if std else 0.0,
+            'feed_consumption': getattr(std, 'feed_consumption', 0.0) if std else 0.0,
+            'cum_feed_consumption': getattr(std, 'cum_feed_consumption', 0.0) if std else 0.0,
+            'standard_fcr': getattr(std, 'fcr', 0.0) if std else 0.0, # Kept key for charts, mapped to new standard
+            'econ_fcr': getattr(std, 'econ_fcr', 0.0) if std else 0.0,
+            'pef': getattr(std, 'pef', 0.0) if std else 0.0,
         }
 
         daily_stats.append(stats)

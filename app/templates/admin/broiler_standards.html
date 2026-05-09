@@ -1,0 +1,35 @@
+{% extends 'base_tabler.html' %}
+
+{% block content %}
+<div class="container-xl">
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h2 class="page-title">Broiler Standards Upload</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <a href="{{ url_for('admin_control_panel') }}" class="btn btn-outline-secondary">Back to Control Panel</a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h3 class="card-title">Upload New Broiler Standards (Excel File)</h3>
+        </div>
+        <div class="card-body">
+            <p>Upload an Excel file containing the broiler standards. The sheet should have 12 headers matching exactly:
+               <strong>Day, Water to Feed Ratio, Live Weight, Daily Gain, Average Daily Gain, Feed Consumption, Cumulative Feed Consumption, FCR, Economic FCR, Daily Depletion Rate, Cumulative Depletion Rate, Production Efficiency</strong>.
+               <br>
+               <em>Note: Existing standard data will be completely wiped and replaced with the contents of the uploaded file.</em>
+            </p>
+            <form action="{{ url_for('admin_broiler_standards') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label required">Select Excel File</label>
+                    <input type="file" class="form-control" name="file" accept=".xlsx,.xls" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload and Apply Standards</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
