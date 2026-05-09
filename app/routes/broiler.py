@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.models import BroilerFlock, BroilerDailyLog
 from app.database import db
-from metrics import calculate_broiler_metrics
+from broiler_metrics import calculate_broiler_metrics
 from datetime import datetime
 
 broiler_bp = Blueprint('broiler', __name__, url_prefix='/broiler')
@@ -122,6 +122,7 @@ def daily_entry(flock_id):
     if request.method == 'POST':
         date_str = request.form.get('date')
         death_count = int(request.form.get('death_count', 0))
+        cull_count = int(request.form.get('cull_count', 0))
         feed_receive = request.form.get('feed_receive')
         feed_type = request.form.get('feed_type')
         feed_daily_use_kg = float(request.form.get('feed_daily_use_kg', 0.0))
@@ -139,6 +140,7 @@ def daily_entry(flock_id):
             date=log_date,
             day_number=day_number,
             death_count=death_count,
+            cull_count=cull_count,
             feed_receive=feed_receive,
             feed_type=feed_type,
             feed_daily_use_kg=feed_daily_use_kg,
@@ -168,6 +170,58 @@ def extract_metadata(row_idx, df):
         if pd.notna(val) and val != '':
             return val
     return None
+
+@broiler_bp.route('/upload_standards', methods=['GET', 'POST'])
+def upload_standards():
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No file part', 'danger')
+            return redirect(request.url)
+
+        file = request.files['file']
+        if file.filename == '':
+            flash('No selected file', 'danger')
+            return redirect(request.url)
+
+        if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+            try:
+                import pandas as pd
+                from app.models.models import BroilerStandard
+                df = pd.read_excel(file)
+
+                BroilerStandard.query.delete()
+
+                for index, row in df.iterrows():
+                    # Expected columns: Day, Standard Mortality %, Standard Bodyweight (g), Standard Weight Gain (g), Standard FCR, Standard Feed Intake (g)
+                    day = int(row.iloc[0]) if pd.notna(row.iloc[0]) else 0
+                    mort = float(row.iloc[1]) if pd.notna(row.iloc[1]) else 0.0
+                    bw = float(row.iloc[2]) if pd.notna(row.iloc[2]) else 0.0
+                    wg = float(row.iloc[3]) if pd.notna(row.iloc[3]) else 0.0
+                    fcr = float(row.iloc[4]) if pd.notna(row.iloc[4]) else 0.0
+                    feed = float(row.iloc[5]) if pd.notna(row.iloc[5]) else 0.0
+
+                    std = BroilerStandard(
+                        day_number=day,
+                        standard_mortality_pct=mort,
+                        standard_bodyweight_g=bw,
+                        standard_weight_gain_g=wg,
+                        standard_fcr=fcr,
+                        standard_feed_intake_g=feed
+                    )
+                    db.session.add(std)
+
+                db.session.commit()
+                flash('Standards uploaded successfully.', 'success')
+                return redirect(url_for('broiler.dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error processing file: {str(e)}', 'danger')
+                return redirect(request.url)
+        else:
+            flash('Invalid file format. Please upload an Excel file.', 'danger')
+            return redirect(request.url)
+
+    return render_template('broiler/broiler_standards.html')
 
 @broiler_bp.route('/import', methods=['GET', 'POST'])
 def import_data():

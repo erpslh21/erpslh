@@ -34,6 +34,9 @@
                 Delete Flock
             </a>
             {% endif %}
+            <button class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#generateBroilerReportModal">
+                Generate Daily House Report
+            </button>
             <a href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}" class="btn btn-primary">
                 Add Daily Log
             </a>
@@ -457,4 +460,288 @@
         };
     });
 </script>
+{% endblock %}
+
+<!-- Generate Broiler Daily Report Modal -->
+<div class="modal modal-blur fade" id="generateBroilerReportModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Generate Daily House Report</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Report Date</label>
+          <input type="date" class="form-control" id="broilerReportDate" value="{{ datetime.now().date().strftime('%Y-%m-%d') }}">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn me-auto" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="btnGenerateBroilerReport">Generate PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden container for rendering charts and canvas before converting to PDF -->
+<div id="broilerReportRenderContainer" style="position: absolute; left: -9999px; top: -9999px; width: 297mm; height: 210mm; background: white; box-sizing: border-box; padding: 10mm; font-family: sans-serif;">
+</div>
+
+<div id="broilerReportGenerationOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; justify-content: center; align-items: center;">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; margin-bottom: 20px;"></div>
+    <p class="loader-text" id="broilerReportGenerationStatus" style="font-size: 1.25rem; font-weight: 500; color: #333;">Initializing...</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- We assume Chart.js and chartjs-plugin-datalabels are loaded in base or here -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const btnGenerate = document.getElementById('btnGenerateBroilerReport');
+        if (!btnGenerate) return;
+
+        btnGenerate.addEventListener('click', async function() {
+            const dateStr = document.getElementById('broilerReportDate').value;
+            if (!dateStr) {
+                alert("Please select a date.");
+                return;
+            }
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('generateBroilerReportModal'));
+            modal.hide();
+
+            const overlay = document.getElementById('broilerReportGenerationOverlay');
+            const statusText = document.getElementById('broilerReportGenerationStatus');
+            const container = document.getElementById('broilerReportRenderContainer');
+
+            overlay.style.display = 'flex';
+            statusText.innerText = "Fetching data...";
+
+            try {
+                const response = await fetch(`/api/broiler/report_data?flock_id={{ flock.id }}&date=${dateStr}`);
+                if (!response.ok) throw new Error("Network response was not ok");
+                const data = await response.json();
+
+                if (data.empty) {
+                    alert("No data available for this date.");
+                    overlay.style.display = 'none';
+                    return;
+                }
+
+                statusText.innerText = "Rendering PDF...";
+
+                // PAGE 1 HTML
+                let htmlPage1 = `
+                <div style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+                        <div>
+                            <h2 style="margin: 0;">${data.farm_name} (${data.house_name}) - AGE: [${data.charts.days.join(', ')}]</h2>
+                            <h4 style="margin: 5px 0 0 0; color: #666;">Intake Date: ${data.intake_date}</h4>
+                            <h4 style="margin: 5px 0 0 0; color: #666;">Live Count: ${data.live_count}</h4>
+                        </div>
+                        <div style="text-align: right;">
+                            <h3 style="margin: 0; color: #666;">Report Date:</h3>
+                            <h3 style="margin: 5px 0 0 0;">${data.report_date}</h3>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 20px; flex: 1;">
+                        <div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">
+                            <h4 style="text-align: center; margin-top: 0;">Mortality & Cull</h4>
+                            <div style="flex: 1; position: relative;">
+                                <canvas id="pdfChartMortCull"></canvas>
+                            </div>
+                        </div>
+                        <div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">
+                            <h4 style="text-align: center; margin-top: 0;">Bodyweight</h4>
+                            <div style="flex: 1; position: relative;">
+                                <canvas id="pdfChartBW"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9;">
+                        <strong>Feed (kg):</strong> ${data.feed_kg} <br>
+                        <strong>Medication:</strong> ${data.medication}
+                    </div>
+                </div>
+                `;
+
+                container.innerHTML = htmlPage1;
+
+                // Render Page 1 Charts
+                const ctxMort = document.getElementById('pdfChartMortCull').getContext('2d');
+                new Chart(ctxMort, {
+                    type: 'bar',
+                    data: {
+                        labels: data.charts.days,
+                        datasets: [
+                            {
+                                type: 'line',
+                                label: 'Standard Mort %',
+                                data: data.charts.mortality_standard,
+                                borderColor: 'red',
+                                borderWidth: 2,
+                                fill: false,
+                                datalabels: { display: false }
+                            },
+                            {
+                                type: 'bar',
+                                label: 'Actual Mort %',
+                                data: data.charts.mortality_actual,
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                            },
+                            {
+                                type: 'bar',
+                                label: 'Actual Cull %',
+                                data: data.charts.cull_actual,
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                            }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, animation: false }
+                });
+
+                const ctxBW = document.getElementById('pdfChartBW').getContext('2d');
+                new Chart(ctxBW, {
+                    type: 'bar',
+                    data: {
+                        labels: data.charts.days,
+                        datasets: [
+                            {
+                                type: 'line',
+                                label: 'Standard BW',
+                                data: data.charts.bodyweight_standard,
+                                borderColor: 'orange',
+                                fill: false,
+                                datalabels: { display: false }
+                            },
+                            {
+                                type: 'line',
+                                label: 'Actual BW',
+                                data: data.charts.bodyweight_actual,
+                                borderColor: 'blue',
+                                fill: false,
+                                datalabels: { display: false }
+                            },
+                            {
+                                type: 'bar',
+                                label: 'Standard Gain',
+                                data: data.charts.weight_gain_standard,
+                                backgroundColor: 'rgba(255, 159, 64, 0.3)'
+                            },
+                            {
+                                type: 'bar',
+                                label: 'Actual Gain',
+                                data: data.charts.weight_gain_actual,
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                            }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, animation: false }
+                });
+
+                await new Promise(r => setTimeout(r, 500)); // wait for rendering
+                const canvasPage1 = await html2canvas(container.firstElementChild, { scale: 2 });
+                const imgData1 = canvasPage1.toDataURL('image/jpeg', 0.85);
+
+                const pdf = new jspdf.jsPDF('l', 'mm', 'a4');
+                pdf.addImage(imgData1, 'JPEG', 0, 0, 297, 210);
+
+                // PAGE 2
+                pdf.addPage();
+
+                let tableRows = data.weekly_summary.map(w => `
+                    <tr>
+                        <td style="border: 1px solid #ddd; padding: 8px;">Week ${w.week}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${w.death_count}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${w.mortality_pct.toFixed(2)}%</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${w.total_feed_kg.toFixed(2)}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${w.avg_bodyweight_g.toFixed(2)}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px;">${w.fcr.toFixed(2)}</td>
+                    </tr>
+                `).join('');
+
+                let htmlPage2 = `
+                <div style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+                        <h2 style="margin: 0;">${data.farm_name} (${data.house_name}) - Page 2</h2>
+                        <h3 style="margin: 0;">${data.report_date}</h3>
+                    </div>
+
+                    <div style="display: flex; gap: 20px; flex: 1;">
+                        <div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">
+                            <h4 style="text-align: center; margin-top: 0;">FCR</h4>
+                            <div style="flex: 1; position: relative;">
+                                <canvas id="pdfChartFCR"></canvas>
+                            </div>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column;">
+                            <h4 style="text-align: center; margin-top: 0;">Weekly Summary</h4>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;">
+                                <thead>
+                                    <tr style="background: #eee;">
+                                        <th style="border: 1px solid #ddd; padding: 8px;">Week</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px;">No of Death</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px;">Mortality%</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px;">Total Feed (kg)</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px;">Avg BW</th>
+                                        <th style="border: 1px solid #ddd; padding: 8px;">FCR</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                `;
+
+                container.innerHTML = htmlPage2;
+
+                const ctxFCR = document.getElementById('pdfChartFCR').getContext('2d');
+                new Chart(ctxFCR, {
+                    type: 'line',
+                    data: {
+                        labels: data.charts.days,
+                        datasets: [
+                            {
+                                label: 'Standard FCR',
+                                data: data.charts.fcr_standard,
+                                borderColor: 'green',
+                                fill: false,
+                                datalabels: { display: false }
+                            },
+                            {
+                                label: 'Actual FCR',
+                                data: data.charts.fcr_actual,
+                                borderColor: 'red',
+                                fill: false,
+                                datalabels: { display: false }
+                            }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, animation: false }
+                });
+
+                await new Promise(r => setTimeout(r, 500));
+                const canvasPage2 = await html2canvas(container.firstElementChild, { scale: 2 });
+                const imgData2 = canvasPage2.toDataURL('image/jpeg', 0.85);
+
+                pdf.addImage(imgData2, 'JPEG', 0, 0, 297, 210);
+
+                pdf.save(`Broiler_Daily_House_Report_${data.house_name}_${data.report_date}.pdf`);
+
+            } catch (err) {
+                console.error(err);
+                alert("Error generating report: " + err.message);
+            } finally {
+                overlay.style.display = 'none';
+            }
+        });
+    });
+</script>
+
 {% endblock %}

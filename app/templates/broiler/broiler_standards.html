@@ -1,0 +1,31 @@
+{% extends 'base_tabler.html' %}
+
+{% block content %}
+<div class="container-xl">
+    <div class="row align-items-center mb-3">
+        <div class="col">
+            <h2 class="page-title">Broiler Standards Upload</h2>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+            <a href="{{ url_for('broiler.dashboard') }}" class="btn btn-outline-secondary">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h3 class="card-title">Upload Standards (Excel File)</h3>
+        </div>
+        <div class="card-body">
+            <p>Upload an Excel file containing the broiler standards. The sheet should have headers like 'Day', 'Standard Mortality %', 'Standard Bodyweight (g)', 'Standard Weight Gain (g)', 'Standard FCR', 'Standard Feed Intake (g)'.</p>
+            <form action="{{ url_for('broiler.upload_standards') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="mb-3">
+                    <label class="form-label required">Select Excel File</label>
+                    <input type="file" class="form-control" name="file" accept=".xlsx,.xls" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload and Apply</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
