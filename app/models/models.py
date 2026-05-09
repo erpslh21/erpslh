@@ -123,6 +123,7 @@ class Flock(db.Model):
     house_id = db.Column(db.Integer, db.ForeignKey('house.id'), nullable=False, index=True)
     farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False, index=True)
     flock_id = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=True)
     intake_date = db.Column(db.Date, nullable=False, default=date.today)
 
     # Intake Counts

@@ -44,7 +44,7 @@
                         <tr>
                             <td>{{ mapping.farm.name }}</td>
                             <td>{{ mapping.house.name }}</td>
-                            <td>{{ mapping.flock.flock_id }}</td>
+                            <td>{{ mapping.flock.name }}</td>
                             <td>{{ mapping.start_date.strftime('%Y-%m-%d') }}</td>
                             <td>
                                 <span class="badge bg-success text-white">Active</span>
@@ -93,7 +93,7 @@
                         <select class="form-select" name="flock_id" required>
                             <option value="">Select Flock</option>
                             {% for flock in flocks %}
-                            <option value="{{ flock.id }}">{{ flock.flock_id }}</option>
+                            <option value="{{ flock.id }}">{{ flock.name }}</option>
                             {% endfor %}
                         </select>
                     </div>

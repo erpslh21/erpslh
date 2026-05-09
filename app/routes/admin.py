@@ -116,7 +116,7 @@ def register_admin_routes(app):
             safe_commit()
             flash(f"House '{house.name}' deleted.", "info")
 
-        return redirect(url_for('admin_houses'))
+        return redirect(url_for('admin_facilities'))
 
     @app.route('/admin/houses/edit/<int:id>', methods=['POST'])
     @login_required
@@ -136,7 +136,7 @@ def register_admin_routes(app):
             safe_commit()
             flash(f"Renamed House '{old_name}' to '{new_name}'.", "success")
 
-        return redirect(url_for('admin_houses'))
+        return redirect(url_for('admin_facilities'))
 
     @app.route('/admin/houses/add', methods=['POST'])
     @login_required
@@ -153,26 +153,79 @@ def register_admin_routes(app):
             safe_commit()
             flash(f"House '{name}' added.", "success")
 
-        return redirect(url_for('admin_houses'))
+        return redirect(url_for('admin_facilities'))
 
-    @app.route('/admin/houses')
+    @app.route('/admin/facilities')
     @login_required
-    def admin_houses():
+    def admin_facilities():
         if not current_user.role == 'Admin':
             flash("Access Denied: Admin only.", "danger")
             return redirect(get_dashboard_url(current_user))
 
+        farms = Farm.query.order_by(Farm.name).all()
         houses = House.query.order_by(House.name).all()
 
-        # Optimize N+1 Query: Bulk fetch houses that have flocks
-        # We query for distinct house_ids from the Flock table
+        farms_with_flocks = set(f[0] for f in db.session.query(Flock.farm_id).distinct().all())
         houses_with_flocks = set(f[0] for f in db.session.query(Flock.house_id).distinct().all())
 
-        # Check if houses can be deleted (no flocks)
+        for f in farms:
+            f.can_delete = f.id not in farms_with_flocks
         for h in houses:
             h.can_delete = h.id not in houses_with_flocks
 
-        return render_template('admin/houses.html', houses=houses)
+        return render_template('admin/admin_facilities.html', farms=farms, houses=houses)
+
+    @app.route('/admin/farms/add', methods=['POST'])
+    @login_required
+    def admin_farm_add():
+        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+
+        name = request.form.get('name').strip()
+        if not name:
+            flash("Farm name is required.", "danger")
+        elif Farm.query.filter_by(name=name).first():
+            flash(f"Farm '{name}' already exists.", "warning")
+        else:
+            db.session.add(Farm(name=name))
+            safe_commit()
+            flash(f"Farm '{name}' added.", "success")
+
+        return redirect(url_for('admin_facilities'))
+
+    @app.route('/admin/farms/edit/<int:id>', methods=['POST'])
+    @login_required
+    def admin_farm_edit(id):
+        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+
+        farm = Farm.query.get_or_404(id)
+        new_name = request.form.get('name').strip()
+
+        if not new_name:
+            flash("New name is required.", "danger")
+        elif new_name != farm.name and Farm.query.filter_by(name=new_name).first():
+            flash(f"Farm '{new_name}' already exists.", "warning")
+        else:
+            old_name = farm.name
+            farm.name = new_name
+            safe_commit()
+            flash(f"Renamed Farm '{old_name}' to '{new_name}'.", "success")
+
+        return redirect(url_for('admin_facilities'))
+
+    @app.route('/admin/farms/delete/<int:id>', methods=['POST'])
+    @login_required
+    def admin_farm_delete(id):
+        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+
+        farm = Farm.query.get_or_404(id)
+        if Flock.query.filter_by(farm_id=farm.id).first():
+            flash(f"Cannot delete Farm '{farm.name}' as it has existing flocks.", "danger")
+        else:
+            db.session.delete(farm)
+            safe_commit()
+            flash(f"Farm '{farm.name}' deleted.", "success")
+
+        return redirect(url_for('admin_facilities'))
 
     @app.route('/admin/performance_report')
     @login_required

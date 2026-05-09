@@ -1,0 +1,2 @@
+ALTER TABLE flock ADD COLUMN name VARCHAR(100);
+UPDATE flock SET name = 'Legacy Flock ' || id;
