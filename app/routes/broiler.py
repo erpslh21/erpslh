@@ -171,58 +171,6 @@ def extract_metadata(row_idx, df):
             return val
     return None
 
-@broiler_bp.route('/upload_standards', methods=['GET', 'POST'])
-def upload_standards():
-    if request.method == 'POST':
-        if 'file' not in request.files:
-            flash('No file part', 'danger')
-            return redirect(request.url)
-
-        file = request.files['file']
-        if file.filename == '':
-            flash('No selected file', 'danger')
-            return redirect(request.url)
-
-        if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
-            try:
-                import pandas as pd
-                from app.models.models import BroilerStandard
-                df = pd.read_excel(file)
-
-                BroilerStandard.query.delete()
-
-                for index, row in df.iterrows():
-                    # Expected columns: Day, Standard Mortality %, Standard Bodyweight (g), Standard Weight Gain (g), Standard FCR, Standard Feed Intake (g)
-                    day = int(row.iloc[0]) if pd.notna(row.iloc[0]) else 0
-                    mort = float(row.iloc[1]) if pd.notna(row.iloc[1]) else 0.0
-                    bw = float(row.iloc[2]) if pd.notna(row.iloc[2]) else 0.0
-                    wg = float(row.iloc[3]) if pd.notna(row.iloc[3]) else 0.0
-                    fcr = float(row.iloc[4]) if pd.notna(row.iloc[4]) else 0.0
-                    feed = float(row.iloc[5]) if pd.notna(row.iloc[5]) else 0.0
-
-                    std = BroilerStandard(
-                        day_number=day,
-                        standard_mortality_pct=mort,
-                        standard_bodyweight_g=bw,
-                        standard_weight_gain_g=wg,
-                        standard_fcr=fcr,
-                        standard_feed_intake_g=feed
-                    )
-                    db.session.add(std)
-
-                db.session.commit()
-                flash('Standards uploaded successfully.', 'success')
-                return redirect(url_for('broiler.dashboard'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Error processing file: {str(e)}', 'danger')
-                return redirect(request.url)
-        else:
-            flash('Invalid file format. Please upload an Excel file.', 'danger')
-            return redirect(request.url)
-
-    return render_template('broiler/broiler_standards.html')
-
 @broiler_bp.route('/import', methods=['GET', 'POST'])
 def import_data():
     if request.method == 'POST':
