@@ -62,7 +62,7 @@
                                 <select name="flock_id" id="flock_id_select" class="form-select" required>
                                     <option value="">Select House</option>
                                     {% for f in active_flocks %}
-                                        <option value="{{ f.id }}">{{ f.house.name }} ({{ f.flock_id }})</option>
+                                        <option value="{{ f.id }}">{{ f.house.name }} ({{ f.name }})</option>
                                     {% endfor %}
                                 </select>
                             </div>

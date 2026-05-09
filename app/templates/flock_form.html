@@ -11,6 +11,12 @@
         <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <div class="mb-3">
+            <label for="name" class="form-label">Flock Name</label>
+            <input type="text" class="form-control" id="name" name="name" placeholder="Optional (e.g. A1-B)">
+            <div class="form-text">Optional. If left blank, an auto-generated Batch ID will be used.</div>
+          </div>
+
+          <div class="mb-3">
             <label for="farm_name" class="form-label required">Farm Name</label>
             <input class="form-control" list="farmOptions" id="farm_name" name="farm_name" placeholder="Type to search or add new..." required>
             <datalist id="farmOptions">
@@ -89,7 +95,7 @@
             <tbody>
               {% for flock in flocks %}
               <tr>
-                <td><a href="{{ url_for('view_flock', id=flock.id) }}">{{ flock.flock_id }}</a></td>
+                <td><a href="{{ url_for('view_flock', id=flock.id) }}">{{ flock.name }}</a></td>
                 <td>
                   <span class="badge bg-{{ 'success' if flock.status == 'Active' else 'secondary' }}">
                     {{ flock.status }}
