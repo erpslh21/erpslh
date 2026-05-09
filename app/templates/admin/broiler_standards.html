@@ -23,6 +23,7 @@
             </p>
             <form action="{{ url_for('admin_broiler_standards') }}" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="upload">
                 <div class="mb-3">
                     <label class="form-label required">Select Excel File</label>
                     <input type="file" class="form-control" name="file" accept=".xlsx,.xls" required>
@@ -31,5 +32,75 @@
             </form>
         </div>
     </div>
+
+    {% if standards %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Current Broiler Standards</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table card-table table-vcenter text-nowrap datatable">
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th>Water:Feed</th>
+                        <th>Live Wt (g)</th>
+                        <th>Daily Gain (g)</th>
+                        <th>Avg Gain (g)</th>
+                        <th>Feed Cons (g)</th>
+                        <th>Cum Feed (g)</th>
+                        <th>FCR</th>
+                        <th>Econ FCR</th>
+                        <th>Daily Depl %</th>
+                        <th>Cum Depl %</th>
+                        <th>PEF</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in standards %}
+                        <tr>
+                            <form id="form-{{ s.id }}" method="POST" action="{{ url_for('admin_broiler_standards') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="action" value="update">
+                                <input type="hidden" name="id" value="{{ s.id }}">
+                            </form>
+                            <td><strong>{{ s.age_days }}</strong></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.01" name="water_to_feed_ratio" class="form-control form-control-sm" value="{{ s.water_to_feed_ratio }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.01" name="live_weight" class="form-control form-control-sm" value="{{ s.live_weight }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.01" name="daily_gain" class="form-control form-control-sm" value="{{ s.daily_gain }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.01" name="avg_daily_gain" class="form-control form-control-sm" value="{{ s.avg_daily_gain }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.01" name="feed_consumption" class="form-control form-control-sm" value="{{ s.feed_consumption }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.01" name="cum_feed_consumption" class="form-control form-control-sm" value="{{ s.cum_feed_consumption }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.001" name="fcr" class="form-control form-control-sm" value="{{ s.fcr }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.001" name="econ_fcr" class="form-control form-control-sm" value="{{ s.econ_fcr }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.0001" name="daily_depletion_rate" class="form-control form-control-sm" value="{{ s.daily_depletion_rate }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.0001" name="cum_depletion_rate" class="form-control form-control-sm" value="{{ s.cum_depletion_rate }}"></td>
+                            <td><input form="form-{{ s.id }}" type="number" step="0.01" name="pef" class="form-control form-control-sm" value="{{ s.pef }}"></td>
+                            <td>
+                                <button form="form-{{ s.id }}" type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        var forms = document.querySelectorAll('form');
+        forms.forEach(function(form) {
+            form.addEventListener('submit', function() {
+                var btn = this.querySelector('button[type="submit"]');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
