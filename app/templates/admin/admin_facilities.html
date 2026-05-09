@@ -81,6 +81,15 @@
                             <input type="text" class="form-control" id="house_name" name="name" placeholder="Enter House Name (e.g. VA1)" required>
                         </div>
                         <div class="col-auto">
+                            <label for="farm_id" class="visually-hidden">Farm</label>
+                            <select class="form-select" id="farm_id" name="farm_id">
+                                <option value="">No Farm</option>
+                                {% for farm in farms %}
+                                    <option value="{{ farm.id }}">{{ farm.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-auto">
                             <button type="submit" class="btn btn-primary">Add House</button>
                         </div>
                     </form>
@@ -94,6 +103,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Farm</th>
                                 <th>Can Delete?</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -102,6 +112,7 @@
                             {% for house in houses %}
                             <tr>
                                 <td>{{ house.name }}</td>
+                                <td>{{ house.farm.name if house.farm else 'None' }}</td>
                                 <td>
                                     {% if house.can_delete %}
                                         <span class="badge bg-success text-white">Yes</span>
@@ -167,13 +178,22 @@
             <form action="{{ url_for('admin_house_edit', id=house.id) }}" method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-header">
-                    <h5 class="modal-title">Rename House {{ house.name }}</h5>
+                    <h5 class="modal-title">Edit House {{ house.name }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="renameHouse{{ house.id }}" class="form-label">New Name</label>
                         <input type="text" class="form-control" id="renameHouse{{ house.id }}" name="name" value="{{ house.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editFarm{{ house.id }}" class="form-label">Farm</label>
+                        <select class="form-select" id="editFarm{{ house.id }}" name="farm_id">
+                            <option value="">No Farm</option>
+                            {% for farm in farms %}
+                                <option value="{{ farm.id }}" {% if house.farm_id == farm.id %}selected{% endif %}>{{ farm.name }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">

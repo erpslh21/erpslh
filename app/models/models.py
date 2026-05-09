@@ -75,7 +75,10 @@ class Farm(db.Model):
 
 class House(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=True, index=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
+
+    farm = db.relationship('Farm', backref=db.backref('houses', lazy=True))
     flocks = db.relationship('Flock', backref='house', lazy=True)
     flock_history = db.relationship('HouseFlockMapping', backref='house', lazy=True, cascade="all, delete-orphan")
 
