@@ -78,6 +78,12 @@ def create_app(config_class=Config):
         @app.context_processor
         def utility_processor():
             from app.utils import get_dashboard_url
-            return dict(calculate_bio_week=calculate_bio_week, get_dashboard_url=get_dashboard_url)
+            from datetime import datetime, timedelta
+            return dict(
+                calculate_bio_week=calculate_bio_week,
+                get_dashboard_url=get_dashboard_url,
+                datetime=datetime,
+                timedelta=timedelta
+            )
 
     return app
