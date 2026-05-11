@@ -282,11 +282,11 @@
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Eggs Collected</label>
-          <input type="number" class="form-control form-control-lg" name="eggs_collected" value="{{ log.eggs_collected if log else 0 }}">
+          <input type="number" class="form-control form-control-lg" name="eggs_collected" id="eggs_collected" value="{{ log.eggs_collected if log else 0 }}">
         </div>
         <div class="mb-3">
           <label class="form-label">Egg Weight (avg)</label>
-          <input type="number" step="0.01" class="form-control form-control-lg" name="egg_weight" value="{{ log.egg_weight if log else 0 }}">
+          <input type="number" step="0.01" class="form-control form-control-lg" name="egg_weight" id="egg_weight" value="{{ log.egg_weight if log else 0 }}">
         </div>
         <label class="form-label">Cull Eggs</label>
         <div class="row">
@@ -765,6 +765,20 @@
         let mortPctM = currentStockM > 0 ? (totalMortM / currentStockM) * 100 : 0;
 
         let eggPct = currentStockF > 0 ? (inEggs / currentStockF) * 100 : 0;
+
+        if (eggPct > 100) {
+            document.getElementById('errorMessageText').innerHTML = 'Egg production cannot be more than 100%. Please check your input.';
+            let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+            return;
+        }
+
+        if (water24h < 0) {
+            document.getElementById('errorMessageText').innerHTML = 'Water consumption (24h) cannot be negative. Please check your water readings.';
+            let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+            errorModal.show();
+            return;
+        }
 
         // Validations
         let mortFWarning = '';

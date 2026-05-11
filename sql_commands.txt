@@ -1,0 +1,27 @@
+CREATE TABLE hatchery_egg_receipt (
+    id INTEGER NOT NULL,
+    farm_id INTEGER NOT NULL,
+    house_id INTEGER NOT NULL,
+    flock_id INTEGER NOT NULL,
+    arrival_date DATE NOT NULL,
+    grading_timestamp DATETIME,
+    batch_number INTEGER NOT NULL,
+    farm_declared_qty INTEGER NOT NULL,
+    actual_received_qty INTEGER NOT NULL,
+    jumbo_cull INTEGER NOT NULL,
+    small_cull INTEGER NOT NULL,
+    abnormal_cull INTEGER NOT NULL,
+    crack_cull INTEGER NOT NULL,
+    settable_eggs INTEGER NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY(farm_id) REFERENCES farm (id),
+    FOREIGN KEY(house_id) REFERENCES house (id),
+    FOREIGN KEY(flock_id) REFERENCES flock (id)
+);
+CREATE INDEX ix_hatchery_egg_receipt_farm_id ON hatchery_egg_receipt (farm_id);
+CREATE INDEX ix_hatchery_egg_receipt_house_id ON hatchery_egg_receipt (house_id);
+CREATE INDEX ix_hatchery_egg_receipt_flock_id ON hatchery_egg_receipt (flock_id);
+CREATE INDEX ix_hatchery_egg_receipt_arrival_date ON hatchery_egg_receipt (arrival_date);
+ALTER TABLE flock ADD COLUMN name VARCHAR(100);
+UPDATE flock SET name = 'Legacy Flock ' || id;
+ALTER TABLE house ADD COLUMN farm_id INTEGER REFERENCES farm(id);

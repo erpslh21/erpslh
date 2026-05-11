@@ -34,7 +34,7 @@
                                     <select name="flock_id" class="form-select" required>
                                         <option value="">Select House</option>
                                         {% for f in active_flocks %}
-                                            <option value="{{ f.id }}">{{ f.house.name }} ({{ f.flock_id }})</option>
+                                            <option value="{{ f.id }}">{{ f.house.name }} ({{ f.name }})</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -114,7 +114,7 @@
                                 <tr>
                                     <td>{{ log.date | date_fmt }}</td>
                                     <td>{{ log.flock.house.name }}</td>
-                                    <td><span class="text-muted">{{ log.flock.flock_id }}</span></td>
+                                    <td><span class="text-muted">{{ log.flock.name }}</span></td>
                                     <td>{{ log.age_week_day }}</td>
                                     <td>
                                         {% if log.flushing %}

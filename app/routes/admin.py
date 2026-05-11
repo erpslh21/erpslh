@@ -116,7 +116,7 @@ def register_admin_routes(app):
             safe_commit()
             flash(f"House '{house.name}' deleted.", "info")
 
-        return redirect(url_for('admin_houses'))
+        return redirect(url_for('admin_facilities'))
 
     @app.route('/admin/houses/edit/<int:id>', methods=['POST'])
     @login_required
@@ -125,6 +125,7 @@ def register_admin_routes(app):
 
         house = House.query.get_or_404(id)
         new_name = request.form.get('name').strip()
+        farm_id = request.form.get('farm_id')
 
         if not new_name:
             flash("New name is required.", "danger")
@@ -133,10 +134,16 @@ def register_admin_routes(app):
         else:
             old_name = house.name
             house.name = new_name
-            safe_commit()
-            flash(f"Renamed House '{old_name}' to '{new_name}'.", "success")
 
-        return redirect(url_for('admin_houses'))
+            if farm_id:
+                house.farm_id = int(farm_id)
+            else:
+                house.farm_id = None
+
+            safe_commit()
+            flash(f"Updated House '{new_name}'.", "success")
+
+        return redirect(url_for('admin_facilities'))
 
     @app.route('/admin/houses/add', methods=['POST'])
     @login_required
@@ -144,35 +151,93 @@ def register_admin_routes(app):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
         name = request.form.get('name').strip()
+        farm_id = request.form.get('farm_id')
+
         if not name:
             flash("House name is required.", "danger")
         elif House.query.filter_by(name=name).first():
             flash(f"House '{name}' already exists.", "warning")
         else:
-            db.session.add(House(name=name))
+            new_house = House(name=name)
+            if farm_id:
+                new_house.farm_id = int(farm_id)
+            db.session.add(new_house)
             safe_commit()
             flash(f"House '{name}' added.", "success")
 
-        return redirect(url_for('admin_houses'))
+        return redirect(url_for('admin_facilities'))
 
-    @app.route('/admin/houses')
+    @app.route('/admin/facilities')
     @login_required
-    def admin_houses():
+    def admin_facilities():
         if not current_user.role == 'Admin':
             flash("Access Denied: Admin only.", "danger")
             return redirect(get_dashboard_url(current_user))
 
+        farms = Farm.query.order_by(Farm.name).all()
         houses = House.query.order_by(House.name).all()
 
-        # Optimize N+1 Query: Bulk fetch houses that have flocks
-        # We query for distinct house_ids from the Flock table
+        farms_with_flocks = set(f[0] for f in db.session.query(Flock.farm_id).distinct().all())
         houses_with_flocks = set(f[0] for f in db.session.query(Flock.house_id).distinct().all())
 
-        # Check if houses can be deleted (no flocks)
+        for f in farms:
+            f.can_delete = f.id not in farms_with_flocks
         for h in houses:
             h.can_delete = h.id not in houses_with_flocks
 
-        return render_template('admin/houses.html', houses=houses)
+        return render_template('admin/admin_facilities.html', farms=farms, houses=houses)
+
+    @app.route('/admin/farms/add', methods=['POST'])
+    @login_required
+    def admin_farm_add():
+        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+
+        name = request.form.get('name').strip()
+        if not name:
+            flash("Farm name is required.", "danger")
+        elif Farm.query.filter_by(name=name).first():
+            flash(f"Farm '{name}' already exists.", "warning")
+        else:
+            db.session.add(Farm(name=name))
+            safe_commit()
+            flash(f"Farm '{name}' added.", "success")
+
+        return redirect(url_for('admin_facilities'))
+
+    @app.route('/admin/farms/edit/<int:id>', methods=['POST'])
+    @login_required
+    def admin_farm_edit(id):
+        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+
+        farm = Farm.query.get_or_404(id)
+        new_name = request.form.get('name').strip()
+
+        if not new_name:
+            flash("New name is required.", "danger")
+        elif new_name != farm.name and Farm.query.filter_by(name=new_name).first():
+            flash(f"Farm '{new_name}' already exists.", "warning")
+        else:
+            old_name = farm.name
+            farm.name = new_name
+            safe_commit()
+            flash(f"Renamed Farm '{old_name}' to '{new_name}'.", "success")
+
+        return redirect(url_for('admin_facilities'))
+
+    @app.route('/admin/farms/delete/<int:id>', methods=['POST'])
+    @login_required
+    def admin_farm_delete(id):
+        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+
+        farm = Farm.query.get_or_404(id)
+        if Flock.query.filter_by(farm_id=farm.id).first():
+            flash(f"Cannot delete Farm '{farm.name}' as it has existing flocks.", "danger")
+        else:
+            db.session.delete(farm)
+            safe_commit()
+            flash(f"Farm '{farm.name}' deleted.", "success")
+
+        return redirect(url_for('admin_facilities'))
 
     @app.route('/admin/performance_report')
     @login_required
@@ -232,6 +297,104 @@ def register_admin_routes(app):
                 flash("Invalid theme selected.", "danger")
 
         return redirect(request.referrer or get_dashboard_url(current_user))
+
+    @app.route('/admin/broiler_standards', methods=['GET', 'POST'])
+    @login_required
+    def admin_broiler_standards():
+        from app.models.models import BroilerStandard
+        from app.utils import safe_commit
+
+        if not current_user.role == 'Admin':
+            flash("Access Denied: Admin only.", "danger")
+            return redirect(get_dashboard_url(current_user))
+
+        if request.method == 'POST':
+            action = request.form.get('action')
+
+            if action == 'upload':
+                if 'file' not in request.files:
+                    flash('No file part', 'danger')
+                    return redirect(request.url)
+
+                file = request.files['file']
+                if file.filename == '':
+                    flash('No selected file', 'danger')
+                    return redirect(request.url)
+
+                if file and (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
+                    try:
+                        import pandas as pd
+
+                        df = pd.read_excel(file, header=0)
+
+                        BroilerStandard.query.delete()
+
+                        for index, row in df.iterrows():
+                            age_days = int(row.iloc[0]) if pd.notna(row.iloc[0]) else 0
+                            water_to_feed_ratio = float(row.iloc[1]) if len(row) > 1 and pd.notna(row.iloc[1]) else 0.0
+                            live_weight = float(row.iloc[2]) if len(row) > 2 and pd.notna(row.iloc[2]) else 0.0
+                            daily_gain = float(row.iloc[3]) if len(row) > 3 and pd.notna(row.iloc[3]) else 0.0
+                            avg_daily_gain = float(row.iloc[4]) if len(row) > 4 and pd.notna(row.iloc[4]) else 0.0
+                            feed_consumption = float(row.iloc[5]) if len(row) > 5 and pd.notna(row.iloc[5]) else 0.0
+                            cum_feed_consumption = float(row.iloc[6]) if len(row) > 6 and pd.notna(row.iloc[6]) else 0.0
+                            fcr = float(row.iloc[7]) if len(row) > 7 and pd.notna(row.iloc[7]) else 0.0
+                            econ_fcr = float(row.iloc[8]) if len(row) > 8 and pd.notna(row.iloc[8]) else 0.0
+                            daily_depletion_rate = float(row.iloc[9]) if len(row) > 9 and pd.notna(row.iloc[9]) else 0.0
+                            cum_depletion_rate = float(row.iloc[10]) if len(row) > 10 and pd.notna(row.iloc[10]) else 0.0
+                            pef = float(row.iloc[11]) if len(row) > 11 and pd.notna(row.iloc[11]) else 0.0
+
+                            std = BroilerStandard(
+                                age_days=age_days,
+                                water_to_feed_ratio=water_to_feed_ratio,
+                                live_weight=live_weight,
+                                daily_gain=daily_gain,
+                                avg_daily_gain=avg_daily_gain,
+                                feed_consumption=feed_consumption,
+                                cum_feed_consumption=cum_feed_consumption,
+                                fcr=fcr,
+                                econ_fcr=econ_fcr,
+                                daily_depletion_rate=daily_depletion_rate,
+                                cum_depletion_rate=cum_depletion_rate,
+                                pef=pef
+                            )
+                            db.session.add(std)
+
+                        db.session.commit()
+                        flash('Broiler standards uploaded successfully.', 'success')
+                        return redirect(url_for('admin_broiler_standards'))
+                    except Exception as e:
+                        db.session.rollback()
+                        flash(f'Error processing file: {str(e)}', 'danger')
+                        return redirect(request.url)
+                else:
+                    flash('Invalid file format. Please upload an Excel file.', 'danger')
+                    return redirect(request.url)
+
+            elif action == 'update':
+                s_id = request.form.get('id')
+                s = BroilerStandard.query.get(s_id)
+                if s:
+                    s.water_to_feed_ratio = float(request.form.get('water_to_feed_ratio') or 0.0)
+                    s.live_weight = float(request.form.get('live_weight') or 0.0)
+                    s.daily_gain = float(request.form.get('daily_gain') or 0.0)
+                    s.avg_daily_gain = float(request.form.get('avg_daily_gain') or 0.0)
+                    s.feed_consumption = float(request.form.get('feed_consumption') or 0.0)
+                    s.cum_feed_consumption = float(request.form.get('cum_feed_consumption') or 0.0)
+                    s.fcr = float(request.form.get('fcr') or 0.0)
+                    s.econ_fcr = float(request.form.get('econ_fcr') or 0.0)
+                    s.daily_depletion_rate = float(request.form.get('daily_depletion_rate') or 0.0)
+                    s.cum_depletion_rate = float(request.form.get('cum_depletion_rate') or 0.0)
+                    s.pef = float(request.form.get('pef') or 0.0)
+
+                    safe_commit()
+                    flash(f'Broiler Standard for Day {s.age_days} updated successfully.', 'success')
+                else:
+                    flash('Broiler Standard not found.', 'danger')
+
+                return redirect(url_for('admin_broiler_standards'))
+
+        standards = BroilerStandard.query.order_by(BroilerStandard.age_days.asc()).all()
+        return render_template('admin/broiler_standards.html', standards=standards)
 
     @app.route('/admin/control-panel')
     @login_required

@@ -1303,6 +1303,26 @@ def update_log_from_request(log, req):
     if log.mortality_female + log.culls_female > current_stock_f:
         raise ValueError(f"Female reductions (Mortality + Culls: {log.mortality_female + log.culls_female}) exceeds Current Stock ({current_stock_f}).")
 
+    log.eggs_collected = int(req.form.get('eggs_collected') or 0)
+
+    if current_stock_f > 0 and log.eggs_collected > current_stock_f:
+        raise ValueError("Egg production cannot be more than 100% of the current female stock.")
+
+    from datetime import timedelta
+
+    # Water validation
+    # Calculate what the 24h water would be
+    yesterday = log.date - timedelta(days=1)
+    yesterday_log = DailyLog.query.filter_by(flock_id=log.flock_id, date=yesterday).first()
+
+    water_r1_input = float(req.form.get('water_reading_1') or 0)
+    if yesterday_log:
+        r1_today_real = water_r1_input / 100.0
+        r1_yesterday_real = yesterday_log.water_reading_1 / 100.0
+        calculated_water_24h = (r1_today_real - r1_yesterday_real) * 1000.0
+        if calculated_water_24h < 0:
+            raise ValueError("Water consumption (24h) cannot be negative. Please check your water readings.")
+
     # Automated Alerts: Mortality Spike
     alert_triggered = False
     mort_pct_m = 0.0

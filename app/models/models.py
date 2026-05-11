@@ -75,7 +75,10 @@ class Farm(db.Model):
 
 class House(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=True, index=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
+
+    farm = db.relationship('Farm', backref=db.backref('houses', lazy=True))
     flocks = db.relationship('Flock', backref='house', lazy=True)
     flock_history = db.relationship('HouseFlockMapping', backref='house', lazy=True, cascade="all, delete-orphan")
 
@@ -123,6 +126,7 @@ class Flock(db.Model):
     house_id = db.Column(db.Integer, db.ForeignKey('house.id'), nullable=False, index=True)
     farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False, index=True)
     flock_id = db.Column(db.String(100), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=True)
     intake_date = db.Column(db.Date, nullable=False, default=date.today)
 
     # Intake Counts
@@ -548,12 +552,28 @@ class BroilerFlock(db.Model):
 
     logs = db.relationship('BroilerDailyLog', backref='flock', lazy=True, cascade="all, delete-orphan")
 
+class BroilerStandard(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    age_days = db.Column(db.Integer, nullable=False)
+    water_to_feed_ratio = db.Column(db.Float, default=0.0)
+    live_weight = db.Column(db.Float, default=0.0)
+    daily_gain = db.Column(db.Float, default=0.0)
+    avg_daily_gain = db.Column(db.Float, default=0.0)
+    feed_consumption = db.Column(db.Float, default=0.0)
+    cum_feed_consumption = db.Column(db.Float, default=0.0)
+    fcr = db.Column(db.Float, default=0.0)
+    econ_fcr = db.Column(db.Float, default=0.0)
+    daily_depletion_rate = db.Column(db.Float, default=0.0)
+    cum_depletion_rate = db.Column(db.Float, default=0.0)
+    pef = db.Column(db.Float, default=0.0)
+
 class BroilerDailyLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     flock_id = db.Column(db.Integer, db.ForeignKey('broiler_flock.id'), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False, default=date.today, index=True)
     day_number = db.Column(db.Integer, nullable=False)
     death_count = db.Column(db.Integer, default=0)
+    cull_count = db.Column(db.Integer, default=0)
     feed_receive = db.Column(db.String(100), nullable=True)
     feed_type = db.Column(db.String(100), nullable=True)
     feed_daily_use_kg = db.Column(db.Float, default=0.0)
