@@ -190,68 +190,6 @@ def register_api_routes(app):
 
         return jsonify({'success': True, 'path': f'/static/reports/{filename}'})
 
-    @app.route('/api/broiler/report_data')
-    @login_required
-    def api_broiler_report_data():
-        flock_id = request.args.get('flock_id', type=int)
-        date_str = request.args.get('date')
-        if not flock_id or not date_str:
-            return jsonify({'error': 'Missing parameters'}), 400
-
-        try:
-            report_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        except ValueError:
-            return jsonify({'error': 'Invalid date format'}), 400
-
-        from app.models.models import BroilerFlock, BroilerDailyLog
-        from broiler_metrics import calculate_broiler_metrics, aggregate_broiler_weekly_metrics
-
-        flock = BroilerFlock.query.get_or_404(flock_id)
-
-        # We need all daily logs up to the report date
-        metrics = calculate_broiler_metrics(flock_id)
-
-        # Filter metrics up to the report date
-        filtered_metrics = [m for m in metrics if m['date'] <= report_date]
-        if not filtered_metrics:
-            return jsonify({'empty': True})
-
-        last_7_days = filtered_metrics[-7:]
-        weekly_summary = aggregate_broiler_weekly_metrics(filtered_metrics)
-
-        report_log = filtered_metrics[-1]
-
-        # Calculate Age in days
-        age_in_days = [f"D{m['day_number']}" for m in last_7_days]
-
-        return jsonify({
-            'empty': False,
-            'farm_name': flock.farm_name,
-            'house_name': flock.house_name,
-            'intake_date': flock.intake_date.strftime('%d-%m-%Y') if flock.intake_date else 'N/A',
-            'report_date': report_date.strftime('%d-%m-%Y'),
-            'live_count': report_log['balance'],
-            'feed_kg': report_log['feed_daily_use_kg'],
-            # Since medication_vaccine doesn't exist on BroilerDailyLog originally, handle gracefully
-            'medication': BroilerDailyLog.query.get(report_log['log_id']).medication_vaccine if hasattr(BroilerDailyLog, 'medication_vaccine') else 'N/A',
-
-            'charts': {
-                'days': age_in_days,
-                'mortality_actual': [m['mortality_pct'] for m in last_7_days],
-                'cull_actual': [m['cull_pct'] for m in last_7_days],
-                'mortality_standard': [m['standard_mortality_pct'] for m in last_7_days],
-
-                'bodyweight_actual': [m['body_weight_g'] for m in last_7_days],
-                'bodyweight_standard': [m['standard_bodyweight_g'] for m in last_7_days],
-                'weight_gain_actual': [m['weight_gain'] for m in last_7_days],
-                'weight_gain_standard': [m['standard_weight_gain_g'] for m in last_7_days],
-
-                'fcr_actual': [m['cumulative_fcr'] for m in last_7_days],
-                'fcr_standard': [m['standard_fcr'] for m in last_7_days]
-            },
-            'weekly_summary': weekly_summary
-        })
-
     @app.route('/api/daily_log/trend')
     @login_required
     def api_daily_log_trend():

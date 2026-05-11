@@ -552,22 +552,12 @@ class BroilerFlock(db.Model):
 
     logs = db.relationship('BroilerDailyLog', backref='flock', lazy=True, cascade="all, delete-orphan")
 
-class BroilerStandard(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    day_number = db.Column(db.Integer, nullable=False)
-    standard_mortality_pct = db.Column(db.Float, default=0.0)
-    standard_bodyweight_g = db.Column(db.Float, default=0.0)
-    standard_weight_gain_g = db.Column(db.Float, default=0.0)
-    standard_fcr = db.Column(db.Float, default=0.0)
-    standard_feed_intake_g = db.Column(db.Float, default=0.0)
-
 class BroilerDailyLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     flock_id = db.Column(db.Integer, db.ForeignKey('broiler_flock.id'), nullable=False, index=True)
     date = db.Column(db.Date, nullable=False, default=date.today, index=True)
     day_number = db.Column(db.Integer, nullable=False)
     death_count = db.Column(db.Integer, default=0)
-    cull_count = db.Column(db.Integer, default=0)
     feed_receive = db.Column(db.String(100), nullable=True)
     feed_type = db.Column(db.String(100), nullable=True)
     feed_daily_use_kg = db.Column(db.Float, default=0.0)
