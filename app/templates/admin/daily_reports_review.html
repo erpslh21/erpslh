@@ -66,18 +66,18 @@
                             <td class="fw-bold">{{ item.stock_male_start }}</td>
                             <td class="fw-bold">{{ item.stock_female_start }}</td>
 
-                            <td class="{{ 'text-danger fw-bold' if item.log.mortality_male > 0 else 'text-muted' }}">
-                                <span class="text-muted">{{ item.log.mortality_male }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.mortality_male / item.stock_male_start * 100) if item.stock_male_start > 0 else 0) or 0) | float)) }}%)</span>
+                            <td class="{{ 'text-danger fw-bold' if item.log.mortality_male is not none and item.log.mortality_male > 0 else 'text-muted' }}">
+                                <span class="text-muted">{{ item.log.mortality_male }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.mortality_male / item.stock_male_start * 100) if item.stock_male_start is not none and item.stock_male_start > 0 else 0) or 0) | float)) }}%)</span>
                             </td>
-                            <td class="{{ 'text-danger fw-bold' if item.log.mortality_female > 0 else 'text-muted' }}">
-                                <span class="text-muted">{{ item.log.mortality_female }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.mortality_female / item.stock_female_start * 100) if item.stock_female_start > 0 else 0) or 0) | float)) }}%)</span>
+                            <td class="{{ 'text-danger fw-bold' if item.log.mortality_female is not none and item.log.mortality_female > 0 else 'text-muted' }}">
+                                <span class="text-muted">{{ item.log.mortality_female }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.mortality_female / item.stock_female_start * 100) if item.stock_female_start is not none and item.stock_female_start > 0 else 0) or 0) | float)) }}%)</span>
                             </td>
 
-                            <td class="{{ 'text-warning fw-bold' if item.log.culls_male > 0 else 'text-muted' }}">
-                                <span class="text-muted">{{ item.log.culls_male }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.culls_male / item.stock_male_start * 100) if item.stock_male_start > 0 else 0) or 0) | float)) }}%)</span>
+                            <td class="{{ 'text-warning fw-bold' if item.log.culls_male is not none and item.log.culls_male > 0 else 'text-muted' }}">
+                                <span class="text-muted">{{ item.log.culls_male }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.culls_male / item.stock_male_start * 100) if item.stock_male_start is not none and item.stock_male_start > 0 else 0) or 0) | float)) }}%)</span>
                             </td>
-                            <td class="{{ 'text-warning fw-bold' if item.log.culls_female > 0 else 'text-muted' }}">
-                                <span class="text-muted">{{ item.log.culls_female }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.culls_female / item.stock_female_start * 100) if item.stock_female_start > 0 else 0) or 0) | float)) }}%)</span>
+                            <td class="{{ 'text-warning fw-bold' if item.log.culls_female is not none and item.log.culls_female > 0 else 'text-muted' }}">
+                                <span class="text-muted">{{ item.log.culls_female }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((((item.log.culls_female / item.stock_female_start * 100) if item.stock_female_start is not none and item.stock_female_start > 0 else 0) or 0) | float)) }}%)</span>
                             </td>
 
                             <td class="fw-bold">
@@ -90,7 +90,7 @@
                             <td>{{ "%.1f"|format(((item.log.feed_female_gp_bird or 0) | float)) if item.log.feed_female_gp_bird is not none else '0.0' }}g</td>
 
                             {% set total_birds = item.stock_male_start + item.stock_female_start %}
-                            {% set water_per_bird = (item.log.water_intake_calculated * 1000) / total_birds if total_birds > 0 else 0 %}
+                            {% set water_per_bird = (item.log.water_intake_calculated * 1000) / total_birds if total_birds is not none and total_birds > 0 else 0 %}
                             <td>{{ "%.0f"|format(((water_per_bird or 0) | float)) }}</td>
 
                             <td class="text-start small" style="max-width: 120px; white-space: normal; line-height: 1.1;">
@@ -105,7 +105,7 @@
                                 {% endif %}
                             </td>
 
-                            <td class="{{ 'bg-success text-white fw-bold' if item.egg_prod_pct >= 85 else '' }}">
+                            <td class="{{ 'bg-success text-white fw-bold' if item.egg_prod_pct is not none and item.egg_prod_pct >= 85 else '' }}">
                                 <span class="text-muted">{{ item.log.eggs_collected }}</span><br><span class="fw-bold small">({{ "%.2f"|format(((item.egg_prod_pct or 0) | float)) }}%)</span>
                             </td>
                             <td>{{ item.log.egg_weight }}</td>
@@ -130,7 +130,7 @@
                             <!-- Hatching / Cull Eggs -->
                             <td class="bg-primary bg-opacity-10 fw-bold">
                                 <span class="text-dark">{{ item.hatch_eggs }}</span><br>
-                                <span class="small {{ 'text-success' if item.hatch_egg_pct >= 95 else 'text-danger' }}">
+                                <span class="small {{ 'text-success' if item.hatch_egg_pct is not none and item.hatch_egg_pct >= 95 else 'text-danger' }}">
                                     ({{ "%.2f"|format(((item.hatch_egg_pct or 0) | float)) }}%)
                                 </span>
                             </td>
