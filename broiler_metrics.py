@@ -61,6 +61,8 @@ def calculate_broiler_metrics(flock_id):
         bio_days = (log.date - flock.intake_date).days
         week_num = 0 if bio_days == 0 else ((bio_days - 1) // 7) + 1 if bio_days > 0 else (bio_days // 7)
 
+        gram_per_bird = (log.feed_daily_use_kg * 1000) / current_balance if current_balance > 0 else 0
+
         stats = {
             'log_id': log.id,
             'date': log.date,
@@ -74,10 +76,12 @@ def calculate_broiler_metrics(flock_id):
             'cull_pct': cull_pct,
             'cumulative_mortality_pct': cumulative_mortality_pct,
             'feed_daily_use_kg': log.feed_daily_use_kg,
+            'gram_per_bird': gram_per_bird,
             'body_weight_g': log.body_weight_g,
             'weight_gain': weight_gain,
             'cumulative_fcr': cumulative_fcr,
             'balance': current_balance,
+            'remarks': log.remarks,
 
             # Standards
             'standard_mortality_pct': getattr(std, 'daily_depletion_rate', 0.0) * 100 if std else 0.0,

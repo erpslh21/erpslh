@@ -93,7 +93,7 @@
                                     <td>{{ m.remarks or '' }}</td>
                                     {% if real_is_admin %}
                                     <td>
-                                        <form action="{{ url_for('broiler.delete_daily_log', log_id=m.log.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this daily log? Metrics will be removed.');">
+                                        <form action="{{ url_for('broiler.delete_daily_log', log_id=m.log_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this daily log? Metrics will be removed.');">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <button class="btn btn-sm btn-outline-danger py-0 d-block w-100" style="font-size: 0.75rem;">Del</button>
                                         </form>
