@@ -845,6 +845,7 @@ def calculate_broiler_metrics(flock_id):
 
         daily_stats.append({
             'log': log,
+            'log_id': log.id,
             'date': log.date,
             'day_number': log.day_number,
             'death_count': death,

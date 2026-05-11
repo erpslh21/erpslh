@@ -1308,6 +1308,8 @@ def update_log_from_request(log, req):
     if current_stock_f > 0 and log.eggs_collected > current_stock_f:
         raise ValueError("Egg production cannot be more than 100% of the current female stock.")
 
+    from datetime import timedelta
+
     # Water validation
     # Calculate what the 24h water would be
     yesterday = log.date - timedelta(days=1)

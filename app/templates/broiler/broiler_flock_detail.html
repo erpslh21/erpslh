@@ -80,23 +80,25 @@
                             <tbody>
                                 {% for m in metrics %}
                                 <tr>
-                                    <td>{{ m.date.strftime('%Y-%m-%d') if m.date else '' }}</td>
-                                    <td>{{ m.day_number }}</td>
-                                    <td>{{ m.death_count }}</td>
-                                    <td>{{ m.balance }}</td>
-                                    <td>{{ '%.2f'|format(((m.feed_daily_use_kg or 0) | float)) }}</td>
-                                    <td>{{ '%.2f'|format(((m.gram_per_bird or 0) | float)) }}</td>
-                                    <td>{{ '%.2f'|format(((m.body_weight_g or 0) | float)) }}</td>
-                                    <td>{{ '%.2f'|format(((m.weight_gain or 0) | float)) }}</td>
-                                    <td>{{ '%.3f'|format(((m.cumulative_fcr or 0) | float)) }}</td>
-                                    <td>{{ '%.3f'|format(((m.standard_fcr or 0) | float)) if m.standard_fcr else '-' }}</td>
-                                    <td>{{ m.remarks or '' }}</td>
+                                    <td>{{ m.get('date').strftime('%Y-%m-%d') if m.get('date') else '' }}</td>
+                                    <td>{{ m.get('day_number') }}</td>
+                                    <td>{{ m.get('death_count', 0) }}</td>
+                                    <td>{{ m.get('balance', 0) }}</td>
+                                    <td>{{ '%.2f'|format(((m.get('feed_daily_use_kg') or 0) | float)) }}</td>
+                                    <td>{{ '%.2f'|format(((m.get('gram_per_bird') or 0) | float)) }}</td>
+                                    <td>{{ '%.2f'|format(((m.get('body_weight_g') or 0) | float)) }}</td>
+                                    <td>{{ '%.2f'|format(((m.get('weight_gain') or 0) | float)) }}</td>
+                                    <td>{{ '%.3f'|format(((m.get('cumulative_fcr') or 0) | float)) }}</td>
+                                    <td>{{ '%.3f'|format(((m.get('standard_fcr') or 0) | float)) if m.get('standard_fcr') is not none else '-' }}</td>
+                                    <td>{{ m.get('remarks') or '' }}</td>
                                     {% if real_is_admin %}
                                     <td>
-                                        <form action="{{ url_for('broiler.delete_daily_log', log_id=m.log_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this daily log? Metrics will be removed.');">
+                                        {% if m.get('log_id') %}
+                                        <form action="{{ url_for('broiler.delete_daily_log', log_id=m.get('log_id')) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this daily log? Metrics will be removed.');">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                             <button class="btn btn-sm btn-outline-danger py-0 d-block w-100" style="font-size: 0.75rem;">Del</button>
                                         </form>
+                                        {% endif %}
                                     </td>
                                     {% endif %}
                                 </tr>
