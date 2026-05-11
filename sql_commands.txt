@@ -22,3 +22,17 @@ CREATE INDEX ix_hatchery_egg_receipt_farm_id ON hatchery_egg_receipt (farm_id);
 CREATE INDEX ix_hatchery_egg_receipt_house_id ON hatchery_egg_receipt (house_id);
 CREATE INDEX ix_hatchery_egg_receipt_flock_id ON hatchery_egg_receipt (flock_id);
 CREATE INDEX ix_hatchery_egg_receipt_arrival_date ON hatchery_egg_receipt (arrival_date);
+ALTER TABLE flock ADD COLUMN name VARCHAR(100);
+UPDATE flock SET name = 'Legacy Flock ' || id;
+ALTER TABLE house ADD COLUMN farm_id INTEGER REFERENCES farm(id);
+ALTER TABLE broiler_daily_log ADD COLUMN cull_count INTEGER DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS broiler_standard (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day_number INTEGER NOT NULL,
+    standard_mortality_pct REAL DEFAULT 0.0,
+    standard_bodyweight_g REAL DEFAULT 0.0,
+    standard_weight_gain_g REAL DEFAULT 0.0,
+    standard_fcr REAL DEFAULT 0.0,
+    standard_feed_intake_g REAL DEFAULT 0.0
+);

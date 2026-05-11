@@ -2241,10 +2241,13 @@ def register_production_routes(app):
             # Find or Create House
             house = House.query.filter_by(name=house_name).first()
             if not house:
-                house = House(name=house_name)
+                house = House(name=house_name, farm_id=farm_id)
                 db.session.add(house)
                 safe_commit()
                 flash(f'Created new House: {house_name}', 'info')
+            elif not house.farm_id:
+                house.farm_id = farm_id
+                safe_commit()
 
             # Validation: Check if House has active flock
             existing_active = Flock.query.filter_by(house_id=house.id, status='Active').first()
@@ -2261,11 +2264,13 @@ def register_production_routes(app):
             n = house_flock_count + 1
 
             flock_id = f"{house.name}_{date_str}_Batch{n}"
+            name = request.form.get('name', '').strip() or flock_id
 
             new_flock = Flock(
                 house_id=house.id,
                 farm_id=farm_id,
                 flock_id=flock_id,
+                name=name,
                 intake_date=intake_date,
                 intake_male=intake_male,
                 intake_female=intake_female,
@@ -2276,7 +2281,7 @@ def register_production_routes(app):
             db.session.add(new_flock)
             db.session.flush()
 
-            log_user_activity(current_user.id, 'Add', 'Flock', new_flock.flock_id, details={
+            log_user_activity(current_user.id, 'Add', 'Flock', new_flock.name, details={
                 'house': house_name,
                 'intake_male': intake_male,
                 'intake_female': intake_female
@@ -2287,7 +2292,7 @@ def register_production_routes(app):
             initialize_sampling_schedule(new_flock.id)
             initialize_vaccine_schedule(new_flock.id)
 
-            flash(f'Flock created successfully! Flock ID: {flock_id}', 'success')
+            flash(f'Flock created successfully! Flock Name: {name}', 'success')
             return redirect(get_dashboard_url(current_user))
 
         farms = Farm.query.all()
@@ -2367,15 +2372,10 @@ def register_production_routes(app):
                 'intake_female': flock.intake_female
             }
 
-            # Flock ID (ID) Update
-            new_flock_id = request.form.get('flock_id').strip()
-            if new_flock_id and new_flock_id != flock.flock_id:
-                # Check for uniqueness
-                existing = Flock.query.filter_by(flock_id=new_flock_id).first()
-                if existing:
-                    flash(f'Error: Flock ID "{new_flock_id}" already exists.', 'danger')
-                    return render_template('flock_edit.html', flock=flock)
-                flock.flock_id = new_flock_id
+            # Flock Name Update
+            new_flock_name = request.form.get('name').strip()
+            if new_flock_name and new_flock_name != flock.name:
+                flock.name = new_flock_name
 
             intake_date_str = request.form.get('intake_date')
             if intake_date_str:

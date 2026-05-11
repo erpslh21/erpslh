@@ -10,7 +10,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-flags.min.css?v={{ version }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-payments.min.css?v={{ version }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-vendors.min.css?v={{ version }}">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json', v=version) }}">
+    {% if config['ENV'] == 'development' %}
+        <link rel="manifest" href="{{ url_for('static', filename='manifest_dev.json') }}">
+    {% else %}
+        <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    {% endif %}
     <meta name="theme-color" content="#005eb8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -30,9 +34,18 @@
         };
     </script>
     <style>
-        :root {
-            --tblr-primary: #005eb8; /* Arbor Acres Blue */
-        }
+        /* DYNAMIC THEME COLOR (Dev vs Live) */
+        {% if config['ENV'] == 'development' %}
+            :root {
+                --tblr-primary: #d63939; /* Tabler Red */
+                --tblr-primary-rgb: 214, 57, 57;
+            }
+        {% else %}
+            :root {
+                --tblr-primary: #005eb8; /* Arbor Acres Blue */
+                --tblr-primary-rgb: 0, 94, 184;
+            }
+        {% endif %}
 
         /* iOS Safe Area Adjustments */
         header.main-header {
@@ -247,6 +260,17 @@
 
   </head>
   <body>
+      {% if config['ENV'] == 'development' %}
+    <div class="alert alert-danger text-center mb-0 rounded-0" style="border: none; padding: 0.5rem;" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-triangle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path d="M12 9v2m0 4v.01"></path>
+            <path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"></path>
+        </svg>
+        <strong>DEVELOPMENT SANDBOX</strong> — You are testing safely.
+    </div>
+    {% endif %}
+    FOR DEVELOPMENT ONLY!
     <div id="loading-overlay" class="loader-overlay" style="display:none;">
         <div class="chicken-loader">
             <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="-14 -14 128 128" class="breeder-head-svg slh-logo">
@@ -264,7 +288,11 @@
     <div class="page">
       <div class="sticky-top" style="z-index: 1030;">
       <!-- Navbar -->
-      <header class="navbar navbar-expand-lg navbar-dark d-print-none main-header" data-bs-theme="dark" style="z-index: 1030;">
+      {% if config['ENV'] == 'development' %}
+        <header class="navbar navbar-expand-lg navbar-dark bg-red d-print-none main-header" data-bs-theme="dark" style="z-index: 1030;">
+      {% else %}
+        <header class="navbar navbar-expand-lg navbar-dark d-print-none main-header" data-bs-theme="dark" style="z-index: 1030;">
+      {% endif %}
         <div class="container-fluid">
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -351,38 +379,36 @@
             <div class="container-fluid">
               <ul class="navbar-nav">
                 {% if user_role == 'Admin' %}
-                    <li class="nav-item role-restricted" data-allowed-roles="Admin">
-                        <a class="nav-link text-warning" href="{{ url_for('admin_control_panel') }}">
-                            <span class="nav-link-title">Admin Panel</span>
-                        </a>
-                    </li>
-                    <li class="nav-item role-restricted" data-allowed-roles="Admin">
-                        <a class="nav-link text-warning" href="{{ url_for('admin_daily_reports_review') }}">
-                            <span class="nav-link-title">Daily Reports Review</span>
-                        </a>
-                    </li>
                     <li class="nav-item dropdown role-restricted" data-allowed-roles="Admin">
                         <a class="nav-link dropdown-toggle text-warning" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                            <span class="nav-link-title">Audit Logs</span>
+                            <span class="nav-link-title">ADMIN</span>
                         </a>
                         <div class="dropdown-menu">
-                            <a class="dropdown-item" href="{{ url_for('admin_audit_logs') }}">System Audit Logs</a>
-                            <a class="dropdown-item" href="{{ url_for('admin_activity_log') }}">User Activity Logs</a>
+                            <a class="dropdown-item" href="{{ url_for('admin_control_panel') }}">Admin Panel</a>
+                            <a class="dropdown-item" href="{{ url_for('admin_daily_reports_review') }}">Daily Reports Review</a>
+                            <div class="dropend">
+                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                                    Audit Logs
+                                </a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{{ url_for('admin_audit_logs') }}">System Audit Logs</a>
+                                    <a class="dropdown-item" href="{{ url_for('admin_activity_log') }}">User Activity Logs</a>
+                                </div>
+                            </div>
                         </div>
                     </li>
-                    <li class="nav-item role-restricted" data-allowed-roles="Admin,Management">
-                        <a class="nav-link text-info" href="{{ url_for('executive_dashboard') }}">
-                            <span class="nav-link-title">Executive</span>
+                    <li class="nav-item dropdown role-restricted" data-allowed-roles="Admin,Management">
+                        <a class="nav-link dropdown-toggle text-info" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                            <span class="nav-link-title">EXECUTIVE</span>
                         </a>
-                    </li>
-                    <li class="nav-item role-restricted" data-allowed-roles="Admin,Management">
-                        <a class="nav-link text-info" href="{{ url_for('flock_detail_readonly_select' ) }}">
-                            <span class="nav-link-title">Flock Detail</span>
-                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('executive_dashboard') }}">Dashboard</a>
+                            <a class="dropdown-item" href="{{ url_for('flock_detail_readonly_select' ) }}">Flock Detail</a>
+                        </div>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle fw-bold" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
-                            <span class="nav-link-title">FARM</span>
+                            <span class="nav-link-title">BREEDER</span>
                         </a>
                         <div class="dropdown-menu">
                             {% for item in get_ui_elements('navbar_main') %}
@@ -430,10 +456,13 @@
                             <a class="dropdown-item" href="{{ url_for('hatchery_egg_receiving') }}">Egg Receiving</a>
                         </div>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-success fw-bold" href="{{ url_for('broiler.dashboard') }}">
-                            <span class="nav-link-title">Broilers</span>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-success fw-bold" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                            <span class="nav-link-title">BROILER</span>
                         </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('broiler.dashboard') }}">Dashboard</a>
+                        </div>
                     </li>
 
                 {% elif user_role == 'Farm' or session.get('user_dept') not in ['Admin', 'Management', 'Hatchery'] %}
