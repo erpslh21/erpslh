@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from app.models.models import BroilerFlock, BroilerDailyLog
 from app.database import db
-from broiler_metrics import calculate_broiler_metrics
+from metrics import calculate_broiler_metrics
 from datetime import datetime
 
 broiler_bp = Blueprint('broiler', __name__, url_prefix='/broiler')
@@ -122,7 +122,6 @@ def daily_entry(flock_id):
     if request.method == 'POST':
         date_str = request.form.get('date')
         death_count = int(request.form.get('death_count', 0))
-        cull_count = int(request.form.get('cull_count', 0))
         feed_receive = request.form.get('feed_receive')
         feed_type = request.form.get('feed_type')
         feed_daily_use_kg = float(request.form.get('feed_daily_use_kg', 0.0))
@@ -140,7 +139,6 @@ def daily_entry(flock_id):
             date=log_date,
             day_number=day_number,
             death_count=death_count,
-            cull_count=cull_count,
             feed_receive=feed_receive,
             feed_type=feed_type,
             feed_daily_use_kg=feed_daily_use_kg,
