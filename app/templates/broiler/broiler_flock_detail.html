@@ -654,7 +654,7 @@
                 // PAGE 2
                 pdf.addPage();
 
-                let tableRows = data.weekly_summary.map(w => `
+                let tableRows = (data.weekly_summary || []).map(w => `
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 8px;">Week ${w.week}</td>
                         <td style="border: 1px solid #ddd; padding: 8px;">${w.death_count}</td>
