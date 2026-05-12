@@ -67,3 +67,44 @@ pg_dump -h <host> -U <user> <dbname> > /home/your_username/backups/backup_$(date
 -   **Aggregated Reports**: The "Yearly ISO" report processes a lot of data. It is currently optimized to filter by year (processing ~1 year of data at a time). This should remain fast (< 2 seconds) even with 30 houses.
 -   **Static Files**: Ensure you configure the "Static Files" section in PythonAnywhere Web tab to serve `/static/` directly, rather than passing it through Flask. This saves CPU.
     -   URL: `/static/` -> Directory: `/home/your_username/your_project/static`
+
+---
+
+## Standard Operating Procedure (SOP): Database Migrations
+
+To prevent production issues like schema desyncs and ghost columns, **manual SQL operations (`ALTER TABLE`, `CREATE TABLE`) directly on the production database are strictly prohibited.** All database schema changes must be managed via Flask-Migrate (Alembic) and version-controlled through Git.
+
+### Workflow for Making Database Changes
+
+1. **Local Development:**
+   - Make your changes to the SQLAlchemy models in `app/models/models.py`.
+   - Generate a new migration script automatically:
+     ```bash
+     flask db migrate -m "Description of changes"
+     ```
+   - Review the generated script in `migrations/versions/` to ensure it correctly reflects your intended changes.
+
+2. **Commit and Push:**
+   - Add the generated migration script along with your updated `models.py` to your git commit.
+   - Push to your branch and open a Pull Request.
+
+3. **CI/CD Verification:**
+   - The GitHub Actions workflow will automatically run `flask db upgrade` on a fresh database environment.
+   - Your Pull Request must pass this migration test before it can be merged into `main`.
+
+4. **Production Deployment:**
+   - The deployment script handles database migrations automatically. See the next section for usage.
+
+---
+
+## Automated Deployment Script
+
+An automated deployment script `deploy.sh` is provided in the repository root to streamline deployments on PythonAnywhere. It ensures the code is updated, database migrations are applied safely, and the web workers are reloaded.
+
+**Usage on PythonAnywhere:**
+1. Open a Bash console.
+2. Navigate to your project directory.
+3. Run the script:
+   ```bash
+   ./deploy.sh
+   ```
