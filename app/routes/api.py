@@ -601,6 +601,115 @@ def register_api_routes(app):
 
         return json.dumps(result)
 
+
+    @app.route('/api/broiler/report_data', methods=['GET'])
+    @login_required
+    def get_broiler_report_data():
+        flock_id = request.args.get('flock_id')
+        date_str = request.args.get('date')
+
+        if not flock_id or not date_str:
+            return jsonify({'error': 'Missing parameters'}), 400
+
+        from app.models.models import BroilerFlock, BroilerDailyLog, BroilerStandard
+        from datetime import datetime
+
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format'}), 400
+
+        flock = BroilerFlock.query.get(flock_id)
+        if not flock:
+            return jsonify({'error': 'Flock not found'}), 404
+
+        # Fetch all logs up to this date, order by date
+        logs = BroilerDailyLog.query.filter(
+            BroilerDailyLog.flock_id == flock.id,
+            BroilerDailyLog.date <= target_date
+        ).order_by(BroilerDailyLog.date.asc()).all()
+
+        if not logs:
+            return jsonify({'empty': True})
+
+        # Calculate live_count based on intake and deaths/culls up to this date
+        live_count = flock.intake_birds or 0
+
+        days_array = []
+        mortality_actual = []
+        cull_actual = []
+        bodyweight_actual = []
+
+        # We need cumulative mortality/cull? The charts seem to show daily or cumulative %?
+        # Let's check how the mortality chart is usually rendered. Usually mortality/cull % is cumulative in standard charts,
+        # but the template has them as "bar" for Actual and "line" for standard. Often actual is daily or cumulative.
+        # Actually the `broiler_flock_detail.html` charts might show cumulative or daily. Let's provide cumulative for both.
+        # Let's provide cumulative percentages since Standard Mort % is a line. Wait, the `calculate_broiler_metrics` gives `death_percentage` which is daily death / prev balance.
+        # Let's look at BroilerStandard: `cum_depletion_rate`. So it's cumulative.
+        # So we'll calculate cumulative mortality % and cull %.
+
+        cumulative_death = 0
+        cumulative_cull = 0
+
+        for log in logs:
+            cumulative_death += (log.death_count or 0)
+            cumulative_cull += (log.cull_count or 0)
+
+            live_count -= (log.death_count or 0)
+            live_count -= (log.cull_count or 0)
+
+            days_array.append(log.day_number)
+
+            if flock.intake_birds and flock.intake_birds > 0:
+                mortality_actual.append(round((cumulative_death / flock.intake_birds) * 100, 2))
+                cull_actual.append(round((cumulative_cull / flock.intake_birds) * 100, 2))
+            else:
+                mortality_actual.append(0.0)
+                cull_actual.append(0.0)
+
+            bodyweight_actual.append(log.body_weight_g or 0.0)
+
+        # Standards
+        mortality_standard = []
+        bodyweight_standard = []
+
+        # Standard lookup
+        for day in days_array:
+            std = BroilerStandard.query.filter_by(age_days=day).first()
+            if std:
+                # The memory says "the raw decimal values (e.g., `cum_depletion_rate`) must be multiplied by 100"
+                mortality_standard.append(round((std.cum_depletion_rate or 0) * 100, 2))
+                bodyweight_standard.append(std.live_weight or 0.0)
+            else:
+                mortality_standard.append(None)
+                bodyweight_standard.append(None)
+
+        # Target date log
+        target_log = next((l for l in logs if l.date == target_date), None)
+        feed_kg = target_log.feed_daily_use_kg if target_log else 0.0
+        medication = target_log.medication_vaccine if target_log else ""
+
+        response_data = {
+            'empty': False,
+            'farm_name': flock.farm_name,
+            'house_name': flock.house_name,
+            'intake_date': flock.intake_date.strftime('%Y-%m-%d') if flock.intake_date else "",
+            'live_count': live_count if live_count > 0 else 0,
+            'report_date': target_date.strftime('%Y-%m-%d'),
+            'charts': {
+                'days': days_array,
+                'mortality_actual': mortality_actual,
+                'cull_actual': cull_actual,
+                'mortality_standard': mortality_standard,
+                'bodyweight_actual': bodyweight_actual,
+                'bodyweight_standard': bodyweight_standard
+            },
+            'feed_kg': feed_kg,
+            'medication': medication or "None"
+        }
+
+        return jsonify(response_data)
+
     @app.route('/api/metrics')
     def get_metrics_list():
         return json.dumps(METRICS_REGISTRY)
