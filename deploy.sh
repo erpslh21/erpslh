@@ -5,7 +5,7 @@ echo "Starting deployment process..."
 
 # 1. Pull the latest code from git
 echo "Pulling latest code from git..."
-/usr/bin/git pull origin main
+/usr/bin/git pull origin develop
 
 # 2. Apply database migrations
 echo "Running database migrations..."
