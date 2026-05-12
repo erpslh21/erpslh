@@ -531,14 +531,27 @@
                     return;
                 }
 
+                // Filter data to last 7 days for the PDF charts
+                const takeLast7 = (arr) => arr ? arr.slice(-7) : [];
+                data.charts.days = takeLast7(data.charts.days);
+                data.charts.mortality_actual = takeLast7(data.charts.mortality_actual);
+                data.charts.cull_actual = takeLast7(data.charts.cull_actual);
+                data.charts.mortality_standard = takeLast7(data.charts.mortality_standard);
+                data.charts.bodyweight_actual = takeLast7(data.charts.bodyweight_actual);
+                data.charts.bodyweight_standard = takeLast7(data.charts.bodyweight_standard);
+                data.charts.weight_gain_actual = takeLast7(data.charts.weight_gain_actual);
+                data.charts.weight_gain_standard = takeLast7(data.charts.weight_gain_standard);
+                data.charts.actual_fcr = takeLast7(data.charts.actual_fcr);
+                data.charts.standard_fcr = takeLast7(data.charts.standard_fcr);
+
                 statusText.innerText = "Rendering PDF...";
 
                 // PAGE 1 HTML
                 let htmlPage1 = `
                 <div style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
                         <div>
-                            <h2 style="margin: 0;">${data.farm_name} (${data.house_name}) - AGE: [${data.charts.days.join(', ')}]</h2>
+                            <h2 style="margin: 0;">${data.farm_name} (${data.house_name}) - AGE: ${data.charts.days.length > 0 ? data.charts.days[data.charts.days.length - 1] : 0} Days</h2>
                             <h4 style="margin: 5px 0 0 0; color: #666;">Intake Date: ${data.intake_date}</h4>
                             <h4 style="margin: 5px 0 0 0; color: #666;">Live Count: ${data.live_count}</h4>
                         </div>
@@ -563,9 +576,9 @@
                         </div>
                     </div>
 
-                    <div style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9;">
-                        <strong>Feed (kg):</strong> ${data.feed_kg} <br>
-                        <strong>Medication:</strong> ${data.medication}
+                    <div style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; display: flex; gap: 40px;">
+                        <div><strong>Feed (kg):</strong> ${data.feed_kg}</div>
+                        <div><strong>Medication:</strong> ${data.medication}</div>
                     </div>
                 </div>
                 `;
@@ -590,19 +603,19 @@
                             },
                             {
                                 type: 'bar',
-                                label: 'Actual Mort %',
+                                label: 'Daily Mort %',
                                 data: data.charts.mortality_actual,
-                                backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)', datalabels: { formatter: (value) => value.toFixed(1) }
                             },
                             {
                                 type: 'bar',
-                                label: 'Actual Cull %',
+                                label: 'Daily Cull %',
                                 data: data.charts.cull_actual,
-                                backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)', datalabels: { formatter: (value) => value.toFixed(1) }
                             }
                         ]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, animation: false }
+                    options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'top' } } }
                 });
 
                 const ctxBW = document.getElementById('pdfChartBW').getContext('2d');
@@ -625,23 +638,23 @@
                                 data: data.charts.bodyweight_actual,
                                 borderColor: 'blue',
                                 fill: false,
-                                datalabels: { display: false }
+                                datalabels: { display: true, formatter: (value) => value !== null ? value.toFixed(1) : '' }
                             },
                             {
                                 type: 'bar',
                                 label: 'Standard Gain',
                                 data: data.charts.weight_gain_standard,
-                                backgroundColor: 'rgba(255, 159, 64, 0.3)'
+                                backgroundColor: 'rgba(255, 159, 64, 0.3)', datalabels: { formatter: (value) => value.toFixed(1) }
                             },
                             {
                                 type: 'bar',
                                 label: 'Actual Gain',
                                 data: data.charts.weight_gain_actual,
-                                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)', datalabels: { formatter: (value) => value.toFixed(1) }
                             }
                         ]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, animation: false }
+                    options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'top' } } }
                 });
 
                 await new Promise(r => setTimeout(r, 500)); // wait for rendering
@@ -667,7 +680,7 @@
 
                 let htmlPage2 = `
                 <div style="width: 100%; height: 100%; box-sizing: border-box; display: flex; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
                         <h2 style="margin: 0;">${data.farm_name} (${data.house_name}) - Page 2</h2>
                         <h3 style="margin: 0;">${data.report_date}</h3>
                     </div>
@@ -711,21 +724,21 @@
                         datasets: [
                             {
                                 label: 'Standard FCR',
-                                data: data.charts.fcr_standard,
+                                data: data.charts.standard_fcr,
                                 borderColor: 'green',
                                 fill: false,
                                 datalabels: { display: false }
                             },
                             {
                                 label: 'Actual FCR',
-                                data: data.charts.fcr_actual,
+                                data: data.charts.actual_fcr,
                                 borderColor: 'red',
                                 fill: false,
-                                datalabels: { display: false }
+                                datalabels: { display: true, formatter: (value) => value !== null ? value.toFixed(2) : '' }
                             }
                         ]
                     },
-                    options: { responsive: true, maintainAspectRatio: false, animation: false }
+                    options: { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { position: 'top' } } }
                 });
 
                 await new Promise(r => setTimeout(r, 500));

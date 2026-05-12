@@ -611,8 +611,10 @@ def register_api_routes(app):
         if not flock_id or not date_str:
             return jsonify({'error': 'Missing parameters'}), 400
 
-        from app.models.models import BroilerFlock, BroilerDailyLog, BroilerStandard
+        from app.models.models import BroilerFlock
         from datetime import datetime
+        from metrics import calculate_broiler_metrics
+        import math
 
         try:
             target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
@@ -623,131 +625,84 @@ def register_api_routes(app):
         if not flock:
             return jsonify({'error': 'Flock not found'}), 404
 
-        logs = BroilerDailyLog.query.filter(
-            BroilerDailyLog.flock_id == flock.id,
-            BroilerDailyLog.date <= target_date
-        ).order_by(BroilerDailyLog.date.asc()).all()
+        # SSOT: Calculate metrics
+        all_metrics = calculate_broiler_metrics(flock.id)
 
-        if not logs:
+        # Filter metrics up to target_date
+        metrics = [m for m in all_metrics if m['date'] <= target_date]
+
+        if not metrics:
             return jsonify({'empty': True})
 
-        live_count = flock.intake_birds or 0
+        # Chart Data extraction
+        days_array = [m['day_number'] for m in metrics]
+        mortality_actual = [m['death_percentage'] for m in metrics]
+        cull_actual = [m['cull_percentage'] for m in metrics]
+        bodyweight_actual = [m['body_weight_g'] for m in metrics]
+        weight_gain_actual = [m['weight_gain'] for m in metrics]
+        actual_fcr = [m['cumulative_fcr'] for m in metrics]
 
-        days_array = []
-        mortality_actual = []
-        cull_actual = []
-        bodyweight_actual = []
-        weight_gain_actual = []
-        actual_fcr = []
-
-        cumulative_death = 0
-        cumulative_cull = 0
-        cumulative_feed_per_bird = 0.0
-
-        for i, log in enumerate(logs):
-            cumulative_death += (log.death_count or 0)
-            cumulative_cull += (log.cull_count or 0)
-
-            days_array.append(log.day_number)
-
-            if flock.intake_birds and flock.intake_birds > 0:
-                mortality_actual.append(round((cumulative_death / flock.intake_birds) * 100, 2))
-                cull_actual.append(round((cumulative_cull / flock.intake_birds) * 100, 2))
-            else:
-                mortality_actual.append(0.0)
-                cull_actual.append(0.0)
-
-            bw = log.body_weight_g or 0.0
-            bodyweight_actual.append(bw)
-
-            if i == 0:
-                prev_bw = flock.arrival_weight_g or 0.0
-            else:
-                prev_bw = logs[i-1].body_weight_g or 0.0
-
-            weight_gain_actual.append(max(0, bw - prev_bw))
-
-            feed_daily_kg = log.feed_daily_use_kg or 0.0
-            gram_per_bird = (feed_daily_kg * 1000) / live_count if live_count > 0 else 0.0
-            cumulative_feed_per_bird += gram_per_bird
-
-            arrival_bw = flock.arrival_weight_g or 0.0
-            bw_diff = bw - arrival_bw
-            fcr = cumulative_feed_per_bird / bw_diff if bw_diff > 0 else 0.0
-            actual_fcr.append(round(fcr, 3))
-
-            live_count -= (log.death_count or 0)
-            live_count -= (log.cull_count or 0)
-
-        mortality_standard = []
-        bodyweight_standard = []
-        weight_gain_standard = []
-        standard_fcr = []
-
-        for day in days_array:
-            std = BroilerStandard.query.filter_by(age_days=day).first()
-            if std:
-                mortality_standard.append(round((std.cum_depletion_rate or 0) * 100, 2))
-                bodyweight_standard.append(std.live_weight or 0.0)
-                weight_gain_standard.append(std.daily_gain or 0.0)
-                standard_fcr.append(std.fcr or 0.0)
-            else:
-                mortality_standard.append(None)
-                bodyweight_standard.append(None)
-                weight_gain_standard.append(None)
-                standard_fcr.append(None)
+        mortality_standard = [m['standard_mortality'] for m in metrics]
+        bodyweight_standard = [m['standard_body_weight_g'] for m in metrics]
+        weight_gain_standard = [m['standard_weight_gain'] for m in metrics]
+        standard_fcr = [m['standard_fcr'] for m in metrics]
 
         # Build weekly summary
         weekly_summary = []
-        # Group logs by week
-        import math
         weeks_data = {}
-        cumulative_feed_kg = 0.0
-
-        for i, log in enumerate(logs):
-            cumulative_feed_kg += (log.feed_daily_use_kg or 0.0)
-            week = math.ceil(log.day_number / 7)
+        for m in metrics:
+            week = math.ceil(m['day_number'] / 7)
             if week not in weeks_data:
                 weeks_data[week] = {
                     'week': week,
                     'death_count': 0,
-                    'mortality_pct': 0.0,
+                    'mortality_pct': 0.0, # Will be sum of daily mortalities or handled correctly
                     'total_feed_kg': 0.0,
-                    'avg_bodyweight_g': 0.0,
-                    'fcr': 0.0,
                     'bws': [],
                     'fcrs': []
                 }
-            weeks_data[week]['death_count'] += (log.death_count or 0)
-            weeks_data[week]['total_feed_kg'] += (log.feed_daily_use_kg or 0.0)
-            weeks_data[week]['bws'].append(log.body_weight_g or 0.0)
-            weeks_data[week]['fcrs'].append(actual_fcr[i])
-            weeks_data[week]['mortality_pct'] = mortality_actual[i]
+            weeks_data[week]['death_count'] += m['death_count']
+            weeks_data[week]['total_feed_kg'] += m['feed_daily_use_kg']
+            weeks_data[week]['bws'].append(m['body_weight_g'])
+            weeks_data[week]['fcrs'].append(m['cumulative_fcr'])
 
-        for w, d in sorted(weeks_data.items()):
-            if d['bws']:
-                d['avg_bodyweight_g'] = sum(d['bws']) / len(d['bws'])
-            if d['fcrs']:
-                d['fcr'] = d['fcrs'][-1] # Take the FCR at the end of the week
+
+        # We need cumulative intake birds to get proper weekly mortality...
+        # But for weekly summary we could just keep the existing simple sum
+        # Or better: sum the deaths over the week, and display it.
+        # Original code did: weeks_data[week]['mortality_pct'] = mortality_actual[i] which was cumulative at that day!
+        # Since we changed to daily mortality, we should probably calculate the week's cumulative mortality using original intake
+        # or just sum the daily mortality if that's what's preferred. The prompt didn't ask to change the weekly table mortality,
+        # but let's recalculate the week's cumulative mortality:
+        intake = flock.intake_birds or 1
+        cum_death_week = 0
+        for w in sorted(weeks_data.keys()):
+            d = weeks_data[w]
+            cum_death_week += d['death_count']
+
+            avg_bw = sum(d['bws']) / len(d['bws']) if d['bws'] else 0.0
+            fcr = d['fcrs'][-1] if d['fcrs'] else 0.0
+
             weekly_summary.append({
                 'week': d['week'],
                 'death_count': d['death_count'],
-                'mortality_pct': d['mortality_pct'],
+                'mortality_pct': (cum_death_week / intake) * 100 if intake > 0 else 0.0,
                 'total_feed_kg': d['total_feed_kg'],
-                'avg_bodyweight_g': d['avg_bodyweight_g'],
-                'fcr': d['fcr']
+                'avg_bodyweight_g': avg_bw,
+                'fcr': fcr
             })
 
-        target_log = next((l for l in logs if l.date == target_date), None)
-        feed_kg = target_log.feed_daily_use_kg if target_log else 0.0
-        medication = target_log.medication_vaccine if target_log else ""
+        target_metric = metrics[-1]
+        feed_kg = target_metric['feed_daily_use_kg']
+        medication = target_metric['remarks'] if target_metric['remarks'] else "None"
+        live_count = target_metric['balance']
 
         response_data = {
             'empty': False,
             'farm_name': flock.farm_name,
             'house_name': flock.house_name,
             'intake_date': flock.intake_date.strftime('%Y-%m-%d') if flock.intake_date else "",
-            'live_count': live_count if live_count > 0 else 0,
+            'live_count': live_count,
             'report_date': target_date.strftime('%Y-%m-%d'),
             'charts': {
                 'days': days_array,
@@ -763,7 +718,7 @@ def register_api_routes(app):
             },
             'weekly_summary': weekly_summary,
             'feed_kg': feed_kg,
-            'medication': medication or "None"
+            'medication': medication
         }
 
         return jsonify(response_data)
