@@ -623,7 +623,6 @@ def register_api_routes(app):
         if not flock:
             return jsonify({'error': 'Flock not found'}), 404
 
-        # Fetch all logs up to this date, order by date
         logs = BroilerDailyLog.query.filter(
             BroilerDailyLog.flock_id == flock.id,
             BroilerDailyLog.date <= target_date
@@ -632,31 +631,22 @@ def register_api_routes(app):
         if not logs:
             return jsonify({'empty': True})
 
-        # Calculate live_count based on intake and deaths/culls up to this date
         live_count = flock.intake_birds or 0
 
         days_array = []
         mortality_actual = []
         cull_actual = []
         bodyweight_actual = []
-
-        # We need cumulative mortality/cull? The charts seem to show daily or cumulative %?
-        # Let's check how the mortality chart is usually rendered. Usually mortality/cull % is cumulative in standard charts,
-        # but the template has them as "bar" for Actual and "line" for standard. Often actual is daily or cumulative.
-        # Actually the `broiler_flock_detail.html` charts might show cumulative or daily. Let's provide cumulative for both.
-        # Let's provide cumulative percentages since Standard Mort % is a line. Wait, the `calculate_broiler_metrics` gives `death_percentage` which is daily death / prev balance.
-        # Let's look at BroilerStandard: `cum_depletion_rate`. So it's cumulative.
-        # So we'll calculate cumulative mortality % and cull %.
+        weight_gain_actual = []
+        actual_fcr = []
 
         cumulative_death = 0
         cumulative_cull = 0
+        cumulative_feed_per_bird = 0.0
 
-        for log in logs:
+        for i, log in enumerate(logs):
             cumulative_death += (log.death_count or 0)
             cumulative_cull += (log.cull_count or 0)
-
-            live_count -= (log.death_count or 0)
-            live_count -= (log.cull_count or 0)
 
             days_array.append(log.day_number)
 
@@ -667,24 +657,87 @@ def register_api_routes(app):
                 mortality_actual.append(0.0)
                 cull_actual.append(0.0)
 
-            bodyweight_actual.append(log.body_weight_g or 0.0)
+            bw = log.body_weight_g or 0.0
+            bodyweight_actual.append(bw)
 
-        # Standards
+            if i == 0:
+                prev_bw = flock.arrival_weight_g or 0.0
+            else:
+                prev_bw = logs[i-1].body_weight_g or 0.0
+
+            weight_gain_actual.append(max(0, bw - prev_bw))
+
+            feed_daily_kg = log.feed_daily_use_kg or 0.0
+            gram_per_bird = (feed_daily_kg * 1000) / live_count if live_count > 0 else 0.0
+            cumulative_feed_per_bird += gram_per_bird
+
+            arrival_bw = flock.arrival_weight_g or 0.0
+            bw_diff = bw - arrival_bw
+            fcr = cumulative_feed_per_bird / bw_diff if bw_diff > 0 else 0.0
+            actual_fcr.append(round(fcr, 3))
+
+            live_count -= (log.death_count or 0)
+            live_count -= (log.cull_count or 0)
+
         mortality_standard = []
         bodyweight_standard = []
+        weight_gain_standard = []
+        standard_fcr = []
 
-        # Standard lookup
         for day in days_array:
             std = BroilerStandard.query.filter_by(age_days=day).first()
             if std:
-                # The memory says "the raw decimal values (e.g., `cum_depletion_rate`) must be multiplied by 100"
                 mortality_standard.append(round((std.cum_depletion_rate or 0) * 100, 2))
                 bodyweight_standard.append(std.live_weight or 0.0)
+                weight_gain_standard.append(std.daily_gain or 0.0)
+                standard_fcr.append(std.fcr or 0.0)
             else:
                 mortality_standard.append(None)
                 bodyweight_standard.append(None)
+                weight_gain_standard.append(None)
+                standard_fcr.append(None)
 
-        # Target date log
+        # Build weekly summary
+        weekly_summary = []
+        # Group logs by week
+        import math
+        weeks_data = {}
+        cumulative_feed_kg = 0.0
+
+        for i, log in enumerate(logs):
+            cumulative_feed_kg += (log.feed_daily_use_kg or 0.0)
+            week = math.ceil(log.day_number / 7)
+            if week not in weeks_data:
+                weeks_data[week] = {
+                    'week': week,
+                    'death_count': 0,
+                    'mortality_pct': 0.0,
+                    'total_feed_kg': 0.0,
+                    'avg_bodyweight_g': 0.0,
+                    'fcr': 0.0,
+                    'bws': [],
+                    'fcrs': []
+                }
+            weeks_data[week]['death_count'] += (log.death_count or 0)
+            weeks_data[week]['total_feed_kg'] += (log.feed_daily_use_kg or 0.0)
+            weeks_data[week]['bws'].append(log.body_weight_g or 0.0)
+            weeks_data[week]['fcrs'].append(actual_fcr[i])
+            weeks_data[week]['mortality_pct'] = mortality_actual[i]
+
+        for w, d in sorted(weeks_data.items()):
+            if d['bws']:
+                d['avg_bodyweight_g'] = sum(d['bws']) / len(d['bws'])
+            if d['fcrs']:
+                d['fcr'] = d['fcrs'][-1] # Take the FCR at the end of the week
+            weekly_summary.append({
+                'week': d['week'],
+                'death_count': d['death_count'],
+                'mortality_pct': d['mortality_pct'],
+                'total_feed_kg': d['total_feed_kg'],
+                'avg_bodyweight_g': d['avg_bodyweight_g'],
+                'fcr': d['fcr']
+            })
+
         target_log = next((l for l in logs if l.date == target_date), None)
         feed_kg = target_log.feed_daily_use_kg if target_log else 0.0
         medication = target_log.medication_vaccine if target_log else ""
@@ -702,8 +755,13 @@ def register_api_routes(app):
                 'cull_actual': cull_actual,
                 'mortality_standard': mortality_standard,
                 'bodyweight_actual': bodyweight_actual,
-                'bodyweight_standard': bodyweight_standard
+                'bodyweight_standard': bodyweight_standard,
+                'weight_gain_actual': weight_gain_actual,
+                'weight_gain_standard': weight_gain_standard,
+                'actual_fcr': actual_fcr,
+                'standard_fcr': standard_fcr
             },
+            'weekly_summary': weekly_summary,
             'feed_kg': feed_kg,
             'medication': medication or "None"
         }
