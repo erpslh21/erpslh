@@ -382,8 +382,8 @@ def register_admin_routes(app):
                     s.cum_feed_consumption = float(request.form.get('cum_feed_consumption') or 0.0)
                     s.fcr = float(request.form.get('fcr') or 0.0)
                     s.econ_fcr = float(request.form.get('econ_fcr') or 0.0)
-                    s.daily_depletion_rate = float(request.form.get('daily_depletion_rate') or 0.0)
-                    s.cum_depletion_rate = float(request.form.get('cum_depletion_rate') or 0.0)
+                    s.daily_depletion_rate = float(request.form.get('daily_depletion_rate') or 0.0) / 100.0
+                    s.cum_depletion_rate = float(request.form.get('cum_depletion_rate') or 0.0) / 100.0
                     s.pef = float(request.form.get('pef') or 0.0)
 
                     safe_commit()

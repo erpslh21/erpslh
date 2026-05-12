@@ -59,7 +59,34 @@
                 </thead>
                 <tbody>
                     {% for s in standards %}
-                        <tr>
+                        <!-- Read-only Row -->
+                        <tr id="row-view-{{ s.id }}">
+                            <td><strong>{{ s.age_days }}</strong></td>
+                            <td>{{ "%.1f"|format((s.water_to_feed_ratio or 0) | float) }}</td>
+                            <td>{{ "%.1f"|format((s.live_weight or 0) | float) }}</td>
+                            <td>{{ "%.1f"|format((s.daily_gain or 0) | float) }}</td>
+                            <td>{{ "%.1f"|format((s.avg_daily_gain or 0) | float) }}</td>
+                            <td>{{ "%.1f"|format((s.feed_consumption or 0) | float) }}</td>
+                            <td>{{ "%.1f"|format((s.cum_feed_consumption or 0) | float) }}</td>
+                            <td>{{ "%.2f"|format((s.fcr or 0) | float) }}</td>
+                            <td>{{ "%.2f"|format((s.econ_fcr or 0) | float) }}</td>
+                            <td>{{ "%.2f"|format(((s.daily_depletion_rate or 0) | float) * 100) }}%</td>
+                            <td>{{ "%.2f"|format(((s.cum_depletion_rate or 0) | float) * 100) }}%</td>
+                            <td>{{ "%.1f"|format((s.pef or 0) | float) }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleEdit('{{ s.id }}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                       <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4"></path>
+                                       <path d="M13.5 6.5l4 4"></path>
+                                    </svg>
+                                    Edit
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Edit Row (Initially Hidden) -->
+                        <tr id="row-edit-{{ s.id }}" class="d-none">
                             <form id="form-{{ s.id }}" method="POST" action="{{ url_for('admin_broiler_standards') }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="action" value="update">
@@ -74,11 +101,24 @@
                             <td><input form="form-{{ s.id }}" type="number" step="0.01" name="cum_feed_consumption" class="form-control form-control-sm" value="{{ s.cum_feed_consumption }}"></td>
                             <td><input form="form-{{ s.id }}" type="number" step="0.001" name="fcr" class="form-control form-control-sm" value="{{ s.fcr }}"></td>
                             <td><input form="form-{{ s.id }}" type="number" step="0.001" name="econ_fcr" class="form-control form-control-sm" value="{{ s.econ_fcr }}"></td>
-                            <td><input form="form-{{ s.id }}" type="number" step="0.0001" name="daily_depletion_rate" class="form-control form-control-sm" value="{{ s.daily_depletion_rate }}"></td>
-                            <td><input form="form-{{ s.id }}" type="number" step="0.0001" name="cum_depletion_rate" class="form-control form-control-sm" value="{{ s.cum_depletion_rate }}"></td>
+                            <td>
+                                <div class="input-group input-group-flat">
+                                    <input form="form-{{ s.id }}" type="number" step="0.01" name="daily_depletion_rate" class="form-control form-control-sm" value="{{ ((s.daily_depletion_rate or 0) | float) * 100 }}">
+                                    <span class="input-group-text p-1">%</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group input-group-flat">
+                                    <input form="form-{{ s.id }}" type="number" step="0.01" name="cum_depletion_rate" class="form-control form-control-sm" value="{{ ((s.cum_depletion_rate or 0) | float) * 100 }}">
+                                    <span class="input-group-text p-1">%</span>
+                                </div>
+                            </td>
                             <td><input form="form-{{ s.id }}" type="number" step="0.01" name="pef" class="form-control form-control-sm" value="{{ s.pef }}"></td>
                             <td>
-                                <button form="form-{{ s.id }}" type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                <div class="d-flex gap-1">
+                                    <button form="form-{{ s.id }}" type="submit" class="btn btn-sm btn-outline-primary">Save</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleEdit('{{ s.id }}')">Cancel</button>
+                                </div>
                             </td>
                         </tr>
                     {% endfor %}
@@ -90,14 +130,43 @@
 </div>
 
 <script>
+    function toggleEdit(id) {
+        var viewRow = document.getElementById('row-view-' + id);
+        var editRow = document.getElementById('row-edit-' + id);
+
+        if (viewRow.classList.contains('d-none')) {
+            // It was in edit mode, so we are cancelling.
+            // Reset the form so that inputs revert to original values
+            var form = document.getElementById('form-' + id);
+            if (form) {
+                form.reset();
+            }
+            viewRow.classList.remove('d-none');
+            editRow.classList.add('d-none');
+        } else {
+            // Switch to edit mode
+            viewRow.classList.add('d-none');
+            editRow.classList.remove('d-none');
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         var forms = document.querySelectorAll('form');
         forms.forEach(function(form) {
             form.addEventListener('submit', function() {
-                var btn = this.querySelector('button[type="submit"]');
-                if (btn) {
-                    btn.disabled = true;
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+                // If it's a specific row form, find the submit button inside that row
+                var submitBtn = null;
+                var formId = form.getAttribute('id');
+                if (formId) {
+                    submitBtn = document.querySelector('button[form="' + formId + '"][type="submit"]');
+                }
+                if (!submitBtn) {
+                    submitBtn = this.querySelector('button[type="submit"]');
+                }
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
                 }
             });
         });

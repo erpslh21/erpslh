@@ -799,7 +799,7 @@ def calculate_broiler_metrics(flock_id):
     """
     Core function to process a broiler flock's logs and calculate dynamic metrics.
     """
-    from app.models.models import BroilerFlock
+    from app.models.models import BroilerFlock, BroilerStandard
 
     flock = BroilerFlock.query.get(flock_id)
     if not flock:
@@ -814,15 +814,20 @@ def calculate_broiler_metrics(flock_id):
     current_balance = flock.intake_birds or 0
     cumulative_feed_per_bird = 0.0
 
+    # Pre-fetch standards to avoid N+1
+    standards = {s.age_days: s for s in BroilerStandard.query.all()}
+
     for i, log in enumerate(sorted_logs):
         # 1. Balance
         death = log.death_count or 0
-        current_balance -= death
+        cull = getattr(log, 'cull_count', 0) or 0
+        current_balance -= (death + cull)
         if current_balance < 0: current_balance = 0
 
-        # 2. Death Percentage
+        # 2. Death and Cull Percentages (Daily)
         prev_balance = flock.intake_birds if i == 0 else daily_stats[i-1]['balance']
         death_percentage = (death / prev_balance * 100) if prev_balance > 0 else 0.0
+        cull_percentage = (cull / prev_balance * 100) if prev_balance > 0 else 0.0
 
         # 3. Gram per bird
         feed_daily_kg = log.feed_daily_use_kg or 0.0
@@ -836,12 +841,20 @@ def calculate_broiler_metrics(flock_id):
             prev_bw = flock.arrival_weight_g or 0.0
         else:
             prev_bw = daily_stats[i-1]['body_weight_g'] or 0.0
-        weight_gain = current_bw - prev_bw
+        weight_gain = current_bw - prev_bw if current_bw > 0 else 0.0
 
         # 5. Cumulative FCR
         arrival_bw = flock.arrival_weight_g or 0.0
         bw_diff = current_bw - arrival_bw
         cumulative_fcr = cumulative_feed_per_bird / bw_diff if bw_diff > 0 else 0.0
+
+        # Standard Fetch
+        std = standards.get(log.day_number)
+        std_body_weight_g = std.live_weight if std else None
+        std_weight_gain = std.daily_gain if std else None
+        std_fcr = std.fcr if std else None
+        # Convert daily depletion from std (e.g., 0.005) to percentage (0.5%)
+        std_mortality = (std.daily_depletion_rate * 100) if std and std.daily_depletion_rate is not None else None
 
         daily_stats.append({
             'log': log,
@@ -849,14 +862,19 @@ def calculate_broiler_metrics(flock_id):
             'date': log.date,
             'day_number': log.day_number,
             'death_count': death,
+            'cull_count': cull,
             'balance': current_balance,
             'death_percentage': death_percentage,
+            'cull_percentage': cull_percentage,
             'feed_daily_use_kg': feed_daily_kg,
             'gram_per_bird': gram_per_bird,
             'body_weight_g': current_bw,
             'weight_gain': weight_gain,
             'cumulative_fcr': cumulative_fcr,
-            'standard_fcr': log.standard_fcr,
+            'standard_fcr': std_fcr,
+            'standard_body_weight_g': std_body_weight_g,
+            'standard_weight_gain': std_weight_gain,
+            'standard_mortality': std_mortality,
             'remarks': log.remarks
         })
 
