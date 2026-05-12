@@ -6,7 +6,6 @@ app = create_app()
 
 with app.app_context():
     try:
-        db.create_all()
         init_ui_elements(commit=True)
     except Exception as e:
         app.logger.warning(f"Error during initialization: {e}")
