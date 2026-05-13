@@ -647,60 +647,9 @@ def register_api_routes(app):
         weight_gain_standard = [m['standard_weight_gain'] for m in metrics]
         standard_fcr = [m['standard_fcr'] for m in metrics]
 
-        # Build weekly summary
-        weekly_summary = []
-        weeks_data = {}
-        for m in metrics:
-            week = math.ceil(m['day_number'] / 7)
-            if week not in weeks_data:
-                weeks_data[week] = {
-                    'week': week,
-                    'death_count': 0,
-                    'mortality_pct': 0.0, # Will be sum of daily mortalities or handled correctly
-                    'total_feed_kg': 0.0,
-                    'bws': [],
-                    'fcrs': []
-                }
-            weeks_data[week]['death_count'] += m['death_count']
-            weeks_data[week]['total_feed_kg'] += m['feed_daily_use_kg']
-            weeks_data[week]['bws'].append(m['body_weight_g'])
-            weeks_data[week]['fcrs'].append(m['cumulative_fcr'])
-
-
-        # We need cumulative intake birds to get proper weekly mortality...
-        # But for weekly summary we could just keep the existing simple sum
-        # Or better: sum the deaths over the week, and display it.
-        # Original code did: weeks_data[week]['mortality_pct'] = mortality_actual[i] which was cumulative at that day!
-        # Since we changed to daily mortality, we should probably calculate the week's cumulative mortality using original intake
-        # or just sum the daily mortality if that's what's preferred. The prompt didn't ask to change the weekly table mortality,
-        # but let's recalculate the week's cumulative mortality:
-        intake = flock.intake_birds or 1
-        cum_death_week = 0
-        total_cum_feed = 0.0
-        latest_avg_bw = 0.0
-        latest_fcr = 0.0
-
-        for w in sorted(weeks_data.keys()):
-            d = weeks_data[w]
-            cum_death_week += d['death_count']
-            total_cum_feed += d['total_feed_kg']
-
-            avg_bw = sum(d['bws']) / len(d['bws']) if d['bws'] else 0.0
-            fcr = d['fcrs'][-1] if d['fcrs'] else 0.0
-
-            if avg_bw > 0:
-                latest_avg_bw = avg_bw
-            if fcr > 0:
-                latest_fcr = fcr
-
-            weekly_summary.append({
-                'week': d['week'],
-                'death_count': d['death_count'],
-                'mortality_pct': (cum_death_week / intake) * 100 if intake > 0 else 0.0,
-                'total_feed_kg': d['total_feed_kg'],
-                'avg_bodyweight_g': avg_bw,
-                'fcr': fcr
-            })
+        # Build weekly summary via SSOT
+        from metrics import aggregate_broiler_weekly
+        weekly_summary, cumulative_summary = aggregate_broiler_weekly(metrics, flock.intake_birds, flock.arrival_weight_g)
 
         target_metric = metrics[-1]
         feed_kg = target_metric['feed_daily_use_kg']
@@ -714,13 +663,7 @@ def register_api_routes(app):
             'intake_date': flock.intake_date.strftime('%d-%m-%Y') if flock.intake_date else "",
             'live_count': live_count,
             'report_date': target_date.strftime('%d-%m-%Y'),
-            'cumulative_summary': {
-                'death_count': cum_death_week,
-                'mortality_pct': (cum_death_week / intake) * 100 if intake > 0 else 0.0,
-                'total_feed_kg': total_cum_feed,
-                'avg_bodyweight_g': latest_avg_bw,
-                'fcr': latest_fcr
-            },
+            'cumulative_summary': cumulative_summary,
             'charts': {
                 'days': days_array,
                 'mortality_actual': mortality_actual,
