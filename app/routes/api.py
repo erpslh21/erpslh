@@ -1331,10 +1331,7 @@ def register_api_routes(app):
 
         return jsonify({'success': True}), 201
 
-    from app.extensions import limiter
-
     @app.route('/api/version')
-    @limiter.exempt
     def get_version():
         return jsonify({'version': APP_VERSION})
 
