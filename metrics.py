@@ -861,6 +861,7 @@ def calculate_broiler_metrics(flock_id):
             'log_id': log.id,
             'date': log.date,
             'day_number': log.day_number,
+            'age_date_display': f"D{log.day_number} ({log.date.strftime('%d-%m')})",
             'death_count': death,
             'cull_count': cull,
             'balance': current_balance,
@@ -911,3 +912,93 @@ def calculate_metrics(logs, flock, requested_metrics, hatchability_data=None, st
                 data[m].append(None)
 
     return data
+
+
+def aggregate_broiler_weekly(daily_stats, intake_birds, arrival_weight_g):
+    """
+    Aggregates daily broiler stats into weekly summary and a cumulative summary.
+    """
+    import math
+
+    weeks_data = {}
+    for m in daily_stats:
+        week = math.ceil(m['day_number'] / 7)
+        if week not in weeks_data:
+            weeks_data[week] = {
+                'week': week,
+                'death_count': 0,
+                'total_feed_kg': 0.0,
+                'total_feed_g_per_bird': 0.0,
+                'bws': [],
+                'fcrs': []
+            }
+
+            # Find start balance and start weight for the week
+            start_day = (week - 1) * 7 + 1
+            if week == 1:
+                weeks_data[week]['start_balance'] = intake_birds or 1
+                weeks_data[week]['start_weight_g'] = arrival_weight_g or 0.0
+            else:
+                prev_day_stat = next((s for s in daily_stats if s['day_number'] == start_day - 1), None)
+                if prev_day_stat:
+                    weeks_data[week]['start_balance'] = prev_day_stat['balance']
+                    weeks_data[week]['start_weight_g'] = prev_day_stat['body_weight_g']
+                else:
+                    weeks_data[week]['start_balance'] = intake_birds or 1
+                    weeks_data[week]['start_weight_g'] = arrival_weight_g or 0.0
+
+        weeks_data[week]['death_count'] += m['death_count']
+        weeks_data[week]['total_feed_kg'] += m['feed_daily_use_kg']
+        weeks_data[week]['total_feed_g_per_bird'] += m['gram_per_bird']
+        if m['body_weight_g'] > 0:
+            weeks_data[week]['bws'].append(m['body_weight_g'])
+        if m['cumulative_fcr'] > 0:
+            weeks_data[week]['fcrs'].append(m['cumulative_fcr'])
+
+    weekly_summary = []
+
+    total_cum_feed_kg = 0.0
+    total_cum_death = 0
+    latest_avg_bw = 0.0
+    latest_cum_fcr = 0.0
+
+    for w in sorted(weeks_data.keys()):
+        d = weeks_data[w]
+
+        start_bal = d['start_balance']
+        mortality_pct = (d['death_count'] / start_bal * 100) if start_bal and start_bal > 0 else 0.0
+
+        avg_bw = sum(d['bws']) / len(d['bws']) if d['bws'] else 0.0
+
+        latest_bw_in_week = d['bws'][-1] if d['bws'] else 0.0
+        weight_gain_in_week = latest_bw_in_week - d['start_weight_g']
+        weekly_fcr = d['total_feed_g_per_bird'] / weight_gain_in_week if weight_gain_in_week > 0 else 0.0
+
+        weekly_summary.append({
+            'week': d['week'],
+            'death_count': d['death_count'],
+            'mortality_pct': mortality_pct,
+            'total_feed_kg': d['total_feed_kg'],
+            'avg_bodyweight_g': avg_bw,
+            'fcr': weekly_fcr
+        })
+
+        total_cum_death += d['death_count']
+        total_cum_feed_kg += d['total_feed_kg']
+        if avg_bw > 0:
+            latest_avg_bw = avg_bw
+
+    # Use the last log's cumulative FCR for the summary
+    if daily_stats:
+        last_stat = daily_stats[-1]
+        latest_cum_fcr = last_stat['cumulative_fcr']
+
+    cumulative_summary = {
+        'death_count': total_cum_death,
+        'mortality_pct': (total_cum_death / (intake_birds or 1)) * 100 if intake_birds else 0.0,
+        'total_feed_kg': total_cum_feed_kg,
+        'avg_bodyweight_g': latest_avg_bw,
+        'fcr': latest_cum_fcr
+    }
+
+    return weekly_summary, cumulative_summary
