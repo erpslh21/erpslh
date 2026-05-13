@@ -635,7 +635,7 @@ def register_api_routes(app):
             return jsonify({'empty': True})
 
         # Chart Data extraction
-        days_array = [m['day_number'] for m in metrics]
+        days_array = [m['age_date_display'] for m in metrics]
         mortality_actual = [m['death_percentage'] for m in metrics]
         cull_actual = [m['cull_percentage'] for m in metrics]
         bodyweight_actual = [m['body_weight_g'] for m in metrics]
@@ -676,12 +676,22 @@ def register_api_routes(app):
         # but let's recalculate the week's cumulative mortality:
         intake = flock.intake_birds or 1
         cum_death_week = 0
+        total_cum_feed = 0.0
+        latest_avg_bw = 0.0
+        latest_fcr = 0.0
+
         for w in sorted(weeks_data.keys()):
             d = weeks_data[w]
             cum_death_week += d['death_count']
+            total_cum_feed += d['total_feed_kg']
 
             avg_bw = sum(d['bws']) / len(d['bws']) if d['bws'] else 0.0
             fcr = d['fcrs'][-1] if d['fcrs'] else 0.0
+
+            if avg_bw > 0:
+                latest_avg_bw = avg_bw
+            if fcr > 0:
+                latest_fcr = fcr
 
             weekly_summary.append({
                 'week': d['week'],
@@ -701,9 +711,16 @@ def register_api_routes(app):
             'empty': False,
             'farm_name': flock.farm_name,
             'house_name': flock.house_name,
-            'intake_date': flock.intake_date.strftime('%Y-%m-%d') if flock.intake_date else "",
+            'intake_date': flock.intake_date.strftime('%d-%m-%Y') if flock.intake_date else "",
             'live_count': live_count,
-            'report_date': target_date.strftime('%Y-%m-%d'),
+            'report_date': target_date.strftime('%d-%m-%Y'),
+            'cumulative_summary': {
+                'death_count': cum_death_week,
+                'mortality_pct': (cum_death_week / intake) * 100 if intake > 0 else 0.0,
+                'total_feed_kg': total_cum_feed,
+                'avg_bodyweight_g': latest_avg_bw,
+                'fcr': latest_fcr
+            },
             'charts': {
                 'days': days_array,
                 'mortality_actual': mortality_actual,

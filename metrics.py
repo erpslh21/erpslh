@@ -861,6 +861,7 @@ def calculate_broiler_metrics(flock_id):
             'log_id': log.id,
             'date': log.date,
             'day_number': log.day_number,
+            'age_date_display': f"D{log.day_number} ({log.date.strftime('%d-%m')})",
             'death_count': death,
             'cull_count': cull,
             'balance': current_balance,
