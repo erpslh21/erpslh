@@ -12,6 +12,6 @@ login_manager.login_message_category = "info"
 
 migrate = Migrate()
 csrf = CSRFProtect()
-limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
+limiter = Limiter(key_func=get_remote_address)
 
 cache = Cache()

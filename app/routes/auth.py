@@ -12,6 +12,7 @@ def register_auth_routes(app):
     from app.utils import safe_commit, get_dashboard_url
 
     @app.route('/change_password', methods=['GET', 'POST'])
+    @limiter.limit("5 per minute", methods=["POST"])
     @login_required
     def change_password():
         if not current_user.id:
