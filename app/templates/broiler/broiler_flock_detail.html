@@ -607,13 +607,13 @@
                                 type: 'bar',
                                 label: 'Daily Mort %',
                                 data: data.charts.mortality_actual,
-                                backgroundColor: 'rgba(255, 99, 132, 0.6)', datalabels: { formatter: (value) => value.toFixed(2), font: { weight: 'bold' } }
+                                backgroundColor: 'rgba(255, 99, 132, 0.6)', datalabels: { formatter: (value) => value !== null ? value.toFixed(2) : '', font: { weight: 'bold' } }
                             },
                             {
                                 type: 'bar',
                                 label: 'Daily Cull %',
                                 data: data.charts.cull_actual,
-                                backgroundColor: 'rgba(54, 162, 235, 0.6)', datalabels: { formatter: (value) => value.toFixed(2), font: { weight: 'bold' } }
+                                backgroundColor: 'rgba(54, 162, 235, 0.6)', datalabels: { formatter: (value) => value !== null ? value.toFixed(2) : '', font: { weight: 'bold' } }
                             }
                         ]
                     },
@@ -665,13 +665,13 @@
                                 type: 'bar',
                                 label: 'Standard Gain',
                                 data: data.charts.weight_gain_standard,
-                                backgroundColor: 'rgba(255, 159, 64, 0.3)', datalabels: { formatter: (value) => value.toFixed(1), font: { weight: 'bold' } }
+                                backgroundColor: 'rgba(255, 159, 64, 0.3)', datalabels: { formatter: (value) => value !== null ? value.toFixed(1) : '', font: { weight: 'bold' } }
                             },
                             {
                                 type: 'bar',
                                 label: 'Actual Gain',
                                 data: data.charts.weight_gain_actual,
-                                backgroundColor: 'rgba(75, 192, 192, 0.6)', datalabels: { formatter: (value) => value.toFixed(1), font: { weight: 'bold' } }
+                                backgroundColor: 'rgba(75, 192, 192, 0.6)', datalabels: { formatter: (value) => value !== null ? value.toFixed(1) : '', font: { weight: 'bold' } }
                             }
                         ]
                     },
@@ -703,10 +703,10 @@
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Week ${w.week}</td>
                         <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${w.death_count}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${w.mortality_pct.toFixed(2)}%</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${w.total_feed_kg.toFixed(2)}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${w.avg_bodyweight_g.toFixed(2)}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${w.fcr.toFixed(2)}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.mortality_pct || 0).toFixed(2)}%</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.total_feed_kg || 0).toFixed(2)}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.avg_bodyweight_g || 0).toFixed(2)}</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.fcr || 0).toFixed(2)}</td>
                     </tr>
                 `).join('');
 
@@ -717,10 +717,10 @@
                         <tr style="background-color: #f0f0f0;">
                             <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Cumulative</td>
                             <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cum.death_count}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cum.mortality_pct.toFixed(2)}%</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cum.total_feed_kg.toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cum.avg_bodyweight_g.toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cum.fcr.toFixed(2)}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.mortality_pct || 0).toFixed(2)}%</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.total_feed_kg || 0).toFixed(2)}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.avg_bodyweight_g || 0).toFixed(2)}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.fcr || 0).toFixed(2)}</td>
                         </tr>
                     `;
                 }
