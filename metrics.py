@@ -854,7 +854,7 @@ def calculate_broiler_metrics(flock_id):
         std_weight_gain = std.daily_gain if std else None
         std_fcr = std.fcr if std else None
         # Convert daily depletion from std (e.g., 0.005) to percentage (0.5%)
-        std_mortality = (std.daily_depletion_rate * 100) if std and std.daily_depletion_rate is not None else None
+        std_mortality = (std.cum_depletion_rate * 100) if std and std.cum_depletion_rate is not None else None
 
         daily_stats.append({
             'log': log,
