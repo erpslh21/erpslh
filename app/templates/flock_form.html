@@ -11,42 +11,31 @@
         <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <div class="mb-3">
+            <label for="farm_id" class="form-label required">Farm Name</label>
+            <select name="farm_id" id="farm_id" class="form-select" required>
+              <option value="" disabled selected>Select a farm...</option>
+              {% for farm in farms %}
+                <option value="{{ farm.id }}">{{ farm.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="house_id" class="form-label required">House Name</label>
+            <select name="house_id" id="house_id" class="form-select" required>
+              <option value="" disabled selected>Select a house...</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
             <label for="name" class="form-label">Flock Name</label>
             <input type="text" class="form-control" id="name" name="name" placeholder="Optional (e.g. A1-B)">
-            <div class="form-text">Optional. If left blank, an auto-generated Batch ID will be used.</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="farm_name" class="form-label required">Farm Name</label>
-            <input class="form-control" list="farmOptions" id="farm_name" name="farm_name" placeholder="Type to search or add new..." required>
-            <datalist id="farmOptions">
-              {% for farm in farms %}
-                <option value="{{ farm.name }}">
-              {% endfor %}
-            </datalist>
-            <div class="form-text">Optional. Type a new name to create a new farm.</div>
-          </div>
-
-          <div class="mb-3">
-            <label for="house_name" class="form-label">House Name</label>
-            <input class="form-control" list="houseOptions" id="house_name" name="house_name" placeholder="Type to search or add new..." required>
-            <datalist id="houseOptions">
-              {% for house in houses %}
-                <option value="{{ house.name }}">
-              {% endfor %}
-            </datalist>
-            <div class="form-text">Type a new name to create a new house.</div>
+            <div class="form-text">Optional. If left blank, the house name will be used.</div>
           </div>
           
           <div class="mb-3">
             <label for="intake_date" class="form-label">Intake Date</label>
             <input type="date" class="form-control" id="intake_date" name="intake_date" required>
-          </div>
-
-          <div class="mb-3">
-            <label for="production_start_date" class="form-label">Planned Production Start Date</label>
-            <input type="date" class="form-control" id="production_start_date" name="production_start_date">
-            <div class="form-text">Optional. If set, production statistics start from this date.</div>
           </div>
           
           <div class="row">
@@ -85,7 +74,7 @@
           <table class="table table-sm">
             <thead>
               <tr>
-                <th>Flock ID</th>
+                <th>Flock Name</th>
                 <th>Status</th>
                 <th>Intake Date</th>
                 <th>Lifetime Cum. Mortality</th>
@@ -120,4 +109,34 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const farmSelect = document.getElementById("farm_id");
+    const houseSelect = document.getElementById("house_id");
+
+    farmSelect.addEventListener("change", function() {
+        const farmId = this.value;
+        houseSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+
+        fetch(`/api/houses_by_farm/${farmId}`)
+            .then(response => response.json())
+            .then(data => {
+                houseSelect.innerHTML = '<option value="" disabled selected>Select a house...</option>';
+                data.forEach(house => {
+                    const option = document.createElement("option");
+                    option.value = house.id;
+                    option.textContent = house.name;
+                    houseSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error("Error fetching houses:", error);
+                houseSelect.innerHTML = '<option value="" disabled selected>Error loading houses</option>';
+            });
+    });
+});
+</script>
 {% endblock %}
