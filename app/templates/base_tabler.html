@@ -86,9 +86,9 @@
         padding-top: env(safe-area-inset-top) !important;
       }
 
-      /* Dark mode navbar styling to match previous hardcoded navbar-dark */
-      [data-bs-theme="dark"] .main-header,
-      [data-bs-theme="dark"] .secondary-header .navbar {
+      /* Always dark navbar styling */
+      .main-header,
+      .secondary-header .navbar {
         background-color: #182433 !important;
       }
 
@@ -397,8 +397,9 @@
       <div class="sticky-top" style="z-index: 1030">
         <!-- Navbar -->
         <header
-          class="navbar navbar-expand-lg d-print-none main-header"
+          class="navbar navbar-expand-lg navbar-dark d-print-none main-header"
           style="z-index: 1030"
+          data-bs-theme="dark"
         >
           <div class="container-fluid">
             <button
@@ -646,7 +647,7 @@
           style="z-index: 1020; position: relative"
         >
           <div class="collapse navbar-collapse" id="navbar-menu">
-            <div class="navbar">
+            <div class="navbar navbar-dark" data-bs-theme="dark">
               <div class="container-fluid">
                 <ul class="navbar-nav">
                   {% if user_role == 'Admin' %}
