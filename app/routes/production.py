@@ -407,20 +407,8 @@ def register_production_routes(app):
 
         weekly_data.reverse()
 
-        # Pre-check available reports for this flock
-        from werkzeug.utils import secure_filename
-        reports_dir = os.path.join(app.root_path, 'static', 'reports')
-        available_reports = set()
-        if os.path.exists(reports_dir):
-            prefix_to_match = f"_{secure_filename(flock.house.name)}_"
-            for f in os.listdir(reports_dir):
-                if prefix_to_match in f and f.endswith(".jpg"):
-                    date_str = f.split("_")[0]
-                    available_reports.add(date_str)
-
         return render_template('flock_detail_readonly.html',
                                flock=flock,
-                               available_reports=available_reports,
                                logs=list(reversed(enriched_logs)),
                                weekly_data=weekly_data,
                                chart_data=chart_data,
@@ -2086,19 +2074,7 @@ def register_production_routes(app):
 
         weekly_data.reverse()
 
-        # Pre-check available reports for this flock
-        from werkzeug.utils import secure_filename
-        reports_dir = os.path.join(app.root_path, 'static', 'reports')
-        available_reports = set()
-        if os.path.exists(reports_dir):
-            # We need a quick way to know which dates have reports
-            prefix_to_match = f"_{secure_filename(flock.house.name)}_"
-            for f in os.listdir(reports_dir):
-                if prefix_to_match in f and f.endswith(".jpg"):
-                    date_str = f.split("_")[0]
-                    available_reports.add(date_str)
-
-        return render_template('flock_detail_modern.html', flock=flock, logs=list(reversed(enriched_logs)), weekly_data=weekly_data, chart_data=chart_data, chart_data_weekly=chart_data_weekly, current_stats=current_stats, global_std=gs, active_flocks=active_flocks, summary_dashboard=summary_dashboard, summary_table=summary_table, health_events=health_events, available_reports=available_reports, hatch_records=hatch_records, std_hatch_map=std_hatch_map)
+        return render_template('flock_detail_modern.html', flock=flock, logs=list(reversed(enriched_logs)), weekly_data=weekly_data, chart_data=chart_data, chart_data_weekly=chart_data_weekly, current_stats=current_stats, global_std=gs, active_flocks=active_flocks, summary_dashboard=summary_dashboard, summary_table=summary_table, health_events=health_events, hatch_records=hatch_records, std_hatch_map=std_hatch_map)
 
     @app.route('/flock/<int:id>/toggle_phase', methods=['POST'])
     @login_required
