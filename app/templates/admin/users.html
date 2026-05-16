@@ -63,7 +63,7 @@
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Department</label>
-                                                        <select class="form-select" name="dept">
+                                                        <select class="form-select dept-select" name="dept">
                                                             <option value="Admin" {% if user.dept == 'Admin' %}selected{% endif %}>Admin</option>
                                                             <option value="Breeder" {% if user.dept == 'Breeder' %}selected{% endif %}>Breeder</option>
                                                             <option value="Hatchery" {% if user.dept == 'Hatchery' %}selected{% endif %}>Hatchery</option>
@@ -72,7 +72,7 @@
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Role</label>
-                                                        <input type="text" class="form-control" name="role" list="roleList" value="{{ user.role }}" required>
+                                                        <select class="form-select role-select" name="role" data-current-role="{{ user.role }}" required></select>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
@@ -163,7 +163,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Department</label>
-                        <select class="form-select" name="dept">
+                        <select class="form-select dept-select" name="dept">
                             <option value="Breeder">Breeder</option>
                             <option value="Hatchery">Hatchery</option>
                             <option value="Admin">Admin</option>
@@ -172,7 +172,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Role</label>
-                        <input type="text" class="form-control" name="role" list="roleList" required>
+                        <select class="form-select role-select" name="role" required></select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -184,9 +184,47 @@
     </div>
 </div>
 
-<datalist id="roleList">
-    <option value="Admin">
-    <option value="Worker">
-    <option value="Management">
-</datalist>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const roleMapping = {
+        'Admin': ['Admin'],
+        'Management': ['Management'],
+        'Breeder': ['Manager', 'Supervisor', 'Worker'],
+        'Hatchery': ['Manager', 'Supervisor', 'Worker'],
+        'Broiler': ['Manager', 'Supervisor', 'Worker']
+    };
+
+    function updateRoleDropdown(deptSelect, roleSelect, currentRole = null) {
+        const dept = deptSelect.value;
+        const roles = roleMapping[dept] || [];
+        roleSelect.innerHTML = '';
+        roles.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r;
+            opt.textContent = r;
+            if (r === currentRole) {
+                opt.selected = true;
+            }
+            roleSelect.appendChild(opt);
+        });
+    }
+
+    // Attach to all department selects (add and edit modals)
+    document.querySelectorAll('.dept-select').forEach(deptSelect => {
+        const form = deptSelect.closest('form');
+        const roleSelect = form.querySelector('.role-select');
+        const currentRole = roleSelect.getAttribute('data-current-role');
+
+        // Initial population
+        updateRoleDropdown(deptSelect, roleSelect, currentRole);
+
+        // Change listener
+        deptSelect.addEventListener('change', function() {
+            updateRoleDropdown(deptSelect, roleSelect, null);
+        });
+    });
+});
+</script>
+
 {% endblock %}
