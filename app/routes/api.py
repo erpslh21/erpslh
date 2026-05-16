@@ -37,7 +37,7 @@ def register_api_routes(app):
         # Restrict to allowed departments if not Admin/Management
         query = Flock.query.filter_by(status='Active')
         if not is_admin and user_role != 'Management':
-            if user_dept == 'Farm':
+            if user_dept == 'Breeder':
                 # This is a bit simplified, usually we might restrict by house or just Farm
                 pass
             elif user_dept == 'Hatchery':
@@ -373,7 +373,7 @@ def register_api_routes(app):
 
     @app.route('/api/health_log/bodyweight_edit', methods=['POST'])
     @login_required
-    @dept_required(['Farm', 'Management', 'Admin'])
+    @dept_required(['Breeder', 'Management', 'Admin'])
     def health_log_bodyweight_edit():
         log_id = request.form.get('log_id', type=int)
         new_date_str = request.form.get('new_date')
@@ -539,7 +539,7 @@ def register_api_routes(app):
 
     @app.route('/api/flock/<int:flock_id>/custom_data', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def get_custom_data(flock_id):
         flock = Flock.query.get_or_404(flock_id)
         req_data = request.get_json()
@@ -1103,7 +1103,7 @@ def register_api_routes(app):
 
     @app.route('/api/chart_data/<int:flock_id>')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def get_chart_data(flock_id):
         flock = Flock.query.get_or_404(flock_id)
 

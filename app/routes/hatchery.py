@@ -152,7 +152,7 @@ def register_hatchery_routes(app):
             return redirect(url_for('flock_hatchability', id=id))
 
         if request.method == 'POST':
-            if current_user.dept == 'Farm' or is_readonly:
+            if current_user.dept == 'Breeder' or is_readonly:
                 flash("Read-only access.", "warning")
             else:
                 h_id = request.form.get('hatchability_id')
@@ -387,7 +387,7 @@ def register_hatchery_routes(app):
 
         flock = Flock.query.options(joinedload(Flock.house)).filter_by(id=id).first_or_404()
         if request.method == 'POST':
-            if current_user.dept == 'Farm':
+            if current_user.dept == 'Breeder':
                 flash("Farm users have read-only access to Hatchability.", "warning")
                 return redirect(url_for('flock_hatchability', id=id))
 

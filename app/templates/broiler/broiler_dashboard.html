@@ -6,6 +6,7 @@
         <div class="col">
             <h2 class="page-title">Broiler Dashboard</h2>
         </div>
+        {% if current_user.role != 'Worker' %}
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
 
@@ -23,6 +24,7 @@
                 </a>
             </div>
         </div>
+        {% endif %}
     </div>
 
     <div class="card">
@@ -42,9 +44,15 @@
                     {% for flock in flocks %}
                     <tr>
                         <td>
+                            {% if current_user.role != 'Worker' %}
                             <a href="{{ url_for('broiler.flock_detail', flock_id=flock.id) }}">
                                 {{ flock.farm_name }} - {{ flock.house_name }}
                             </a>
+                            {% else %}
+                            <a href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}">
+                                {{ flock.farm_name }} - {{ flock.house_name }}
+                            </a>
+                            {% endif %}
                         </td>
                         <td class="text-muted">{{ flock.breed }}</td>
                         <td class="text-muted">{{ flock.intake_date.strftime('%Y-%m-%d') if flock.intake_date else '' }}</td>

@@ -1,8 +1,8 @@
 # Constants for fast membership checks
-ALLOWED_EXPORT_ROLES = frozenset(['Management', 'Farm'])
-FARM_HATCHERY_ADMIN_DEPTS = frozenset(['Farm', 'Hatchery', 'Admin'])
-FARM_HATCHERY_ADMIN_MGMT_DEPTS = frozenset(['Farm', 'Hatchery', 'Admin', 'Management'])
-ADMIN_FARM_MGMT_ROLES = frozenset(['Admin', 'Farm', 'Management'])
+ALLOWED_EXPORT_ROLES = frozenset(['Management', 'Breeder'])
+FARM_HATCHERY_ADMIN_DEPTS = frozenset(['Breeder', 'Hatchery', 'Admin'])
+FARM_HATCHERY_ADMIN_MGMT_DEPTS = frozenset(['Breeder', 'Hatchery', 'Admin', 'Management'])
+ADMIN_FARM_MGMT_ROLES = frozenset(['Admin', 'Breeder', 'Management'])
 
 INV_TX_TYPES_ALL = frozenset(['Purchase', 'Usage', 'Adjustment', 'Waste'])
 INV_TX_TYPES_USAGE_WASTE = frozenset(['Usage', 'Waste'])
@@ -13,7 +13,7 @@ EMPTY_NOTE_VALUES = frozenset(['none', 'nan'])
 # Initial User Data for Seeding
 INITIAL_USERS = [
     {'username': 'admin', 'password': 'admin123', 'dept': 'Admin', 'role': 'Admin'},
-    {'username': 'farm_user', 'password': 'farm123', 'dept': 'Farm', 'role': 'Worker'},
+    {'username': 'farm_user', 'password': 'farm123', 'dept': 'Breeder', 'role': 'Worker'},
     {'username': 'hatch_user', 'password': 'hatch123', 'dept': 'Hatchery', 'role': 'Worker'},
     {'username': 'manager', 'password': 'manager123', 'dept': 'Management', 'role': 'Management'}
 ]

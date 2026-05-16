@@ -8,7 +8,7 @@
     <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="mb-3">
-        <label for="farm_name" class="form-label">Farm</label>
+        <label for="farm_name" class="form-label">Breeder</label>
         <input class="form-control" list="farmOptions" id="farm_name" name="farm_name" value="{{ flock.farm.name if flock.farm else '' }}" placeholder="Type to search or add new..." required>
         <datalist id="farmOptions">
           {% for farm in farms %}

@@ -17,7 +17,7 @@ def register_admin_routes(app):
 
     @app.route('/import', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def import_data():
         if request.method == 'POST':
             # Check for Confirmation
@@ -468,7 +468,7 @@ def register_admin_routes(app):
 
     @app.route('/feed_codes/delete/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_feed_code(id):
         fc = FeedCode.query.get_or_404(id)
         db.session.delete(fc)
@@ -478,7 +478,7 @@ def register_admin_routes(app):
 
     @app.route('/feed_codes', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def manage_feed_codes():
         if request.method == 'POST':
             code = request.form.get('code').strip()
@@ -503,7 +503,7 @@ def register_admin_routes(app):
 
     @app.route('/standards', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def manage_standards():
         if request.method == 'POST':
             action = request.form.get('action')

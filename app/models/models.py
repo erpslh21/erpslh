@@ -103,7 +103,7 @@ class InventoryItem(VersionedMixin, db.Model):
     cost_per_unit = db.Column(db.Float, default=0.0)
     category = db.Column(db.String(50), nullable=True)
     unit_of_measurement = db.Column(db.String(50), nullable=True)
-    location = db.Column(db.String(50), default='Farm')
+    location = db.Column(db.String(50), default='Breeder')
 
     transactions = db.relationship('InventoryTransaction', backref='item', lazy=True, cascade="all, delete-orphan")
     vaccines = db.relationship('Vaccine', backref='inventory_item', lazy=True)
@@ -116,7 +116,7 @@ class InventoryTransaction(VersionedMixin, db.Model):
     quantity = db.Column(db.Float, nullable=False)
     transaction_date = db.Column(db.Date, nullable=False, default=date.today, index=True)
     notes = db.Column(db.String(255), nullable=True)
-    location = db.Column(db.String(50), default='Farm')
+    location = db.Column(db.String(50), default='Breeder')
     classification = db.Column(db.String(50), nullable=True)
     batch_number = db.Column(db.String(50), nullable=True)
     expiry_date = db.Column(db.Date, nullable=True)
