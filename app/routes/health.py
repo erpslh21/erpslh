@@ -26,7 +26,7 @@ def register_health_routes(app):
 
     @app.route('/health_log/bodyweight', methods=['GET', 'POST'])
     @login_required
-    @dept_required(['Farm', 'Management', 'Admin'])
+    @dept_required(['Breeder', 'Management', 'Admin'])
     def health_log_bodyweight():
         if request.method == 'POST':
             flock_id = request.form.get('flock_id')
@@ -294,7 +294,7 @@ def register_health_routes(app):
 
     @app.route('/upload_weights', methods=['POST'])
     @login_required
-    @dept_required(['Farm', 'Management'])
+    @dept_required(['Breeder', 'Management'])
     def upload_weights():
         house_id = request.form.get('house_id')
         age_week = request.form.get('age_week')
@@ -1071,7 +1071,7 @@ def register_health_routes(app):
 
     @app.route('/flock/<int:id>/sampling/<int:event_id>/upload', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def upload_sampling_result(id, event_id):
         event = SamplingEvent.query.get_or_404(event_id)
 
@@ -1146,7 +1146,7 @@ def register_health_routes(app):
 
     @app.route('/flock/<int:id>/vaccines', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_vaccines(id):
         flock = Flock.query.options(joinedload(Flock.house)).filter_by(id=id).first_or_404()
         if request.method == 'POST':
@@ -1349,7 +1349,7 @@ def register_health_routes(app):
 
     @app.route('/flock/<int:id>/sampling')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_sampling(id):
         flock = Flock.query.options(joinedload(Flock.house)).filter_by(id=id).first_or_404()
         events = SamplingEvent.query.filter_by(flock_id=id).order_by(SamplingEvent.age_week.asc()).all()
@@ -1357,7 +1357,7 @@ def register_health_routes(app):
 
     @app.route('/health_log/post_mortem', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def health_log_post_mortem():
         if request.method == 'POST':
             flock_id = request.form.get('flock_id')

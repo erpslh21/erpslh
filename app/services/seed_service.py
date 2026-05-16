@@ -347,5 +347,5 @@ INITIAL_USERS = [
     {'name': 'Admin', 'role': 'Admin', 'dept': 'Admin', 'status': 'Active'},
     {'name': 'Management', 'role': 'Management', 'dept': 'Management', 'status': 'Active'},
     {'name': 'Hatchery User', 'role': 'User', 'dept': 'Hatchery', 'status': 'Active'},
-    {'name': 'Farm User', 'role': 'User', 'dept': 'Farm', 'status': 'Active'}
+    {'name': 'Farm User', 'role': 'User', 'dept': 'Breeder', 'status': 'Active'}
 ]

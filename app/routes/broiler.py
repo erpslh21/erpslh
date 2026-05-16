@@ -73,7 +73,7 @@ from flask_login import login_required, current_user
 
 @broiler_bp.route('/flock/<int:flock_id>/delete', methods=['POST'])
 @login_required
-@dept_required('Farm')
+@dept_required('Breeder')
 def delete_flock(flock_id):
     if not current_user.role == 'Admin':
         flash('Access Denied: Admins only.', 'danger')
@@ -97,7 +97,7 @@ def delete_flock(flock_id):
 
 @broiler_bp.route('/daily_log/<int:log_id>/delete', methods=['POST'])
 @login_required
-@dept_required('Farm')
+@dept_required('Breeder')
 def delete_daily_log(log_id):
     if not current_user.role == 'Admin':
         flash('Access Denied: Admins only.', 'danger')

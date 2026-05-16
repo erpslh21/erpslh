@@ -1023,6 +1023,164 @@
             </div>
           </div>
         </header>
+
+      <!-- Offline Banner -->
+      <div id="offline-banner" class="alert alert-warning d-none text-center sticky-top mb-0 rounded-0 border-0" style="z-index: 9999;">
+        You are currently in Offline Mode (Read-Only). Changes cannot be saved.
+      </div>
+
+      <!-- Secondary Navbar for Links -->
+      <header class="navbar-expand-md secondary-header" style="z-index: 1020; position: relative;">
+        <div class="collapse navbar-collapse" id="navbar-menu">
+          <div class="navbar navbar-dark" data-bs-theme="dark">
+            <div class="container-fluid">
+              <ul class="navbar-nav">
+                {% if user_role == 'Admin' %}
+                    <li class="nav-item dropdown role-restricted" data-allowed-roles="Admin">
+                        <a class="nav-link dropdown-toggle text-warning" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                            <span class="nav-link-title">ADMIN</span>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('admin_control_panel') }}">Admin Panel</a>
+                            <a class="dropdown-item" href="{{ url_for('admin_daily_reports_review') }}">Daily Reports Review</a>
+                            <div class="dropend">
+                                <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                                    Audit Logs
+                                </a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="{{ url_for('admin_audit_logs') }}">System Audit Logs</a>
+                                    <a class="dropdown-item" href="{{ url_for('admin_activity_log') }}">User Activity Logs</a>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown role-restricted" data-allowed-roles="Admin,Management">
+                        <a class="nav-link dropdown-toggle text-info" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                            <span class="nav-link-title">EXECUTIVE</span>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('executive_dashboard') }}">Dashboard</a>
+                            <a class="dropdown-item" href="{{ url_for('flock_detail_readonly_select' ) }}">Flock Detail</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-bold" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                            <span class="nav-link-title">BREEDER</span>
+                        </a>
+                        <div class="dropdown-menu">
+                            {% for item in get_ui_elements('navbar_main') %}
+                                {% if item.key == 'nav_dashboard' %}
+                                    <a class="dropdown-item" href="{{ get_dashboard_url(current_user) }}">{{ item.label }}</a>
+                                    <a class="dropdown-item" href="{{ url_for('flock_select') }}">Flock Detail</a>
+                                {% elif item.key == 'nav_daily_entry' %}
+                                    <a class="dropdown-item" href="{{ url_for('daily_log') }}">{{ item.label }}</a>
+                                {% elif item.key == 'nav_inventory' %}
+                                    <a class="dropdown-item" href="{{ url_for('inventory') }}">{{ item.label }}</a>
+                                {% elif item.key == 'nav_health_log' %}
+                                    <div class="dropend">
+                                        <a class="dropdown-item dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                                            {{ item.label }}
+                                        </a>
+                                        <div class="dropdown-menu">
+                                            {% for h_item in get_ui_elements('navbar_health') %}
+                                                {% if h_item.key == 'nav_health_vaccine' %}
+                                                    <a href="{{ url_for('health_log_vaccines') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                                {% elif h_item.key == 'nav_health_sampling' %}
+                                                    <a href="{{ url_for('health_log_sampling') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                                {% elif h_item.key == 'nav_health_medication' %}
+                                                    <a href="{{ url_for('health_log_medication') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                                {% elif h_item.key == 'nav_health_notes' %}
+                                                    <a href="{{ url_for('health_log_post_mortem') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                                {% elif h_item.key == 'nav_weight_grading' %}
+                                                    <a href="{{ url_for('health_log_bodyweight') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                            <a class="dropdown-item" href="{{ url_for('history') }}">History</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-bold" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                            <span class="nav-link-title">HATCHERY</span>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('hatchery_dashboard') }}">Dashboard</a>
+                            <a class="dropdown-item" href="{{ url_for('hatchery_inventory') }}">Inventory</a>
+                            <a class="dropdown-item" href="{{ url_for('hatchery_flock_routing') }}">Flock Routing</a>
+                        </div>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-success fw-bold" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                            <span class="nav-link-title">BROILER</span>
+                        </a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="{{ url_for('broiler.dashboard') }}">Dashboard</a>
+                        </div>
+                    </li>
+
+                {% elif user_dept == 'Breeder' or session.get('user_dept') not in ['Admin', 'Management', 'Hatchery', 'Broiler'] %}
+                    {% if current_user.role != 'Worker' %}
+                        {% for item in get_ui_elements('navbar_main') %}
+                            {% if item.key == 'nav_dashboard' %}
+                                <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ get_dashboard_url(current_user) }}"><span class="nav-link-title">{{ item.label }}</span></a></li>
+                                <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('flock_select') }}"><span class="nav-link-title">Flock Detail</span></a></li>
+                            {% elif item.key == 'nav_daily_entry' %}
+                                <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('daily_log') }}"><span class="nav-link-title">{{ item.label }}</span></a></li>
+                            {% elif item.key == 'nav_inventory' %}
+                                <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('inventory') }}"><span class="nav-link-title">{{ item.label }}</span></a></li>
+                            {% elif item.key == 'nav_health_log' %}
+                                <li class="nav-item dropdown role-restricted" data-allowed-roles="Breeder">
+                                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false" >
+                                        <span class="nav-link-title">{{ item.label }}</span>
+                                    </a>
+                                    <div class="dropdown-menu">
+                                        {% for h_item in get_ui_elements('navbar_health') %}
+                                            {% if h_item.key == 'nav_health_vaccine' %}
+                                                <a href="{{ url_for('health_log_vaccines') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                            {% elif h_item.key == 'nav_health_sampling' %}
+                                                <a href="{{ url_for('health_log_sampling') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                            {% elif h_item.key == 'nav_health_medication' %}
+                                                <a href="{{ url_for('health_log_medications') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                            {% elif h_item.key == 'nav_health_notes' %}
+                                                <a href="{{ url_for('health_log_notes') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                            {% elif h_item.key == 'nav_weight_grading' %}
+                                                <a href="{{ url_for('health_log_weight_grading') }}" class="dropdown-item">{{ h_item.label }}</a>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('history') }}"><span class="nav-link-title">History</span></a></li>
+                    {% else %}
+                        <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('daily_log') }}"><span class="nav-link-title">Daily Entry</span></a></li>
+                    {% endif %}
+
+                {% elif user_dept == 'Hatchery' %}
+                    {% if current_user.role != 'Worker' %}
+                        <li class="nav-item role-restricted" data-allowed-roles="Hatchery"><a class="nav-link" href="{{ url_for('hatchery_dashboard') }}"><span class="nav-link-title">Dashboard</span></a></li>
+                        <li class="nav-item role-restricted" data-allowed-roles="Hatchery"><a class="nav-link" href="{{ url_for('hatchery_inventory') }}"><span class="nav-link-title">Inventory</span></a></li>
+                        {% if current_user.role in ['Admin', 'Manager'] or current_user.dept == 'Admin' %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('hatchery_flock_routing') }}"><span class="nav-link-title">Flock Routing</span></a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="nav-item role-restricted" data-allowed-roles="Hatchery"><a class="nav-link" href="{{ url_for('hatchery_egg_receiving') }}"><span class="nav-link-title">Egg Receiving Entry</span></a></li>
+                    {% endif %}
+                {% elif user_dept == 'Broiler' %}
+                    <li class="nav-item role-restricted" data-allowed-roles="Broiler"><a class="nav-link" href="{{ url_for('broiler.dashboard') }}"><span class="nav-link-title">Daily Entry</span></a></li>
+                {% elif user_role == 'Management' or user_dept == 'Management' %}
+                    <li class="nav-item role-restricted" data-allowed-roles="Management"><a class="nav-link" href="{{ url_for('executive_dashboard') }}"><span class="nav-link-title">Executive Dashboard</span></a></li>
+                    <li class="nav-item role-restricted" data-allowed-roles="Management"><a class="nav-link" href="{{ url_for('flock_detail_readonly_select') }}"><span class="nav-link-title">Flock Detail</span></a></li>
+                {% endif %}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </header>
+
       </div>
 
       <div class="page-wrapper" id="main-page-wrapper">

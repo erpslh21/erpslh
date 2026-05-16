@@ -257,9 +257,25 @@ def get_gemini_response(user_prompt):
 def get_dashboard_url(user):
     if not getattr(user, 'is_authenticated', False):
         return url_for('login')
-    if getattr(user, 'dept', None) == 'Hatchery':
-        return url_for('hatchery_dashboard')
-    elif getattr(user, 'dept', None) == 'Management':
+
+    dept = getattr(user, 'dept', None)
+    role = getattr(user, 'role', None)
+
+    if dept == 'Admin':
+        return url_for('index') # Or keep their existing view
+    elif dept == 'Management':
         return url_for('executive_dashboard')
-    else:
+    elif dept == 'Breeder':
+        if role == 'Worker':
+            return url_for('daily_log')
         return url_for('index')
+    elif dept == 'Hatchery':
+        if role == 'Worker':
+            return url_for('hatchery_egg_receiving')
+        return url_for('hatchery_dashboard')
+    elif dept == 'Broiler':
+        if role == 'Worker':
+            return url_for('broiler.dashboard') # Since daily entry needs flock_id, default to dashboard so they can pick
+        return url_for('broiler.dashboard')
+
+    return url_for('index')

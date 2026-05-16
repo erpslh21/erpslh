@@ -17,7 +17,7 @@ def register_main_routes(app):
 
     @app.route('/')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def index():
         active_flocks = Flock.query.options(joinedload(Flock.logs).joinedload(DailyLog.partition_weights), joinedload(Flock.logs).joinedload(DailyLog.photos), joinedload(Flock.logs).joinedload(DailyLog.clinical_notes_list), joinedload(Flock.house)).filter_by(status='Active').all()
 

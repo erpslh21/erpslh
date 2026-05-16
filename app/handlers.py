@@ -118,7 +118,7 @@ def register_context_processors(app):
                  effective_dept = 'Hatchery'
                  effective_role = 'Worker'
             else:
-                 effective_dept = 'Farm'
+                 effective_dept = 'Breeder'
                  effective_role = 'Worker'
         def get_partition_val(log, name, type_):
             if not log: return 0.0
