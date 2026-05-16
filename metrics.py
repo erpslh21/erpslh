@@ -272,6 +272,19 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
         if total_cull_eggs > 0:
             has_cull_eggs = True
 
+        # Lighting Hours Calculation
+        lighting_hours = 0
+        if log.light_on_time and log.light_off_time:
+            try:
+                fmt = '%H:%M'
+                t1 = datetime.strptime(log.light_on_time, fmt)
+                t2 = datetime.strptime(log.light_off_time, fmt)
+                diff = (t2 - t1).total_seconds() / 3600
+                if diff < 0: diff += 24
+                lighting_hours = round(diff, 1)
+            except:
+                pass
+
         # Feed Cleanup Hours Calculation
         feed_cleanup_hours = None
 
@@ -340,6 +353,7 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
 
             # Feed Cleanup Hours (SSOT Calculation)
             'feed_cleanup_hours': feed_cleanup_hours,
+            'lighting_hours': lighting_hours,
             # Raw
             'mortality_male': mort_m,
             'mortality_female': mort_f,
