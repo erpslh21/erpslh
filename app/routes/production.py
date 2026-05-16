@@ -2213,8 +2213,23 @@ def register_production_routes(app):
     @dept_required('Breeder')
     def manage_flocks():
         if request.method == 'POST':
-            house_name = request.form.get('house_name').strip()
+            farm_id_str = request.form.get('farm_id')
+            house_id_str = request.form.get('house_id')
             intake_date_str = request.form.get('intake_date')
+
+            if not farm_id_str or not house_id_str:
+                flash('Error: Farm and House are required.', 'danger')
+                return redirect(url_for('manage_flocks'))
+
+            farm_id = int(farm_id_str)
+            house_id = int(house_id_str)
+
+            farm = Farm.query.get(farm_id)
+            house = House.query.get(house_id)
+
+            if not farm or not house:
+                flash('Error: Invalid Farm or House selected.', 'danger')
+                return redirect(url_for('manage_flocks'))
 
             # production_start_date is now dynamic based on egg_prod_pct >= 5.0, so no direct assignment
 
@@ -2222,32 +2237,6 @@ def register_production_routes(app):
             intake_female = int(request.form.get('intake_female') or 0)
             doa_male = int(request.form.get('doa_male') or 0)
             doa_female = int(request.form.get('doa_female') or 0)
-
-            # Find or Create Farm
-            farm_name = request.form.get('farm_name', '').strip()
-            if not farm_name:
-                flash('Error: Farm name is required.', 'danger')
-                return redirect(url_for('manage_flocks'))
-
-            farm_id = None
-            farm = Farm.query.filter_by(name=farm_name).first()
-            if not farm:
-                farm = Farm(name=farm_name)
-                db.session.add(farm)
-                safe_commit()
-                flash(f'Created new Farm: {farm_name}', 'info')
-            farm_id = farm.id
-
-            # Find or Create House
-            house = House.query.filter_by(name=house_name).first()
-            if not house:
-                house = House(name=house_name, farm_id=farm_id)
-                db.session.add(house)
-                safe_commit()
-                flash(f'Created new House: {house_name}', 'info')
-            elif not house.farm_id:
-                house.farm_id = farm_id
-                safe_commit()
 
             # Validation: Check if House has active flock
             existing_active = Flock.query.filter_by(house_id=house.id, status='Active').first()
@@ -2264,7 +2253,7 @@ def register_production_routes(app):
             n = house_flock_count + 1
 
             flock_id = f"{house.name}_{date_str}_Batch{n}"
-            name = request.form.get('name', '').strip() or flock_id
+            name = request.form.get('name', '').strip() or house.name
 
             new_flock = Flock(
                 house_id=house.id,
@@ -2282,7 +2271,7 @@ def register_production_routes(app):
             db.session.flush()
 
             log_user_activity(current_user.id, 'Add', 'Flock', new_flock.name, details={
-                'house': house_name,
+                'house': house.name,
                 'intake_male': intake_male,
                 'intake_female': intake_female
             })
@@ -2394,16 +2383,18 @@ def register_production_routes(app):
             flock.prod_start_female_hosp = int(request.form.get('prod_start_female_hosp') or 0)
 
             # Farm Update
-            farm_name = request.form.get('farm_name', '').strip()
-            if not farm_name:
-                flash('Error: Farm name is required.', 'danger')
-                return render_template('flock_edit.html', flock=flock)
+            farm_id_str = request.form.get('farm_id')
+            if not farm_id_str:
+                flash('Error: Farm is required.', 'danger')
+                farms = Farm.query.all()
+                return render_template('flock_edit.html', flock=flock, farms=farms)
 
-            farm = Farm.query.filter_by(name=farm_name).first()
+            farm_id = int(farm_id_str)
+            farm = Farm.query.get(farm_id)
             if not farm:
-                farm = Farm(name=farm_name)
-                db.session.add(farm)
-                safe_commit()
+                flash('Error: Invalid Farm selected.', 'danger')
+                farms = Farm.query.all()
+                return render_template('flock_edit.html', flock=flock, farms=farms)
             flock.farm_id = farm.id
 
             new_data = {

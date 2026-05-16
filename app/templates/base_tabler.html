@@ -1,345 +1,1028 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
     <title>SLH-OP Dashboard</title>
     <!-- Tabler Core CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css?v={{ version }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-flags.min.css?v={{ version }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-payments.min.css?v={{ version }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-vendors.min.css?v={{ version }}">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css?v={{ version }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-flags.min.css?v={{ version }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-payments.min.css?v={{ version }}"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler-vendors.min.css?v={{ version }}"
+    />
     {% if config['ENV'] == 'development' %}
-        <link rel="manifest" href="{{ url_for('static', filename='manifest_dev.json') }}">
+    <link
+      rel="manifest"
+      href="{{ url_for('static', filename='manifest_dev.json') }}"
+    />
     {% else %}
-        <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link
+      rel="manifest"
+      href="{{ url_for('static', filename='manifest.json') }}"
+    />
     {% endif %}
-    <meta name="theme-color" content="#005eb8">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="SLH-OP">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png', v=version) }}">
+    <meta name="theme-color" content="#005eb8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="SLH-OP" />
+    <link
+      rel="apple-touch-icon"
+      href="{{ url_for('static', filename='icon-192.png', v=version) }}"
+    />
+
+    <!-- Theme Script to avoid FOUC -->
+    <script>
+      (function () {
+        var theme = localStorage.getItem("tablerTheme");
+        if (theme === "dark" || theme === "light") {
+          document.documentElement.setAttribute("data-bs-theme", theme);
+        } else if (
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches
+        ) {
+          document.documentElement.setAttribute("data-bs-theme", "dark");
+        } else {
+          document.documentElement.setAttribute("data-bs-theme", "light");
+        }
+      })();
+    </script>
     {% if real_is_admin %}
     <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
+    <script>
+      eruda.init();
+    </script>
     {% endif %}
     <script>
-        // Global application configuration
-        window.SLHConfig = {
-            endpoints: {
-                offlineSnapshot: "{{ url_for('offline_snapshot') }}"
-            }
-        };
+      // Global application configuration
+      window.SLHConfig = {
+        endpoints: {
+          offlineSnapshot: "{{ url_for('offline_snapshot') }}",
+        },
+      };
     </script>
     <style>
-        :root {
-            --tblr-primary: #005eb8; /* Arbor Acres Blue */
-        }
+      :root {
+        --tblr-primary: #005eb8; /* Arbor Acres Blue */
+      }
 
-        /* iOS Safe Area Adjustments */
-        header.main-header {
-            padding-top: env(safe-area-inset-top) !important;
-        }
+      /* iOS Safe Area Adjustments */
+      header.main-header {
+        padding-top: env(safe-area-inset-top) !important;
+      }
 
-        .dropdown-menu {
-            z-index: 1050 !important;
-        }
+      /* Always dark navbar styling */
+      .main-header,
+      .secondary-header .navbar {
+        background-color: #182433 !important;
+      }
 
-        .page-wrapper {
-            padding-bottom: env(safe-area-inset-bottom) !important;
-            margin-top: 0 !important;
-            padding-top: 0 !important;
-        }
+      .dropdown-menu {
+        z-index: 1050 !important;
+      }
 
-        #loading-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.85);
-            z-index: 9999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-        .loader-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255, 255, 255, 0.85); /* Slight blur/fade */
-            display: flex; justify-content: center; align-items: center;
-            z-index: 9999;
-        }
+      .page-wrapper {
+        padding-bottom: env(safe-area-inset-bottom) !important;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+      }
 
-        .chicken-loader {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+      #loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.85);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+      .loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.85); /* Slight blur/fade */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
 
-        .breeder-head-svg {
-            color: #005eb8; /* SLH Blue */
-        }
+      [data-bs-theme="dark"] .loader-overlay {
+        background: rgba(24, 36, 51, 0.85);
+      }
+      [data-bs-theme="dark"] .loader-text {
+        color: #f8f9fa;
+      }
 
-        .drawBreeder {
-            stroke-dasharray: 400;
-            stroke-dashoffset: 400;
-            animation: drawBreeder 5s infinite ease-in-out;
-        }
+      .chicken-loader {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
 
-        @keyframes drawBreeder {
-            0% { stroke-dashoffset: 400; opacity: 0.2; }
-            50% { stroke-dashoffset: 0; opacity: 1; }
-            100% { stroke-dashoffset: -400; opacity: 0.2; }        }
+      .breeder-head-svg {
+        color: #005eb8; /* SLH Blue */
+      }
 
-        @keyframes blinkEye {
-            0%, 10%, 20%, 50%, 60%, 90%, 100% { opacity: 1; }
-            15%, 55%, 95% { opacity: 0; }
-        }
+      .drawBreeder {
+        stroke-dasharray: 400;
+        stroke-dashoffset: 400;
+        animation: drawBreeder 5s infinite ease-in-out;
+      }
 
-        .blinkEye {
-            animation: blinkEye 5s infinite;
+      @keyframes drawBreeder {
+        0% {
+          stroke-dashoffset: 400;
+          opacity: 0.2;
+        }
+        50% {
+          stroke-dashoffset: 0;
+          opacity: 1;
+        }
+        100% {
+          stroke-dashoffset: -400;
+          opacity: 0.2;
+        }
+      }
 
+      @keyframes blinkEye {
+        0%,
+        10%,
+        20%,
+        50%,
+        60%,
+        90%,
+        100% {
+          opacity: 1;
         }
+        15%,
+        55%,
+        95% {
+          opacity: 0;
+        }
+      }
 
-        .slh-logo .drawBreeder.blinkEye {
-            animation: drawBreeder 5s infinite ease-in-out, blinkEye 5s infinite;
+      .blinkEye {
+        animation: blinkEye 5s infinite;
+      }
 
-        }
+      .slh-logo .drawBreeder.blinkEye {
+        animation:
+          drawBreeder 5s infinite ease-in-out,
+          blinkEye 5s infinite;
+      }
 
-        .loader-text {
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            margin-top: 15px;
-            color: #444;
-        }
-        .nav-link-title {
-            font-weight: 500;
-        }
-        .btn-floating {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            z-index: 1090;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 24px;
-            padding: 0;
-        }
+      .loader-text {
+        font-family: "Inter", sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin-top: 15px;
+        color: #444;
+      }
+      .nav-link-title {
+        font-weight: 500;
+      }
+      .btn-floating {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1090;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        padding: 0;
+      }
 
-        /* iOS Pull-to-Refresh */
-        #ptr-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1020;
-            transform: translateY(-100%);
-            transition: transform 0.2s ease;
-            background-color: transparent;
-        }
+      /* iOS Pull-to-Refresh */
+      #ptr-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1020;
+        transform: translateY(-100%);
+        transition: transform 0.2s ease;
+        background-color: transparent;
+      }
 
-        /* AI Chat Widget */
-        .ai-chat-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1090;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .ai-chat-box {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            width: 320px;
-            max-width: calc(100vw - 40px);
-            z-index: 1095;
-            display: none;
-            flex-direction: column;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-        }
-        .ai-chat-body {
-            height: 300px;
-            overflow-y: auto;
-            background-color: #f8f9fa;
-        }
-        .ai-msg {
-            max-width: 85%;
-            margin-bottom: 10px;
-            padding: 8px 12px;
-            border-radius: 12px;
-            font-size: 0.9rem;
-        }
-        .ai-msg-user {
-            background-color: var(--tblr-primary);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 0;
-            margin-left: auto;
-        }
-        .ai-msg-bot {
-            background-color: white;
-            border: 1px solid #e9ecef;
-            color: #333;
-            align-self: flex-start;
-            border-bottom-left-radius: 0;
-            margin-right: auto;
-        }
-        .chat-spinner {
-            display: none;
-            align-self: flex-start;
-            margin-bottom: 10px;
-        }
+      /* AI Chat Widget */
+      .ai-chat-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1090;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .ai-chat-box {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 320px;
+        max-width: calc(100vw - 40px);
+        z-index: 1095;
+        display: none;
+        flex-direction: column;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+      .ai-chat-body {
+        height: 300px;
+        overflow-y: auto;
+        background-color: #f8f9fa;
+      }
+      .ai-msg {
+        max-width: 85%;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-size: 0.9rem;
+      }
+      .ai-msg-user {
+        background-color: var(--tblr-primary);
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 0;
+        margin-left: auto;
+      }
+      .ai-msg-bot {
+        background-color: white;
+        border: 1px solid #e9ecef;
+        color: #333;
+        align-self: flex-start;
+        border-bottom-left-radius: 0;
+        margin-right: auto;
+      }
+      .chat-spinner {
+        display: none;
+        align-self: flex-start;
+        margin-bottom: 10px;
+      }
     </style>
     {% block extra_head %}{% endblock %}
 
     <script>
-        const originalFetch = window.fetch;
-        window.fetch = async function() {
-            let [resource, config] = arguments;
-            if(config === undefined) {
-                config = {};
-            }
-            if(config.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method.toUpperCase())) {
-                let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-                let csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
-                if(csrfToken) {
-                    if(!config.headers) {
-                        config.headers = {};
-                    }
-                    if(config.headers instanceof Headers) {
-                        config.headers.append('X-CSRFToken', csrfToken);
-                    } else {
-                        config.headers['X-CSRFToken'] = csrfToken;
-                    }
-                }
-            }
-            return originalFetch(resource, config);
-        };
-
-        // jQuery global CSRF handler
-        if (typeof jQuery !== 'undefined') {
-            jQuery.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                        let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-                        if (csrfTokenMeta) {
-                            xhr.setRequestHeader("X-CSRFToken", csrfTokenMeta.getAttribute('content'));
-                        }
-                    }
-                }
-            });
+      const originalFetch = window.fetch;
+      window.fetch = async function () {
+        let [resource, config] = arguments;
+        if (config === undefined) {
+          config = {};
         }
+        if (
+          config.method &&
+          ["POST", "PUT", "DELETE", "PATCH"].includes(
+            config.method.toUpperCase(),
+          )
+        ) {
+          let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+          let csrfToken = csrfTokenMeta
+            ? csrfTokenMeta.getAttribute("content")
+            : "";
+          if (csrfToken) {
+            if (!config.headers) {
+              config.headers = {};
+            }
+            if (config.headers instanceof Headers) {
+              config.headers.append("X-CSRFToken", csrfToken);
+            } else {
+              config.headers["X-CSRFToken"] = csrfToken;
+            }
+          }
+        }
+        return originalFetch(resource, config);
+      };
 
+      // jQuery global CSRF handler
+      if (typeof jQuery !== "undefined") {
+        jQuery.ajaxSetup({
+          beforeSend: function (xhr, settings) {
+            if (
+              !/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) &&
+              !this.crossDomain
+            ) {
+              let csrfTokenMeta = document.querySelector(
+                'meta[name="csrf-token"]',
+              );
+              if (csrfTokenMeta) {
+                xhr.setRequestHeader(
+                  "X-CSRFToken",
+                  csrfTokenMeta.getAttribute("content"),
+                );
+              }
+            }
+          },
+        });
+      }
     </script>
-
   </head>
   <body>
-    <div id="loading-overlay" class="loader-overlay" style="display:none;">
-        <div class="chicken-loader">
-            <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="-14 -14 128 128" class="breeder-head-svg slh-logo">
-  <circle cx="50" cy="50" r="64" fill="#ffffff" />
-  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, -6)">
-    <path class="custom-logo-path drawBreeder" d="m78.14 54.345 0.0026-0.28244c-0.0283 5.3531-0.97265 7.988-3.9396 12.32 0 0 0.46373 3.5974 1.0821 5.6 1.0595 3.4311 3.2798 6.8098 4.3272 10.4 2.0178 6.9167 1.0516 14.202-6.0322 15.69" stroke-width="2.6457"/>
-    <path class="custom-logo-path slh-eye drawBreeder blinkEye" d="m65.286 56.508 0.05668 0.07851" stroke-width="7.5591"/>
-    <path class="custom-logo-path drawBreeder" d="m36.428 46.586c-4.3086 3.3052-12.213 18.443-14.207 22.975-3.3406 7.5952-4.0449 13.587-5.142 23.537" stroke-width="2.6457"/>
-    <path class="custom-logo-path drawBreeder" d="m78.152 53.839c-1.965-6.7001-9.8729-14.401-20.105-14.614-6.0786-0.12664-12.418 2.4074-17.6 5.2086-2.3866 1.2901-4.2248 2.6267-7.2 1.7926-6.5183-1.8275-11.381-14.927-5.3772-20.378 3.0047-2.7277 8.4544 0.26719 9.7865 2.1708-0.11421-2.8074 0.17607-8.4781 3.0135-10.641 4.3843-3.3414 10.195 3.6196 11.963 5.9337 0.75757-2.9175 2.9364-8.474 7.0257-8.5769 5.4617-0.13744 9.8604 10.598 10.637 10.633 0.63106 0.02814 1.137-6.6833 4.5926-5.7878 3.8393 0.99495 6.945 9.2974 7.3992 11.31 0.41019 1.8173 1.0486 6.6207 0.71243 9.0916-0.83596 6.1454-1.5141 11.284-4.8478 13.894 2.2642-0.08264 4.323 2.3963 7.4699 4.9891 0.74514 0.61392 5.4132 4.645 6.768 8.1934 0.85452 2.2382-7.5759-0.61032-13.543-1.208-2.2242-0.22276-3.9924-0.25544-6.4 0.34136-2.0416 0.50606-3.0152 1.1589-4.7969 2.7056-6.1463 5.3354-10.377 15.576-6.7451 23.081 2.868 5.9265 7.7202 7.5046 13.142 5.9752 0.33347 3.8243 1.9984 7.5108 2.4 12.428" stroke-width="2.6457"/>  </g>
-</svg>
-            <p class="loader-text">Processing...</p>
-        </div>
+    <div id="loading-overlay" class="loader-overlay" style="display: none">
+      <div class="chicken-loader">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="120"
+          height="120"
+          viewBox="-14 -14 128 128"
+          class="breeder-head-svg slh-logo"
+        >
+          <circle cx="50" cy="50" r="64" fill="#ffffff" />
+          <g
+            fill="none"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            transform="translate(0, -6)"
+          >
+            <path
+              class="custom-logo-path drawBreeder"
+              d="m78.14 54.345 0.0026-0.28244c-0.0283 5.3531-0.97265 7.988-3.9396 12.32 0 0 0.46373 3.5974 1.0821 5.6 1.0595 3.4311 3.2798 6.8098 4.3272 10.4 2.0178 6.9167 1.0516 14.202-6.0322 15.69"
+              stroke-width="2.6457"
+            />
+            <path
+              class="custom-logo-path slh-eye drawBreeder blinkEye"
+              d="m65.286 56.508 0.05668 0.07851"
+              stroke-width="7.5591"
+            />
+            <path
+              class="custom-logo-path drawBreeder"
+              d="m36.428 46.586c-4.3086 3.3052-12.213 18.443-14.207 22.975-3.3406 7.5952-4.0449 13.587-5.142 23.537"
+              stroke-width="2.6457"
+            />
+            <path
+              class="custom-logo-path drawBreeder"
+              d="m78.152 53.839c-1.965-6.7001-9.8729-14.401-20.105-14.614-6.0786-0.12664-12.418 2.4074-17.6 5.2086-2.3866 1.2901-4.2248 2.6267-7.2 1.7926-6.5183-1.8275-11.381-14.927-5.3772-20.378 3.0047-2.7277 8.4544 0.26719 9.7865 2.1708-0.11421-2.8074 0.17607-8.4781 3.0135-10.641 4.3843-3.3414 10.195 3.6196 11.963 5.9337 0.75757-2.9175 2.9364-8.474 7.0257-8.5769 5.4617-0.13744 9.8604 10.598 10.637 10.633 0.63106 0.02814 1.137-6.6833 4.5926-5.7878 3.8393 0.99495 6.945 9.2974 7.3992 11.31 0.41019 1.8173 1.0486 6.6207 0.71243 9.0916-0.83596 6.1454-1.5141 11.284-4.8478 13.894 2.2642-0.08264 4.323 2.3963 7.4699 4.9891 0.74514 0.61392 5.4132 4.645 6.768 8.1934 0.85452 2.2382-7.5759-0.61032-13.543-1.208-2.2242-0.22276-3.9924-0.25544-6.4 0.34136-2.0416 0.50606-3.0152 1.1589-4.7969 2.7056-6.1463 5.3354-10.377 15.576-6.7451 23.081 2.868 5.9265 7.7202 7.5046 13.142 5.9752 0.33347 3.8243 1.9984 7.5108 2.4 12.428"
+              stroke-width="2.6457"
+            />
+          </g>
+        </svg>
+        <p class="loader-text">Processing...</p>
+      </div>
     </div>
 
     <div class="page">
-      <div class="sticky-top" style="z-index: 1030;">
-      <!-- Navbar -->
-      <header class="navbar navbar-expand-lg navbar-dark d-print-none main-header" data-bs-theme="dark" style="z-index: 1030;">
-        <div class="container-fluid">
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-          </button>
+      <div class="sticky-top" style="z-index: 1030">
+        <!-- Navbar -->
+        <header
+          class="navbar navbar-expand-lg navbar-dark d-print-none main-header"
+          style="z-index: 1030"
+          data-bs-theme="dark"
+        >
+          <div class="container-fluid">
+            <button
+              class="navbar-toggler"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#navbar-menu"
+              aria-controls="navbar-menu"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
+              <span class="navbar-toggler-icon"></span>
+            </button>
 
-          <a href="javascript:history.back()" class="nav-link px-2 text-white" id="smart-back-btn" style="display: none; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; margin-right: 8px;">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-              <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-              <path d="M5 12l14 0" />
-              <path d="M5 12l6 6" />
-              <path d="M5 12l6 -6" />
-            </svg>
-          </a>
-
-          <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
-            <a href="{{ get_dashboard_url(current_user) }}" class="text-decoration-none text-white d-flex align-items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="-14 -14 128 128" class="me-2 slh-logo" width="24" height="24">
-  <circle cx="50" cy="50" r="64" fill="#ffffff" />
-  <g fill="none" stroke="#005eb8" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, -6)">
-    <path d="m78.14 54.345 0.0026-0.28244c-0.0283 5.3531-0.97265 7.988-3.9396 12.32 0 0 0.46373 3.5974 1.0821 5.6 1.0595 3.4311 3.2798 6.8098 4.3272 10.4 2.0178 6.9167 1.0516 14.202-6.0322 15.69" stroke-width="2.6457"/>
-    <path class="slh-eye" d="m65.286 56.508 0.05668 0.07851" stroke-width="7.5591"/>
-    <path d="m36.428 46.586c-4.3086 3.3052-12.213 18.443-14.207 22.975-3.3406 7.5952-4.0449 13.587-5.142 23.537" stroke-width="2.6457"/>
-    <path d="m78.152 53.839c-1.965-6.7001-9.8729-14.401-20.105-14.614-6.0786-0.12664-12.418 2.4074-17.6 5.2086-2.3866 1.2901-4.2248 2.6267-7.2 1.7926-6.5183-1.8275-11.381-14.927-5.3772-20.378 3.0047-2.7277 8.4544 0.26719 9.7865 2.1708-0.11421-2.8074 0.17607-8.4781 3.0135-10.641 4.3843-3.3414 10.195 3.6196 11.963 5.9337 0.75757-2.9175 2.9364-8.474 7.0257-8.5769 5.4617-0.13744 9.8604 10.598 10.637 10.633 0.63106 0.02814 1.137-6.6833 4.5926-5.7878 3.8393 0.99495 6.945 9.2974 7.3992 11.31 0.41019 1.8173 1.0486 6.6207 0.71243 9.0916-0.83596 6.1454-1.5141 11.284-4.8478 13.894 2.2642-0.08264 4.323 2.3963 7.4699 4.9891 0.74514 0.61392 5.4132 4.645 6.768 8.1934 0.85452 2.2382-7.5759-0.61032-13.543-1.208-2.2242-0.22276-3.9924-0.25544-6.4 0.34136-2.0416 0.50606-3.0152 1.1589-4.7969 2.7056-6.1463 5.3354-10.377 15.576-6.7451 23.081 2.868 5.9265 7.7202 7.5046 13.142 5.9752 0.33347 3.8243 1.9984 7.5108 2.4 12.428" stroke-width="2.6457"/>  </g>
-</svg>
-              SLH-OP <small class="text-muted ms-2 fs-5">({{ user_dept or 'Guest' }})</small>
+            <a
+              href="javascript:history.back()"
+              class="nav-link px-2 text-white"
+              id="smart-back-btn"
+              style="
+                display: none;
+                min-width: 44px;
+                min-height: 44px;
+                align-items: center;
+                justify-content: center;
+                margin-right: 8px;
+              "
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="icon icon-tabler icon-tabler-arrow-left"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M5 12l14 0" />
+                <path d="M5 12l6 6" />
+                <path d="M5 12l6 -6" />
+              </svg>
             </a>
-          </h1>
 
-          <div class="navbar-nav flex-row order-md-last">
-            <div class="d-none d-md-flex">
-              {% if real_is_admin %}
-                <a href="{{ url_for('toggle_admin_view') }}" class="nav-link px-0 hide-theme-dark me-3" title="Toggle Admin View" data-bs-toggle="tooltip" data-bs-placement="bottom">
+            <h1
+              class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3"
+            >
+              <a
+                href="{{ get_dashboard_url(current_user) }}"
+                class="text-decoration-none d-flex align-items-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="-14 -14 128 128"
+                  class="me-2 slh-logo"
+                  width="24"
+                  height="24"
+                >
+                  <circle cx="50" cy="50" r="64" fill="#ffffff" />
+                  <g
+                    fill="none"
+                    stroke="#005eb8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    transform="translate(0, -6)"
+                  >
+                    <path
+                      d="m78.14 54.345 0.0026-0.28244c-0.0283 5.3531-0.97265 7.988-3.9396 12.32 0 0 0.46373 3.5974 1.0821 5.6 1.0595 3.4311 3.2798 6.8098 4.3272 10.4 2.0178 6.9167 1.0516 14.202-6.0322 15.69"
+                      stroke-width="2.6457"
+                    />
+                    <path
+                      class="slh-eye"
+                      d="m65.286 56.508 0.05668 0.07851"
+                      stroke-width="7.5591"
+                    />
+                    <path
+                      d="m36.428 46.586c-4.3086 3.3052-12.213 18.443-14.207 22.975-3.3406 7.5952-4.0449 13.587-5.142 23.537"
+                      stroke-width="2.6457"
+                    />
+                    <path
+                      d="m78.152 53.839c-1.965-6.7001-9.8729-14.401-20.105-14.614-6.0786-0.12664-12.418 2.4074-17.6 5.2086-2.3866 1.2901-4.2248 2.6267-7.2 1.7926-6.5183-1.8275-11.381-14.927-5.3772-20.378 3.0047-2.7277 8.4544 0.26719 9.7865 2.1708-0.11421-2.8074 0.17607-8.4781 3.0135-10.641 4.3843-3.3414 10.195 3.6196 11.963 5.9337 0.75757-2.9175 2.9364-8.474 7.0257-8.5769 5.4617-0.13744 9.8604 10.598 10.637 10.633 0.63106 0.02814 1.137-6.6833 4.5926-5.7878 3.8393 0.99495 6.945 9.2974 7.3992 11.31 0.41019 1.8173 1.0486 6.6207 0.71243 9.0916-0.83596 6.1454-1.5141 11.284-4.8478 13.894 2.2642-0.08264 4.323 2.3963 7.4699 4.9891 0.74514 0.61392 5.4132 4.645 6.768 8.1934 0.85452 2.2382-7.5759-0.61032-13.543-1.208-2.2242-0.22276-3.9924-0.25544-6.4 0.34136-2.0416 0.50606-3.0152 1.1589-4.7969 2.7056-6.1463 5.3354-10.377 15.576-6.7451 23.081 2.868 5.9265 7.7202 7.5046 13.142 5.9752 0.33347 3.8243 1.9984 7.5108 2.4 12.428"
+                      stroke-width="2.6457"
+                    />
+                  </g>
+                </svg>
+                SLH-OP
+                <small class="text-muted ms-2 fs-5"
+                  >({{ user_dept or 'Guest' }})</small
+                >
+              </a>
+            </h1>
+
+            <div class="navbar-nav flex-row order-md-last">
+              <div class="d-none d-md-flex">
+                {% if real_is_admin %}
+                <a
+                  href="{{ url_for('toggle_admin_view') }}"
+                  class="nav-link px-0 hide-theme-dark me-3"
+                  title="Toggle Admin View"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="bottom"
+                >
                   {{ 'Show Admin View' if not is_admin else 'Hide Admin View' }}
                 </a>
+                {% endif %}
+              </div>
+
+              <div class="d-flex align-items-center me-3 gap-2">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm d-none"
+                  id="pwa-install-btn"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="icon icon-tabler icon-tabler-device-mobile"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path
+                      d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14z"
+                    ></path>
+                    <path d="M11 4h2"></path>
+                    <path d="M12 17v.01"></path>
+                  </svg>
+                  Install App
+                </button>
+              </div>
+
+              {% if session.get('user_id') %}
+              <div class="nav-item dropdown">
+                <a
+                  href="#"
+                  class="nav-link d-flex lh-1 text-reset p-0"
+                  data-bs-toggle="dropdown"
+                  aria-label="Open user menu"
+                >
+                  <span class="avatar avatar-sm bg-primary text-white"
+                    >{{ session.get('user_name')[0]|upper if
+                    session.get('user_name') else 'U' }}</span
+                  >
+                  <div class="d-none d-xl-block ps-2">
+                    <div>{{ session.get('user_name') }}</div>
+                    <div class="mt-1 small text-muted">{{ user_dept }}</div>
+                  </div>
+                </a>
+                <div
+                  class="dropdown-menu dropdown-menu-end dropdown-menu-arrow"
+                >
+                  <!-- Theme Toggle -->
+                  <a
+                    href="javascript:void(0);"
+                    class="dropdown-item theme-toggle-btn"
+                  >
+                    <span
+                      class="theme-icon-dark d-none d-flex align-items-center"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="icon icon-tabler icon-tabler-moon me-2"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        fill="none"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path
+                          d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"
+                        />
+                      </svg>
+                      Enable Dark Mode</span
+                    >
+                    <span
+                      class="theme-icon-light d-none d-flex align-items-center"
+                      ><svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="icon icon-tabler icon-tabler-sun me-2"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        fill="none"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                        <path
+                          d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"
+                        />
+                      </svg>
+                      Enable Light Mode</span
+                    >
+                  </a>
+                  <div class="dropdown-divider"></div>
+                  <a href="{{ url_for('settings') }}" class="dropdown-item"
+                    >Settings</a
+                  >
+                  <a
+                    href="{{ url_for('change_password') }}"
+                    class="dropdown-item"
+                    >Change Password</a
+                  >
+                  <div class="dropdown-divider"></div>
+                  <a href="{{ url_for('logout') }}" class="dropdown-item"
+                    >Logout</a
+                  >
+                </div>
+              </div>
+              {% else %}
+              <div class="nav-item">
+                <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+              </div>
               {% endif %}
             </div>
+          </div>
+        </header>
 
-            <div class="d-flex align-items-center me-3">
-                <button type="button" class="btn btn-primary btn-sm d-none" id="pwa-install-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-device-mobile" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                       <path d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14z"></path>
-                       <path d="M11 4h2"></path>
-                       <path d="M12 17v.01"></path>
-                    </svg>
-                    Install App
-                </button>
-            </div>
+        <!-- Offline Banner -->
+        <div
+          id="offline-banner"
+          class="alert alert-warning d-none text-center sticky-top mb-0 rounded-0 border-0"
+          style="z-index: 9999"
+        >
+          You are currently in Offline Mode (Read-Only). Changes cannot be
+          saved.
+        </div>
 
-            {% if session.get('user_id') %}
-            <div class="nav-item dropdown">
-              <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
-                <span class="avatar avatar-sm bg-primary text-white">{{ session.get('user_name')[0]|upper if session.get('user_name') else 'U' }}</span>
-                <div class="d-none d-xl-block ps-2">
-                  <div>{{ session.get('user_name') }}</div>
-                  <div class="mt-1 small text-muted">{{ user_dept }}</div>
-                </div>
-              </a>
-              <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-                <a href="{{ url_for('settings') }}" class="dropdown-item">Settings</a>
-                <a href="{{ url_for('change_password') }}" class="dropdown-item">Change Password</a>
-                <div class="dropdown-divider"></div>
-                <a href="{{ url_for('logout') }}" class="dropdown-item">Logout</a>
+        <!-- Secondary Navbar for Links -->
+        <header
+          class="navbar-expand-md secondary-header"
+          style="z-index: 1020; position: relative"
+        >
+          <div class="collapse navbar-collapse" id="navbar-menu">
+            <div class="navbar navbar-dark" data-bs-theme="dark">
+              <div class="container-fluid">
+                <ul class="navbar-nav">
+                  {% if user_role == 'Admin' %}
+                  <li
+                    class="nav-item dropdown role-restricted"
+                    data-allowed-roles="Admin"
+                  >
+                    <a
+                      class="nav-link dropdown-toggle text-warning"
+                      href="#"
+                      data-bs-toggle="dropdown"
+                      data-bs-auto-close="outside"
+                      role="button"
+                      aria-expanded="false"
+                    >
+                      <span class="nav-link-title">ADMIN</span>
+                    </a>
+                    <div class="dropdown-menu">
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('admin_control_panel') }}"
+                        >Admin Panel</a
+                      >
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('admin_daily_reports_review') }}"
+                        >Daily Reports Review</a
+                      >
+                      <div class="dropend">
+                        <a
+                          class="dropdown-item dropdown-toggle"
+                          href="#"
+                          data-bs-toggle="dropdown"
+                          data-bs-auto-close="outside"
+                          role="button"
+                          aria-expanded="false"
+                        >
+                          Audit Logs
+                        </a>
+                        <div class="dropdown-menu">
+                          <a
+                            class="dropdown-item"
+                            href="{{ url_for('admin_audit_logs') }}"
+                            >System Audit Logs</a
+                          >
+                          <a
+                            class="dropdown-item"
+                            href="{{ url_for('admin_activity_log') }}"
+                            >User Activity Logs</a
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                  <li
+                    class="nav-item dropdown role-restricted"
+                    data-allowed-roles="Admin,Management"
+                  >
+                    <a
+                      class="nav-link dropdown-toggle text-info"
+                      href="#"
+                      data-bs-toggle="dropdown"
+                      data-bs-auto-close="outside"
+                      role="button"
+                      aria-expanded="false"
+                    >
+                      <span class="nav-link-title">EXECUTIVE</span>
+                    </a>
+                    <div class="dropdown-menu">
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('executive_dashboard') }}"
+                        >Dashboard</a
+                      >
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('flock_detail_readonly_select' ) }}"
+                        >Flock Detail</a
+                      >
+                    </div>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle fw-bold"
+                      href="#"
+                      data-bs-toggle="dropdown"
+                      data-bs-auto-close="outside"
+                      role="button"
+                      aria-expanded="false"
+                    >
+                      <span class="nav-link-title">BREEDER</span>
+                    </a>
+                    <div class="dropdown-menu">
+                      {% for item in get_ui_elements('navbar_main') %} {% if
+                      item.key == 'nav_dashboard' %}
+                      <a
+                        class="dropdown-item"
+                        href="{{ get_dashboard_url(current_user) }}"
+                        >{{ item.label }}</a
+                      >
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('flock_select') }}"
+                        >Flock Detail</a
+                      >
+                      {% elif item.key == 'nav_daily_entry' %}
+                      <a class="dropdown-item" href="{{ url_for('daily_log') }}"
+                        >{{ item.label }}</a
+                      >
+                      {% elif item.key == 'nav_inventory' %}
+                      <a class="dropdown-item" href="{{ url_for('inventory') }}"
+                        >{{ item.label }}</a
+                      >
+                      {% elif item.key == 'nav_health_log' %}
+                      <div class="dropend">
+                        <a
+                          class="dropdown-item dropdown-toggle"
+                          href="#"
+                          data-bs-toggle="dropdown"
+                          data-bs-auto-close="outside"
+                          role="button"
+                          aria-expanded="false"
+                        >
+                          {{ item.label }}
+                        </a>
+                        <div class="dropdown-menu">
+                          {% for h_item in get_ui_elements('navbar_health') %}
+                          {% if h_item.key == 'nav_health_vaccine' %}
+                          <a
+                            href="{{ url_for('health_log_vaccines') }}"
+                            class="dropdown-item"
+                            >{{ h_item.label }}</a
+                          >
+                          {% elif h_item.key == 'nav_health_sampling' %}
+                          <a
+                            href="{{ url_for('health_log_sampling') }}"
+                            class="dropdown-item"
+                            >{{ h_item.label }}</a
+                          >
+                          {% elif h_item.key == 'nav_health_medication' %}
+                          <a
+                            href="{{ url_for('health_log_medication') }}"
+                            class="dropdown-item"
+                            >{{ h_item.label }}</a
+                          >
+                          {% elif h_item.key == 'nav_health_notes' %}
+                          <a
+                            href="{{ url_for('health_log_post_mortem') }}"
+                            class="dropdown-item"
+                            >{{ h_item.label }}</a
+                          >
+                          {% elif h_item.key == 'nav_weight_grading' %}
+                          <a
+                            href="{{ url_for('health_log_bodyweight') }}"
+                            class="dropdown-item"
+                            >{{ h_item.label }}</a
+                          >
+                          {% endif %} {% endfor %}
+                        </div>
+                      </div>
+                      {% endif %} {% endfor %}
+                      <a class="dropdown-item" href="{{ url_for('history') }}"
+                        >History</a
+                      >
+                    </div>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle fw-bold"
+                      href="#"
+                      data-bs-toggle="dropdown"
+                      data-bs-auto-close="outside"
+                      role="button"
+                      aria-expanded="false"
+                    >
+                      <span class="nav-link-title">HATCHERY</span>
+                    </a>
+                    <div class="dropdown-menu">
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('hatchery_dashboard') }}"
+                        >Dashboard</a
+                      >
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('hatchery_inventory') }}"
+                        >Inventory</a
+                      >
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('hatchery_flock_routing') }}"
+                        >Flock Routing</a
+                      >
+                    </div>
+                  </li>
+                  <li class="nav-item dropdown">
+                    <a
+                      class="nav-link dropdown-toggle text-success fw-bold"
+                      href="#"
+                      data-bs-toggle="dropdown"
+                      data-bs-auto-close="outside"
+                      role="button"
+                      aria-expanded="false"
+                    >
+                      <span class="nav-link-title">BROILER</span>
+                    </a>
+                    <div class="dropdown-menu">
+                      <a
+                        class="dropdown-item"
+                        href="{{ url_for('broiler.dashboard') }}"
+                        >Dashboard</a
+                      >
+                    </div>
+                  </li>
+
+                  {% elif user_role == 'Farm' or session.get('user_dept') not in
+                  ['Admin', 'Management', 'Hatchery'] %} {% for item in
+                  get_ui_elements('navbar_main') %} {% if item.key ==
+                  'nav_dashboard' %}
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Farm"
+                  >
+                    <a
+                      class="nav-link"
+                      href="{{ get_dashboard_url(current_user) }}"
+                      ><span class="nav-link-title">{{ item.label }}</span></a
+                    >
+                  </li>
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Farm"
+                  >
+                    <a class="nav-link" href="{{ url_for('flock_select') }}"
+                      ><span class="nav-link-title">Flock Detail</span></a
+                    >
+                  </li>
+                  {% elif item.key == 'nav_daily_entry' %}
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Farm"
+                  >
+                    <a class="nav-link" href="{{ url_for('daily_log') }}"
+                      ><span class="nav-link-title">{{ item.label }}</span></a
+                    >
+                  </li>
+                  {% elif item.key == 'nav_inventory' %}
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Farm"
+                  >
+                    <a class="nav-link" href="{{ url_for('inventory') }}"
+                      ><span class="nav-link-title">{{ item.label }}</span></a
+                    >
+                  </li>
+                  {% elif item.key == 'nav_health_log' %}
+                  <li
+                    class="nav-item dropdown role-restricted"
+                    data-allowed-roles="Farm"
+                  >
+                    <a
+                      class="nav-link dropdown-toggle"
+                      href="#"
+                      data-bs-toggle="dropdown"
+                      data-bs-auto-close="outside"
+                      role="button"
+                      aria-expanded="false"
+                    >
+                      <span class="nav-link-title">{{ item.label }}</span>
+                    </a>
+                    <div class="dropdown-menu">
+                      {% for h_item in get_ui_elements('navbar_health') %} {% if
+                      h_item.key == 'nav_health_vaccine' %}
+                      <a
+                        href="{{ url_for('health_log_vaccines') }}"
+                        class="dropdown-item"
+                        >{{ h_item.label }}</a
+                      >
+                      {% elif h_item.key == 'nav_health_sampling' %}
+                      <a
+                        href="{{ url_for('health_log_sampling') }}"
+                        class="dropdown-item"
+                        >{{ h_item.label }}</a
+                      >
+                      {% elif h_item.key == 'nav_health_medication' %}
+                      <a
+                        href="{{ url_for('health_log_medication') }}"
+                        class="dropdown-item"
+                        >{{ h_item.label }}</a
+                      >
+                      {% elif h_item.key == 'nav_health_notes' %}
+                      <a
+                        href="{{ url_for('health_log_post_mortem') }}"
+                        class="dropdown-item"
+                        >{{ h_item.label }}</a
+                      >
+                      {% elif h_item.key == 'nav_weight_grading' %}
+                      <a
+                        href="{{ url_for('health_log_bodyweight') }}"
+                        class="dropdown-item"
+                        >{{ h_item.label }}</a
+                      >
+                      {% endif %} {% endfor %}
+                    </div>
+                  </li>
+                  {% endif %} {% endfor %}
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Farm"
+                  >
+                    <a class="nav-link" href="{{ url_for('history') }}"
+                      ><span class="nav-link-title">History</span></a
+                    >
+                  </li>
+
+                  {% elif user_role == 'Hatchery' or user_dept == 'Hatchery' %}
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Hatchery"
+                  >
+                    <a
+                      class="nav-link"
+                      href="{{ url_for('hatchery_dashboard') }}"
+                      ><span class="nav-link-title">Dashboard</span></a
+                    >
+                  </li>
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Hatchery"
+                  >
+                    <a
+                      class="nav-link"
+                      href="{{ url_for('hatchery_inventory') }}"
+                      ><span class="nav-link-title">Inventory</span></a
+                    >
+                  </li>
+                  {% if current_user.role in ['Admin', 'Manager'] or
+                  current_user.dept == 'Admin' %}
+                  <li class="nav-item">
+                    <a
+                      class="nav-link"
+                      href="{{ url_for('hatchery_flock_routing') }}"
+                      ><span class="nav-link-title">Flock Routing</span></a
+                    >
+                  </li>
+                  {% endif %} {% elif user_role == 'Management' or user_dept ==
+                  'Management' %}
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Management"
+                  >
+                    <a
+                      class="nav-link"
+                      href="{{ url_for('executive_dashboard') }}"
+                      ><span class="nav-link-title"
+                        >Executive Dashboard</span
+                      ></a
+                    >
+                  </li>
+                  <li
+                    class="nav-item role-restricted"
+                    data-allowed-roles="Management"
+                  >
+                    <a
+                      class="nav-link"
+                      href="{{ url_for('flock_detail_readonly_select') }}"
+                      ><span class="nav-link-title">Flock Detail</span></a
+                    >
+                  </li>
+                  {% endif %}
+                </ul>
               </div>
             </div>
-            {% else %}
-            <div class="nav-item">
-              <a href="{{ url_for('login') }}" class="nav-link">Login</a>
-            </div>
-            {% endif %}
           </div>
+
         </div>
       </header>
 
@@ -499,6 +1182,9 @@
           </div>
         </div>
       </header>
+
+        </header>
+
       </div>
 
       <div class="page-wrapper" id="main-page-wrapper">
@@ -510,103 +1196,224 @@
         <!-- System Health Widget Injection -->
         {% if system_health_logs and request.endpoint == 'index' %}
         <div class="container-fluid mt-3 mb-2">
-            <div class="alert alert-info alert-dismissible bg-white border-info shadow-sm" role="alert">
-                <div class="d-flex align-items-center mb-2">
-                    <h4 class="alert-title text-info mb-0 me-2">System Health</h4>
-                    <span class="badge bg-success text-white">Online</span>
-                </div>
-                <div class="text-secondary small">
-                    <ul class="mb-0 ps-3">
-                    {% for s_log in system_health_logs %}
-                        <li><strong>{{ s_log.timestamp.strftime('%Y-%m-%d %H:%M') }}</strong>: {{ s_log.action }} ({{ s_log.module }})</li>
-                    {% endfor %}
-                    </ul>
-                </div>
-                <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+          <div
+            class="alert alert-info alert-dismissible bg-white border-info shadow-sm"
+            role="alert"
+          >
+            <div class="d-flex align-items-center mb-2">
+              <h4 class="alert-title text-info mb-0 me-2">System Health</h4>
+              <span class="badge bg-success text-white">Online</span>
             </div>
+            <div class="text-secondary small">
+              <ul class="mb-0 ps-3">
+                {% for s_log in system_health_logs %}
+                <li>
+                  <strong
+                    >{{ s_log.timestamp.strftime('%Y-%m-%d %H:%M') }}</strong
+                  >: {{ s_log.action }} ({{ s_log.module }})
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+          </div>
         </div>
         {% endif %}
 
         <!-- Flash Messages (Replaced by Toasts) -->
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            // Map flash categories to toast types (success, error, info)
-                            let type = 'info';
-                            if ('{{ category }}' === 'success') type = 'success';
-                            if ('{{ category }}' === 'danger' || '{{ category }}' === 'error') type = 'error';
-                            if ('{{ category }}' === 'warning') type = 'error';
+          document.addEventListener('DOMContentLoaded', function() {
+              {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                      {% for category, message in messages %}
+                          // Map flash categories to toast types (success, error, info)
+                          let type = 'info';
+                          if ('{{ category }}' === 'success') type = 'success';
+                          if ('{{ category }}' === 'danger' || '{{ category }}' === 'error') type = 'error';
+                          if ('{{ category }}' === 'warning') type = 'error';
 
-                            // Delay slightly to ensure toast container and function are ready
-                            setTimeout(() => {
-                                if(typeof showToast === 'function') {
-                                    showToast({{ message | tojson }}, type);
-                                }
-                            }, 100);
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-            });
+                          // Delay slightly to ensure toast container and function are ready
+                          setTimeout(() => {
+                              if(typeof showToast === 'function') {
+                                  showToast({{ message | tojson }}, type);
+                              }
+                          }, 100);
+                      {% endfor %}
+                  {% endif %}
+              {% endwith %}
+          });
         </script>
 
         <!-- Content -->
         <div class="page-body">
-          <div class="container-fluid">
-            {% block content %}{% endblock %}
-          </div>
+          <div class="container-fluid">{% block content %}{% endblock %}</div>
         </div>
-
       </div>
     </div>
 
     <!-- Back to Top Button -->
-    <button type="button" class="btn btn-primary btn-floating btn-lg shadow" id="btn-back-to-top" title="Back to Top">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-up m-0 p-0" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-          <path d="M12 5l0 14"></path>
-          <path d="M18 11l-6 -6"></path>
-          <path d="M6 11l6 -6"></path>
-        </svg>
+    <button
+      type="button"
+      class="btn btn-primary btn-floating btn-lg shadow"
+      id="btn-back-to-top"
+      title="Back to Top"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="icon icon-tabler icon-tabler-arrow-up m-0 p-0"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="currentColor"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+        <path d="M12 5l0 14"></path>
+        <path d="M18 11l-6 -6"></path>
+        <path d="M6 11l6 -6"></path>
+      </svg>
     </button>
 
     {% if session.get('user_id') %}
     <!-- AI Chat Widget -->
-    <button type="button" class="btn btn-info ai-chat-btn text-white d-none" id="ai-chat-btn" title="AI Assistant">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-message-chatbot" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-           <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-           <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z"></path>
-           <path d="M9.5 9h.01"></path>
-           <path d="M14.5 9h.01"></path>
-           <path d="M9.5 13a3.5 3.5 0 0 0 5 0"></path>
-        </svg>
+    <button
+      type="button"
+      class="btn btn-info ai-chat-btn text-white d-none"
+      id="ai-chat-btn"
+      title="AI Assistant"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="icon icon-tabler icon-tabler-message-chatbot"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        stroke-width="2"
+        stroke="currentColor"
+        fill="none"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+        <path
+          d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z"
+        ></path>
+        <path d="M9.5 9h.01"></path>
+        <path d="M14.5 9h.01"></path>
+        <path d="M9.5 13a3.5 3.5 0 0 0 5 0"></path>
+      </svg>
     </button>
 
     <!-- iOS Install Modal -->
-    <div class="modal modal-blur fade" id="ios-install-modal" tabindex="-1" role="dialog" aria-hidden="true">
-      <div class="modal-dialog modal-sm modal-dialog-scrollable" role="document">        <div class="modal-content">
+    <div
+      class="modal modal-blur fade"
+      id="ios-install-modal"
+      tabindex="-1"
+      role="dialog"
+      aria-hidden="true"
+    >
+      <div
+        class="modal-dialog modal-sm modal-dialog-scrollable"
+        role="document"
+      >
+        <div class="modal-content">
           <div class="modal-body text-center py-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-primary icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                <path d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14z"></path>
-                <path d="M11 4h2"></path>
-                <path d="M12 17v.01"></path>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="icon mb-2 text-primary icon-lg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+              <path
+                d="M6 5a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2v-14z"
+              ></path>
+              <path d="M11 4h2"></path>
+              <path d="M12 17v.01"></path>
             </svg>
             <h3>Install SLH-OP</h3>
-            <div class="text-muted mb-3">Install this app on your device for quick and easy offline access.</div>
+            <div class="text-muted mb-3">
+              Install this app on your device for quick and easy offline access.
+            </div>
 
             <div class="card text-start bg-blue-lt">
-                <div class="card-body p-3">
-                    <p class="mb-2"><strong>1.</strong> Tap the <strong>Share</strong> icon <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-share-2 d-inline-block align-text-bottom" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: -2px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M8 9h-1a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8a2 2 0 0 0 -2 -2h-1"></path><path d="M12 14v-11"></path><path d="M9 6l3 -3l3 3"></path></svg> at the bottom of Safari.</p>
-                    <p class="mb-0"><strong>2.</strong> Scroll down and tap <strong>Add to Home Screen</strong> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-plus d-inline-block align-text-bottom" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: -2px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 5l0 14"></path><path d="M5 12l14 0"></path></svg>.</p>
-                </div>
+              <div class="card-body p-3">
+                <p class="mb-2">
+                  <strong>1.</strong> Tap the <strong>Share</strong> icon
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="icon icon-tabler icon-tabler-share-2 d-inline-block align-text-bottom"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="margin-bottom: -2px"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path
+                      d="M8 9h-1a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-8a2 2 0 0 0 -2 -2h-1"
+                    ></path>
+                    <path d="M12 14v-11"></path>
+                    <path d="M9 6l3 -3l3 3"></path>
+                  </svg>
+                  at the bottom of Safari.
+                </p>
+                <p class="mb-0">
+                  <strong>2.</strong> Scroll down and tap
+                  <strong>Add to Home Screen</strong>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="icon icon-tabler icon-tabler-plus d-inline-block align-text-bottom"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    stroke-width="2"
+                    stroke="currentColor"
+                    fill="none"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="margin-bottom: -2px"
+                  >
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <path d="M12 5l0 14"></path>
+                    <path d="M5 12l14 0"></path></svg
+                  >.
+                </p>
+              </div>
             </div>
           </div>
           <div class="modal-footer">
             <div class="w-100">
               <div class="row">
-                <div class="col"><a href="#" class="btn w-100" onclick="document.getElementById('ios-install-modal').classList.remove('show'); document.getElementById('ios-install-modal').style.display = 'none'; document.body.classList.remove('modal-open');">Got it</a></div>
+                <div class="col">
+                  <a
+                    href="#"
+                    class="btn w-100"
+                    onclick="
+                      document
+                        .getElementById('ios-install-modal')
+                        .classList.remove('show');
+                      document.getElementById(
+                        'ios-install-modal',
+                      ).style.display = 'none';
+                      document.body.classList.remove('modal-open');
+                    "
+                    >Got it</a
+                  >
+                </div>
               </div>
             </div>
           </div>
@@ -615,84 +1422,176 @@
     </div>
 
     <div class="card ai-chat-box" id="ai-chat-box">
-        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center py-2">
-            <h5 class="card-title mb-0 d-flex align-items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-sparkles me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                   <path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"></path>
-                </svg>
-                AI Assistant
-            </h5>
-            <button type="button" class="btn-close btn-close-white" id="ai-chat-close"></button>
+      <div
+        class="card-header bg-info text-white d-flex justify-content-between align-items-center py-2"
+      >
+        <h5 class="card-title mb-0 d-flex align-items-center">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon icon-tabler icon-tabler-sparkles me-2"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+            <path
+              d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2zm-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6z"
+            ></path>
+          </svg>
+          AI Assistant
+        </h5>
+        <button
+          type="button"
+          class="btn-close btn-close-white"
+          id="ai-chat-close"
+        ></button>
+      </div>
+      <div
+        class="card-body ai-chat-body p-3 d-flex flex-column"
+        id="ai-chat-body"
+      >
+        <div class="ai-msg ai-msg-bot">
+          Hello! I'm your SLH Poultry AI. Ask me anything about Arbor Acres Plus
+          S broiler breeders.
         </div>
-        <div class="card-body ai-chat-body p-3 d-flex flex-column" id="ai-chat-body">
-            <div class="ai-msg ai-msg-bot">Hello! I'm your SLH Poultry AI. Ask me anything about Arbor Acres Plus S broiler breeders.</div>
-            <div class="spinner-border text-info spinner-border-sm chat-spinner ms-2" role="status" id="ai-chat-spinner"></div>
-        </div>
-        <div class="card-footer p-2">
-            <form id="ai-chat-form" class="d-flex">
-                <input type="text" class="form-control me-2" id="ai-chat-input" placeholder="Type a message..." required autocomplete="off">
-                <button type="submit" class="btn btn-info btn-icon" title="Send">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-send" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                       <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                       <path d="M10 14l11 -11"></path>
-                       <path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5"></path>
-                    </svg>
-                </button>
-            </form>
-        </div>
+        <div
+          class="spinner-border text-info spinner-border-sm chat-spinner ms-2"
+          role="status"
+          id="ai-chat-spinner"
+        ></div>
+      </div>
+      <div class="card-footer p-2">
+        <form id="ai-chat-form" class="d-flex">
+          <input
+            type="text"
+            class="form-control me-2"
+            id="ai-chat-input"
+            placeholder="Type a message..."
+            required
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-info btn-icon" title="Send">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="icon icon-tabler icon-tabler-send"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+              <path d="M10 14l11 -11"></path>
+              <path
+                d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5"
+              ></path>
+            </svg>
+          </button>
+        </form>
+      </div>
     </div>
     {% endif %}
 
     <!-- Update Toast Notification -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="dynamic-toast-container" style="z-index: 1100;">
-      <div id="updateToast" class="toast text-white bg-primary border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div
+      class="toast-container position-fixed bottom-0 end-0 p-3"
+      id="dynamic-toast-container"
+      style="z-index: 1100"
+    >
+      <div
+        id="updateToast"
+        class="toast text-white bg-primary border-0"
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
         <div class="toast-header bg-primary text-white border-bottom-0">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-refresh" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon icon-tabler icon-tabler-refresh"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
             <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
             <path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"></path>
             <path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"></path>
           </svg>
           <strong class="me-auto ms-2">New Update Available</strong>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+          <button
+            type="button"
+            class="btn-close btn-close-white"
+            data-bs-dismiss="toast"
+            aria-label="Close"
+          ></button>
         </div>
-        <div class="toast-body d-flex justify-content-between align-items-center pt-0">
+        <div
+          class="toast-body d-flex justify-content-between align-items-center pt-0"
+        >
           <span>A new version is available.</span>
-          <button type="button" class="btn btn-sm btn-light text-primary fw-bold" onclick="window.location.reload(true);">Reload to Update</button>
+          <button
+            type="button"
+            class="btn btn-sm btn-light text-primary fw-bold"
+            onclick="window.location.reload(true)"
+          >
+            Reload to Update
+          </button>
         </div>
       </div>
     </div>
 
     <!-- Tabler Core JS & Bootstrap -->
-    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js?v={{ version }}">
-        // jQuery global CSRF handler
-        if (typeof jQuery !== 'undefined') {
-            jQuery.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                        let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-                        if (csrfTokenMeta) {
-                            xhr.setRequestHeader("X-CSRFToken", csrfTokenMeta.getAttribute('content'));
-                        }
-                    }
-                }
-            });
-        }
-
+    <script
+      src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js?v={{ version }}"
+    >
+      // jQuery global CSRF handler
+      if (typeof jQuery !== 'undefined') {
+          jQuery.ajaxSetup({
+              beforeSend: function(xhr, settings) {
+                  if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                      let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
+                      if (csrfTokenMeta) {
+                          xhr.setRequestHeader("X-CSRFToken", csrfTokenMeta.getAttribute('content'));
+                      }
+                  }
+              }
+          });
+      }
     </script>
     <script>
-        function showToast(message, type = "success") {
-          const container = document.getElementById("dynamic-toast-container");
-          if (!container) return;
+      function showToast(message, type = "success") {
+        const container = document.getElementById("dynamic-toast-container");
+        if (!container) return;
 
-          const toastId = "toast-" + Date.now() + Math.floor(Math.random() * 1000);
-          const bgClass = type === "success" ? "bg-success" : (type === "error" ? "bg-danger" : "bg-primary");
-          const title = type === "success" ? "Success" : (type === "error" ? "Error" : "Info");
-          const iconHtml = type === "success"
-              ? `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M5 12l5 5l10 -10"></path></svg>`
-              : `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-triangle text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 9v4"></path><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path><path d="M12 16h.01"></path></svg>`;
+        const toastId =
+          "toast-" + Date.now() + Math.floor(Math.random() * 1000);
+        const bgClass =
+          type === "success"
+            ? "bg-success"
+            : type === "error"
+              ? "bg-danger"
+              : "bg-primary";
+        const title =
+          type === "success" ? "Success" : type === "error" ? "Error" : "Info";
+        const iconHtml =
+          type === "success"
+            ? `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M5 12l5 5l10 -10"></path></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-alert-triangle text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M12 9v4"></path><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"></path><path d="M12 16h.01"></path></svg>`;
 
-          const toastHtml = `
+        const toastHtml = `
             <div id="${toastId}" class="toast text-white ${bgClass} border-0 mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
               <div class="toast-header ${bgClass} text-white border-bottom-0">
                 ${iconHtml}
@@ -703,282 +1602,424 @@
             </div>
           `;
 
-          container.insertAdjacentHTML("beforeend", toastHtml);
-          const toastEl = document.getElementById(toastId);
-          toastEl.querySelector('.toast-body').textContent = message;
-          // Assuming bootstrap object is available globally either directly or via tabler
-          const bsToast = new (window.bootstrap || window.tabler).Toast(toastEl);
-          bsToast.show();
+        container.insertAdjacentHTML("beforeend", toastHtml);
+        const toastEl = document.getElementById(toastId);
+        toastEl.querySelector(".toast-body").textContent = message;
+        // Assuming bootstrap object is available globally either directly or via tabler
+        const bsToast = new (window.bootstrap || window.tabler).Toast(toastEl);
+        bsToast.show();
 
-          toastEl.addEventListener("hidden.bs.toast", function () {
-            toastEl.remove();
-          });
-        }
-
-        // Alias Tabler's bundled Bootstrap so existing scripts that rely on `new bootstrap.Modal()` continue to work.
-        if (typeof window.bootstrap === 'undefined' && typeof window.tabler !== 'undefined') {
-            window.bootstrap = window.tabler;
-        }
-        document.addEventListener('DOMContentLoaded', function() {
-            const mybutton = document.getElementById("btn-back-to-top");
-
-            window.onscroll = function () {
-                if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                    mybutton.style.display = "flex";
-                } else {
-                    mybutton.style.display = "none";
-                }
-            };
-
-            // AI Chat Logic
-            const aiChatBtn = document.getElementById('ai-chat-btn');
-            const aiChatBox = document.getElementById('ai-chat-box');
-            if (aiChatBtn && aiChatBox) {
-                const aiChatClose = document.getElementById('ai-chat-close');
-                const aiChatForm = document.getElementById('ai-chat-form');
-                const aiChatInput = document.getElementById('ai-chat-input');
-                const aiChatBody = document.getElementById('ai-chat-body');
-                const aiChatSpinner = document.getElementById('ai-chat-spinner');
-
-                aiChatBtn.addEventListener('click', function() {
-                    if (aiChatBox.style.display === 'flex') {
-                        aiChatBox.style.display = 'none';
-                    } else {
-                        aiChatBox.style.display = 'flex';
-                        aiChatInput.focus();
-                    }
-                });
-
-                aiChatClose.addEventListener('click', function() {
-                    aiChatBox.style.display = 'none';
-                });
-
-                function addMessage(text, isUser) {
-                    const msgDiv = document.createElement('div');
-                    msgDiv.className = `ai-msg ${isUser ? 'ai-msg-user' : 'ai-msg-bot'}`;
-                    msgDiv.innerText = text;
-                    aiChatBody.insertBefore(msgDiv, aiChatSpinner);
-                    aiChatBody.scrollTop = aiChatBody.scrollHeight;
-                }
-
-                aiChatForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    const text = aiChatInput.value.trim();
-                    if (!text) return;
-
-                    addMessage(text, true);
-                    aiChatInput.value = '';
-                    aiChatInput.disabled = true;
-                    aiChatSpinner.style.display = 'block';
-                    aiChatBody.scrollTop = aiChatBody.scrollHeight;
-
-                    fetch('{{ url_for("chat") }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text })
-                    })
-                    .then(response => {
-                        if (!response.ok || response.redirected) {
-                            throw new Error('Session expired or network error.');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        aiChatSpinner.style.display = 'none';
-                        aiChatInput.disabled = false;
-                        aiChatInput.focus();
-                        addMessage(data.response, false);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        aiChatSpinner.style.display = 'none';
-                        aiChatInput.disabled = false;
-                        addMessage('Sorry, I encountered an error connecting to the server.', false);
-                    });
-                });
-            }
-
-            mybutton.addEventListener("click", function() {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-
-            const overlay = document.getElementById('loading-overlay');
-            document.querySelectorAll('form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    if (this.checkValidity() && !e.defaultPrevented && (!this.target || this.target === '_self')) {
-                        overlay.style.display = 'flex';
-                    }
-                });
-            });
-
-            // Show loading overlay on all links that look like regular page transitions
-            document.querySelectorAll('a').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    // Ignore links that:
-                    // - are just hashes (e.g., #tabs)
-                    // - have target="_blank"
-                    // - have data-bs-toggle (modals, dropdowns, tabs)
-                    // - have javascript: hrefs
-                    // - open a new page or don't navigate
-                    // - are a download link
-                    const href = this.getAttribute('href');
-                    const hasToggle = this.hasAttribute('data-bs-toggle');
-                    const hasTarget = this.getAttribute('target') === '_blank';
-                    const isDownload = this.hasAttribute('download');
-                    const isHash = href && href.startsWith('#');
-                    const isJs = href && href.startsWith('javascript:');
-
-                    // If it's a valid link that causes navigation, show loader
-                    if (href && !hasToggle && !hasTarget && !isDownload && !isHash && !isJs) {
-                        // Only show overlay if it's the same origin
-                        try {
-                            const url = new URL(this.href);
-                            if (url.origin === window.location.origin) {
-                                overlay.style.display = 'flex';
-                            }
-                        } catch (err) {
-                            // Invalid URL format, ignore
-                        }
-                    }
-                });
-            });
-
-            window.addEventListener('pageshow', function() {
-                overlay.style.display = 'none';
-            });
-        });
-
-        // jQuery global CSRF handler
-        if (typeof jQuery !== 'undefined') {
-            jQuery.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                        let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-                        if (csrfTokenMeta) {
-                            xhr.setRequestHeader("X-CSRFToken", csrfTokenMeta.getAttribute('content'));
-                        }
-                    }
-                }
-            });
-        }
-
-    </script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('Service Worker Registered!', reg))
-            .catch(err => console.log('Service Worker Registration Failed', err));
+        toastEl.addEventListener("hidden.bs.toast", function () {
+          toastEl.remove();
         });
       }
 
-        // jQuery global CSRF handler
-        if (typeof jQuery !== 'undefined') {
-            jQuery.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                        let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-                        if (csrfTokenMeta) {
-                            xhr.setRequestHeader("X-CSRFToken", csrfTokenMeta.getAttribute('content'));
-                        }
-                    }
+      // Alias Tabler's bundled Bootstrap so existing scripts that rely on `new bootstrap.Modal()` continue to work.
+      if (
+        typeof window.bootstrap === "undefined" &&
+        typeof window.tabler !== "undefined"
+      ) {
+        window.bootstrap = window.tabler;
+      }
+      document.addEventListener("DOMContentLoaded", function () {
+        const mybutton = document.getElementById("btn-back-to-top");
+
+        window.onscroll = function () {
+          if (
+            document.body.scrollTop > 300 ||
+            document.documentElement.scrollTop > 300
+          ) {
+            mybutton.style.display = "flex";
+          } else {
+            mybutton.style.display = "none";
+          }
+        };
+
+        // AI Chat Logic
+        const aiChatBtn = document.getElementById("ai-chat-btn");
+        const aiChatBox = document.getElementById("ai-chat-box");
+        if (aiChatBtn && aiChatBox) {
+          const aiChatClose = document.getElementById("ai-chat-close");
+          const aiChatForm = document.getElementById("ai-chat-form");
+          const aiChatInput = document.getElementById("ai-chat-input");
+          const aiChatBody = document.getElementById("ai-chat-body");
+          const aiChatSpinner = document.getElementById("ai-chat-spinner");
+
+          aiChatBtn.addEventListener("click", function () {
+            if (aiChatBox.style.display === "flex") {
+              aiChatBox.style.display = "none";
+            } else {
+              aiChatBox.style.display = "flex";
+              aiChatInput.focus();
+            }
+          });
+
+          aiChatClose.addEventListener("click", function () {
+            aiChatBox.style.display = "none";
+          });
+
+          function addMessage(text, isUser) {
+            const msgDiv = document.createElement("div");
+            msgDiv.className = `ai-msg ${isUser ? "ai-msg-user" : "ai-msg-bot"}`;
+            msgDiv.innerText = text;
+            aiChatBody.insertBefore(msgDiv, aiChatSpinner);
+            aiChatBody.scrollTop = aiChatBody.scrollHeight;
+          }
+
+          aiChatForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const text = aiChatInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, true);
+            aiChatInput.value = "";
+            aiChatInput.disabled = true;
+            aiChatSpinner.style.display = "block";
+            aiChatBody.scrollTop = aiChatBody.scrollHeight;
+
+            fetch('{{ url_for("chat") }}', {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: text }),
+            })
+              .then((response) => {
+                if (!response.ok || response.redirected) {
+                  throw new Error("Session expired or network error.");
                 }
-            });
+                return response.json();
+              })
+              .then((data) => {
+                aiChatSpinner.style.display = "none";
+                aiChatInput.disabled = false;
+                aiChatInput.focus();
+                addMessage(data.response, false);
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                aiChatSpinner.style.display = "none";
+                aiChatInput.disabled = false;
+                addMessage(
+                  "Sorry, I encountered an error connecting to the server.",
+                  false,
+                );
+              });
+          });
         }
 
+        mybutton.addEventListener("click", function () {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        const overlay = document.getElementById("loading-overlay");
+        document.querySelectorAll("form").forEach((form) => {
+          form.addEventListener("submit", function (e) {
+            if (
+              this.checkValidity() &&
+              !e.defaultPrevented &&
+              (!this.target || this.target === "_self")
+            ) {
+              overlay.style.display = "flex";
+            }
+          });
+        });
+
+        // Show loading overlay on all links that look like regular page transitions
+        document.querySelectorAll("a").forEach((link) => {
+          link.addEventListener("click", function (e) {
+            // Ignore links that:
+            // - are just hashes (e.g., #tabs)
+            // - have target="_blank"
+            // - have data-bs-toggle (modals, dropdowns, tabs)
+            // - have javascript: hrefs
+            // - open a new page or don't navigate
+            // - are a download link
+            const href = this.getAttribute("href");
+            const hasToggle = this.hasAttribute("data-bs-toggle");
+            const hasTarget = this.getAttribute("target") === "_blank";
+            const isDownload = this.hasAttribute("download");
+            const isHash = href && href.startsWith("#");
+            const isJs = href && href.startsWith("javascript:");
+
+            // If it's a valid link that causes navigation, show loader
+            if (
+              href &&
+              !hasToggle &&
+              !hasTarget &&
+              !isDownload &&
+              !isHash &&
+              !isJs
+            ) {
+              // Only show overlay if it's the same origin
+              try {
+                const url = new URL(this.href);
+                if (url.origin === window.location.origin) {
+                  overlay.style.display = "flex";
+                }
+              } catch (err) {
+                // Invalid URL format, ignore
+              }
+            }
+          });
+        });
+
+        window.addEventListener("pageshow", function () {
+          overlay.style.display = "none";
+        });
+      });
+
+      // jQuery global CSRF handler
+      if (typeof jQuery !== "undefined") {
+        jQuery.ajaxSetup({
+          beforeSend: function (xhr, settings) {
+            if (
+              !/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) &&
+              !this.crossDomain
+            ) {
+              let csrfTokenMeta = document.querySelector(
+                'meta[name="csrf-token"]',
+              );
+              if (csrfTokenMeta) {
+                xhr.setRequestHeader(
+                  "X-CSRFToken",
+                  csrfTokenMeta.getAttribute("content"),
+                );
+              }
+            }
+          },
+        });
+      }
     </script>
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/sw.js")
+            .then((reg) => console.log("Service Worker Registered!", reg))
+            .catch((err) =>
+              console.log("Service Worker Registration Failed", err),
+            );
+        });
+      }
+
+      // jQuery global CSRF handler
+      if (typeof jQuery !== "undefined") {
+        jQuery.ajaxSetup({
+          beforeSend: function (xhr, settings) {
+            if (
+              !/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) &&
+              !this.crossDomain
+            ) {
+              let csrfTokenMeta = document.querySelector(
+                'meta[name="csrf-token"]',
+              );
+              if (csrfTokenMeta) {
+                xhr.setRequestHeader(
+                  "X-CSRFToken",
+                  csrfTokenMeta.getAttribute("content"),
+                );
+              }
+            }
+          },
+        });
+      }
+    </script>
+    <script>
+      // Global Chart.js dark mode handler
+      window.addEventListener("themeChanged", function (e) {
+        if (typeof Chart !== "undefined") {
+          const theme = e.detail.theme;
+          const textColor = theme === "dark" ? "#f8f9fa" : "#666";
+          const gridColor =
+            theme === "dark"
+              ? "rgba(255, 255, 255, 0.1)"
+              : "rgba(0, 0, 0, 0.1)";
+
+          Chart.defaults.color = textColor;
+          if (Chart.defaults.scale) {
+            Chart.defaults.scale.grid.color = gridColor;
+          }
+
+          // Update all existing chart instances
+          Object.values(Chart.instances).forEach((chart) => {
+            if (chart.options.scales) {
+              for (const scale in chart.options.scales) {
+                if (chart.options.scales[scale].grid) {
+                  chart.options.scales[scale].grid.color = gridColor;
+                }
+                if (chart.options.scales[scale].ticks) {
+                  chart.options.scales[scale].ticks.color = textColor;
+                }
+              }
+            }
+
+            // Also handle datalabels color if plugin is used
+            if (chart.options.plugins && chart.options.plugins.datalabels) {
+              chart.options.plugins.datalabels.color = textColor;
+            }
+
+            chart.update();
+          });
+        }
+      });
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // Init Chart.js theme on load if Chart is defined, otherwise individual pages handle their defaults
+        if (typeof Chart !== "undefined") {
+          const currentTheme =
+            document.documentElement.getAttribute("data-bs-theme") || "light";
+          const textColor = currentTheme === "dark" ? "#f8f9fa" : "#666";
+          const gridColor =
+            currentTheme === "dark"
+              ? "rgba(255, 255, 255, 0.1)"
+              : "rgba(0, 0, 0, 0.1)";
+          Chart.defaults.color = textColor;
+          if (Chart.defaults.scale) {
+            Chart.defaults.scale.grid.color = gridColor;
+          }
+        }
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.querySelector(".theme-toggle-btn");
+        const iconDark = document.querySelector(".theme-icon-dark");
+        const iconLight = document.querySelector(".theme-icon-light");
+
+        function updateThemeUI(theme) {
+          if (theme === "dark") {
+            // If we are IN dark mode, show the "Enable Light Mode" button
+            iconLight.classList.remove("d-none");
+            iconDark.classList.add("d-none");
+          } else {
+            // If we are IN light mode, show the "Enable Dark Mode" button
+            iconDark.classList.remove("d-none");
+            iconLight.classList.add("d-none");
+          }
+        }
+
+        if (themeToggleBtn) {
+          const currentTheme =
+            document.documentElement.getAttribute("data-bs-theme") || "light";
+          updateThemeUI(currentTheme);
+
+          themeToggleBtn.addEventListener("click", () => {
+            let currentTheme =
+              document.documentElement.getAttribute("data-bs-theme");
+            let newTheme = currentTheme === "dark" ? "light" : "dark";
+
+            document.documentElement.setAttribute("data-bs-theme", newTheme);
+            localStorage.setItem("tablerTheme", newTheme);
+            updateThemeUI(newTheme);
+
+            // Dispatch custom event for Chart.js and other components to react
+            window.dispatchEvent(
+              new CustomEvent("themeChanged", { detail: { theme: newTheme } }),
+            );
+          });
+        }
+
         // Custom Pull-to-Refresh for iOS
-        const ptrContainer = document.getElementById('ptr-container');
-        const pageWrapper = document.getElementById('main-page-wrapper');
+        const ptrContainer = document.getElementById("ptr-container");
+        const pageWrapper = document.getElementById("main-page-wrapper");
         let startY = 0;
         let currentY = 0;
         let isRefreshing = false;
         const triggerDistance = 60; // Distance needed to trigger refresh
 
         if (pageWrapper && ptrContainer) {
-            pageWrapper.addEventListener('touchstart', (e) => {
-                // Only allow pull to refresh if we are at the very top of the page
-                if (window.scrollY === 0 && !isRefreshing) {
-                    startY = e.touches[0].clientY;
-                    ptrContainer.style.transition = 'none';
-                    pageWrapper.style.transition = 'none';
+          pageWrapper.addEventListener(
+            "touchstart",
+            (e) => {
+              // Only allow pull to refresh if we are at the very top of the page
+              if (window.scrollY === 0 && !isRefreshing) {
+                startY = e.touches[0].clientY;
+                ptrContainer.style.transition = "none";
+                pageWrapper.style.transition = "none";
+              }
+            },
+            { passive: true },
+          );
+
+          pageWrapper.addEventListener(
+            "touchmove",
+            (e) => {
+              if (startY > 0 && window.scrollY === 0 && !isRefreshing) {
+                currentY = e.touches[0].clientY;
+                const diff = currentY - startY;
+
+                if (diff > 0) {
+                  // User is pulling down
+                  // Apply resistance
+                  const pullDistance = Math.min(
+                    diff * 0.4,
+                    triggerDistance + 20,
+                  );
+
+                  ptrContainer.style.transform = `translateY(${pullDistance - 60}px)`; // -60px is the initial hidden state (-100% of 60px height)
+                  pageWrapper.style.transform = `translateY(${pullDistance}px)`;
+
+                  if (e.cancelable) {
+                    e.preventDefault(); // Prevent native scroll
+                  }
                 }
-            }, { passive: true });
+              }
+            },
+            { passive: false },
+          );
 
-            pageWrapper.addEventListener('touchmove', (e) => {
-                if (startY > 0 && window.scrollY === 0 && !isRefreshing) {
-                    currentY = e.touches[0].clientY;
-                    const diff = currentY - startY;
-
-                    if (diff > 0) {
-                        // User is pulling down
-                        // Apply resistance
-                        const pullDistance = Math.min(diff * 0.4, triggerDistance + 20);
-
-                        ptrContainer.style.transform = `translateY(${pullDistance - 60}px)`; // -60px is the initial hidden state (-100% of 60px height)
-                        pageWrapper.style.transform = `translateY(${pullDistance}px)`;
-
-                        if (e.cancelable) {
-                            e.preventDefault(); // Prevent native scroll
-                        }
-                    }
+          pageWrapper.addEventListener("touchend", (e) => {
+            if (startY > 0 && !isRefreshing) {
+              const diff = currentY - startY;
+              if (diff * 0.4 > triggerDistance) {
+                // Trigger Refresh
+                isRefreshing = true;
+                if (navigator.vibrate) {
+                  navigator.vibrate(50); // Slight haptic vibration
                 }
-            }, { passive: false });
 
-            pageWrapper.addEventListener('touchend', (e) => {
-                if (startY > 0 && !isRefreshing) {
-                    const diff = currentY - startY;
-                    if (diff * 0.4 > triggerDistance) {
-                        // Trigger Refresh
-                        isRefreshing = true;
-                        if (navigator.vibrate) {
-                            navigator.vibrate(50); // Slight haptic vibration
-                        }
+                // Keep the spinner visible while refreshing
+                ptrContainer.style.transition = "transform 0.2s ease";
+                pageWrapper.style.transition = "transform 0.2s ease";
+                ptrContainer.style.transform = `translateY(10px)`;
+                pageWrapper.style.transform = `translateY(70px)`;
 
-                        // Keep the spinner visible while refreshing
-                        ptrContainer.style.transition = 'transform 0.2s ease';
-                        pageWrapper.style.transition = 'transform 0.2s ease';
-                        ptrContainer.style.transform = `translateY(10px)`;
-                        pageWrapper.style.transform = `translateY(70px)`;
+                const activeUserId = localStorage.getItem(
+                  "slh_offline_user_id",
+                );
 
-                        const activeUserId = localStorage.getItem("slh_offline_user_id");
-
-                        // Trigger updateOfflineData equivalent, then reload
-                        if (activeUserId && typeof syncSnapshot === 'function') {
-                            syncSnapshot(activeUserId).then(() => {
-                                window.location.reload();
-                            }).catch(() => {
-                                window.location.reload();
-                            });
-                        } else {
-                            window.location.reload();
-                        }
-
-                    } else {
-                        // Cancel Refresh and reset
-                        ptrContainer.style.transition = 'transform 0.2s ease';
-                        pageWrapper.style.transition = 'transform 0.2s ease';
-                        ptrContainer.style.transform = 'translateY(-100%)';
-                        pageWrapper.style.transform = 'translateY(0)';
-                    }
-
-                    // Reset variables
-                    startY = 0;
-                    currentY = 0;
+                // Trigger updateOfflineData equivalent, then reload
+                if (activeUserId && typeof syncSnapshot === "function") {
+                  syncSnapshot(activeUserId)
+                    .then(() => {
+                      window.location.reload();
+                    })
+                    .catch(() => {
+                      window.location.reload();
+                    });
+                } else {
+                  window.location.reload();
                 }
-            });
+              } else {
+                // Cancel Refresh and reset
+                ptrContainer.style.transition = "transform 0.2s ease";
+                pageWrapper.style.transition = "transform 0.2s ease";
+                ptrContainer.style.transform = "translateY(-100%)";
+                pageWrapper.style.transform = "translateY(0)";
+              }
+
+              // Reset variables
+              startY = 0;
+              currentY = 0;
+            }
+          });
         }
 
         // Smart Back Button Logic
-        const smartBackBtn = document.getElementById('smart-back-btn');
+        const smartBackBtn = document.getElementById("smart-back-btn");
         if (smartBackBtn) {
-            const currentPath = window.location.pathname;
-            const hiddenPaths = ['/', '/login', '/executive_dashboard'];
-            if (!hiddenPaths.includes(currentPath)) {
-                smartBackBtn.style.display = 'flex';
-            }
+          const currentPath = window.location.pathname;
+          const hiddenPaths = ["/", "/login", "/executive_dashboard"];
+          if (!hiddenPaths.includes(currentPath)) {
+            smartBackBtn.style.display = "flex";
+          }
         }
 
         const userId = "{{ session.get('user_id', '') }}";
@@ -989,77 +2030,85 @@
         let displayDept = rawUserDept || "Guest";
 
         // For farm users, display their dept (house) instead of just "Farm"
-        let displayLabel = displayRole === 'Admin' || displayRole === 'Management' ? displayRole : displayDept;
+        let displayLabel =
+          displayRole === "Admin" || displayRole === "Management"
+            ? displayRole
+            : displayDept;
 
         if (userId) {
-            // Online: Save to localStorage
-            localStorage.setItem("slh_offline_user_id", userId);
-            localStorage.setItem("slh_offline_user_role", displayRole);
-            localStorage.setItem("slh_offline_user_dept", displayLabel);
-            if (typeof initOfflineSync === 'function') initOfflineSync(userId);
+          // Online: Save to localStorage
+          localStorage.setItem("slh_offline_user_id", userId);
+          localStorage.setItem("slh_offline_user_role", displayRole);
+          localStorage.setItem("slh_offline_user_dept", displayLabel);
+          if (typeof initOfflineSync === "function") initOfflineSync(userId);
         } else {
-            // Offline/Cache Fallback
-            const cachedUserId = localStorage.getItem("slh_offline_user_id");
-            const cachedUserRole = localStorage.getItem("slh_offline_user_role") || "Guest";
-            const cachedUserDept = localStorage.getItem("slh_offline_user_dept") || "Guest";
+          // Offline/Cache Fallback
+          const cachedUserId = localStorage.getItem("slh_offline_user_id");
+          const cachedUserRole =
+            localStorage.getItem("slh_offline_user_role") || "Guest";
+          const cachedUserDept =
+            localStorage.getItem("slh_offline_user_dept") || "Guest";
 
-            if (cachedUserId) {
-                if (typeof initOfflineSync === 'function') initOfflineSync(cachedUserId);
-            }
+          if (cachedUserId) {
+            if (typeof initOfflineSync === "function")
+              initOfflineSync(cachedUserId);
+          }
 
-            // Overwrite the rendered HTML with the cached role to avoid SW bleeding
-            displayDept = cachedUserDept;
+          // Overwrite the rendered HTML with the cached role to avoid SW bleeding
+          displayDept = cachedUserDept;
         }
 
         // Always ensure the navbar brand reflects the true user (online or cached)
-        const deptBadge = document.querySelector('.navbar-brand small');
+        const deptBadge = document.querySelector(".navbar-brand small");
         if (deptBadge) {
-            deptBadge.textContent = `(${displayDept})`;
+          deptBadge.textContent = `(${displayDept})`;
         }
 
         // Enforce role-restricted UI elements when loading from a cached Service Worker page
-        document.querySelectorAll('.role-restricted').forEach(el => {
-            const allowedRoles = el.getAttribute('data-allowed-roles');
-            if (allowedRoles) {
-                const rolesArray = allowedRoles.split(',').map(r => r.trim());
-                if (!rolesArray.includes(displayDept)) {
-                    el.style.display = 'none';
-                }
+        document.querySelectorAll(".role-restricted").forEach((el) => {
+          const allowedRoles = el.getAttribute("data-allowed-roles");
+          if (allowedRoles) {
+            const rolesArray = allowedRoles.split(",").map((r) => r.trim());
+            if (!rolesArray.includes(displayDept)) {
+              el.style.display = "none";
             }
+          }
         });
       });
 
       // Auto-Version Check on Visibility Change
       let currentAppVersion = "{{ version }}";
-      document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') {
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
           fetch('{{ url_for("get_version") }}')
-            .then(res => res.json())
-            .then(data => {
+            .then((res) => res.json())
+            .then((data) => {
               if (data.version && data.version > currentAppVersion) {
                 currentAppVersion = data.version;
-                const updateToastEl = document.getElementById('updateToast');
+                const updateToastEl = document.getElementById("updateToast");
                 if (updateToastEl) {
-                  const updateToast = new bootstrap.Toast(updateToastEl, { autohide: false });
+                  const updateToast = new bootstrap.Toast(updateToastEl, {
+                    autohide: false,
+                  });
                   updateToast.show();
                 }
               }
             })
-            .catch(err => console.log('Version check failed', err));
+            .catch((err) => console.log("Version check failed", err));
         }
 
         // PWA Installation Logic
         let deferredPrompt;
-        const installBtn = document.getElementById('pwa-install-btn');
+        const installBtn = document.getElementById("pwa-install-btn");
 
         // Handle Android / Chrome install prompt
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent Chrome 67 and earlier from automatically showing the prompt
-            e.preventDefault();
-            // Stash the event so it can be triggered later.
-            deferredPrompt = e;
-            // Update UI to notify the user they can add to home screen
-            if(installBtn) installBtn.classList.remove('d-none');
+        window.addEventListener("beforeinstallprompt", (e) => {
+          // Prevent Chrome 67 and earlier from automatically showing the prompt
+          e.preventDefault();
+          // Stash the event so it can be triggered later.
+          deferredPrompt = e;
+          // Update UI to notify the user they can add to home screen
+          if (installBtn) installBtn.classList.remove("d-none");
         });
 
         // Detect iOS devices
@@ -1069,77 +2118,95 @@
         };
 
         // Detect if app is running in standalone mode
-        const isInStandaloneMode = () => ('standalone' in window.navigator) && (window.navigator.standalone);
+        const isInStandaloneMode = () =>
+          "standalone" in window.navigator && window.navigator.standalone;
 
         // Show install button for iOS if not installed
         if (isIos() && !isInStandaloneMode()) {
-            if(installBtn) installBtn.classList.remove('d-none');
+          if (installBtn) installBtn.classList.remove("d-none");
         }
 
-        if(installBtn) {
-            installBtn.addEventListener('click', (e) => {
-                if (deferredPrompt) {
-                    // Handle Android/Chrome
-                    deferredPrompt.prompt();
-                    deferredPrompt.userChoice.then((choiceResult) => {
-                        if (choiceResult.outcome === 'accepted') {
-                            console.log('User accepted the install prompt');
-                        }
-                        deferredPrompt = null;
-                        installBtn.classList.add('d-none');
-                    });
-                } else if (isIos() && !isInStandaloneMode()) {
-                    // Handle iOS Safari
-                    const iosModal = new window.bootstrap.Modal(document.getElementById('ios-install-modal'));
-                    iosModal.show();
+        if (installBtn) {
+          installBtn.addEventListener("click", (e) => {
+            if (deferredPrompt) {
+              // Handle Android/Chrome
+              deferredPrompt.prompt();
+              deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === "accepted") {
+                  console.log("User accepted the install prompt");
                 }
-            });
+                deferredPrompt = null;
+                installBtn.classList.add("d-none");
+              });
+            } else if (isIos() && !isInStandaloneMode()) {
+              // Handle iOS Safari
+              const iosModal = new window.bootstrap.Modal(
+                document.getElementById("ios-install-modal"),
+              );
+              iosModal.show();
+            }
+          });
         }
       });
 
-        // jQuery global CSRF handler
-        if (typeof jQuery !== 'undefined') {
-            jQuery.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                        let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-                        if (csrfTokenMeta) {
-                            xhr.setRequestHeader("X-CSRFToken", csrfTokenMeta.getAttribute('content'));
-                        }
-                    }
-                }
-            });
-        }
-
+      // jQuery global CSRF handler
+      if (typeof jQuery !== "undefined") {
+        jQuery.ajaxSetup({
+          beforeSend: function (xhr, settings) {
+            if (
+              !/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) &&
+              !this.crossDomain
+            ) {
+              let csrfTokenMeta = document.querySelector(
+                'meta[name="csrf-token"]',
+              );
+              if (csrfTokenMeta) {
+                xhr.setRequestHeader(
+                  "X-CSRFToken",
+                  csrfTokenMeta.getAttribute("content"),
+                );
+              }
+            }
+          },
+        });
+      }
     </script>
     {% block extra_scripts %}{% endblock %}
 
     <!-- Modal Stacking Context Fix -->
     <script>
-      document.addEventListener("DOMContentLoaded", function() {
+      document.addEventListener("DOMContentLoaded", function () {
         // Move all modals out of .page-wrapper and append them to document.body
         // This ensures they are not trapped in nested stacking contexts (especially on mobile/safari)
         // and correctly float above the .modal-backdrop which is also appended to body.
-        const modals = document.querySelectorAll('.modal');
-        modals.forEach(modal => {
+        const modals = document.querySelectorAll(".modal");
+        modals.forEach((modal) => {
           document.body.appendChild(modal);
         });
       });
 
-        // jQuery global CSRF handler
-        if (typeof jQuery !== 'undefined') {
-            jQuery.ajaxSetup({
-                beforeSend: function(xhr, settings) {
-                    if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-                        let csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-                        if (csrfTokenMeta) {
-                            xhr.setRequestHeader("X-CSRFToken", csrfTokenMeta.getAttribute('content'));
-                        }
-                    }
-                }
-            });
-        }
-
+      // jQuery global CSRF handler
+      if (typeof jQuery !== "undefined") {
+        jQuery.ajaxSetup({
+          beforeSend: function (xhr, settings) {
+            if (
+              !/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) &&
+              !this.crossDomain
+            ) {
+              let csrfTokenMeta = document.querySelector(
+                'meta[name="csrf-token"]',
+              );
+              if (csrfTokenMeta) {
+                xhr.setRequestHeader(
+                  "X-CSRFToken",
+                  csrfTokenMeta.getAttribute("content"),
+                );
+              }
+            }
+          },
+        });
+      }
     </script>
     <script src="{{ url_for('static', filename='js/offline_sync.js') }}?v={{ version }}"></script>
-</body></html>
+  </body>
+</html>

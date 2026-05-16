@@ -24,6 +24,12 @@ def register_api_routes(app):
     from app.utils import safe_commit, send_push_alert, log_user_activity, dept_required, round_to_whole, get_gemini_response, get_dashboard_url
     from app.services.data_service import generate_spreadsheet_data, recalculate_flock_inventory
 
+    @app.route('/api/houses_by_farm/<int:farm_id>')
+    @login_required
+    def api_houses_by_farm(farm_id):
+        houses = House.query.filter_by(farm_id=farm_id).order_by(House.name).all()
+        return jsonify([{'id': h.id, 'name': h.name} for h in houses])
+
     @app.route('/api/offline_snapshot')
     @login_required
     def offline_snapshot():

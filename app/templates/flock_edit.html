@@ -8,13 +8,13 @@
     <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="mb-3">
-        <label for="farm_name" class="form-label">Breeder</label>
-        <input class="form-control" list="farmOptions" id="farm_name" name="farm_name" value="{{ flock.farm.name if flock.farm else '' }}" placeholder="Type to search or add new..." required>
-        <datalist id="farmOptions">
+        <label for="farm_id" class="form-label required">Breeder</label>
+        <select name="farm_id" id="farm_id" class="form-select" required>
+          <option value="" disabled>Select a farm...</option>
           {% for farm in farms %}
-            <option value="{{ farm.name }}">
+            <option value="{{ farm.id }}" {% if flock.farm_id == farm.id %}selected{% endif %}>{{ farm.name }}</option>
           {% endfor %}
-        </datalist>
+        </select>
       </div>
 
       <div class="mb-3">
