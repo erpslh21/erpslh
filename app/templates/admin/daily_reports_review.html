@@ -82,8 +82,8 @@
 
                             <td class="fw-bold">
                                 {{ "%.1f"|format(((item.feed_total_kg or 0) | float)) }}
-                                {% if item.log.feed_cleanup_hours is not none %}
-                                <small class="text-muted fw-normal d-block" style="font-size: 0.7rem;">({{ item.log.feed_cleanup_hours }}h)</small>
+                                {% if item.feed_cleanup_hours is not none %}
+                                <small class="text-muted fw-normal d-block" style="font-size: 0.7rem;">({{ item.feed_cleanup_hours }}h)</small>
                                 {% endif %}
                             </td>
                             <td>{{ "%.1f"|format(((item.log.feed_male_gp_bird or 0) | float)) if item.log.feed_male_gp_bird is not none else '0.0' }}g</td>
@@ -140,7 +140,7 @@
                                 <span>({{ "%.2f"|format(((item.cull_eggs_pct or 0) | float)) }}%)</span>
                             </td>
 
-                            <td>{{ item.log.light_hours }}</td>
+                            <td>{{ item.lighting_hours }}</td>
                             <td>
                                 <div class="d-flex justify-content-center gap-1">
                                     <a href="{{ url_for('edit_daily_log', id=item.log.id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
