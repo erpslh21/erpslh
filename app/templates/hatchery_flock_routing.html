@@ -32,7 +32,7 @@
                 <table class="table table-vcenter card-table">
                     <thead>
                         <tr>
-                            <th>Farm</th>
+                            <th>Breeder</th>
                             <th>House</th>
                             <th>Active Flock Breed/ID</th>
                             <th>Date Placed (start_date)</th>
@@ -73,7 +73,7 @@
                 <div class="modal-body">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
-                        <label class="form-label">Farm</label>
+                        <label class="form-label">Breeder</label>
                         <select class="form-select" name="farm_id" id="farmSelect" required>
                             <option value="">Select Farm</option>
                             {% for farm in farms %}

@@ -850,7 +850,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/transaction/edit/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_inventory_transaction(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
@@ -919,7 +919,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/transaction/delete/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_inventory_transaction(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
@@ -945,7 +945,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/edit/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_inventory_item(id):
         item = InventoryItem.query.get_or_404(id)
 
@@ -999,7 +999,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/transaction', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def inventory_transaction():
         item_id = int(request.form.get('inventory_item_id'))
         type_ = request.form.get('transaction_type')
@@ -1043,7 +1043,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/add', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def add_inventory_item():
         name = request.form.get('name')
         type_ = request.form.get('type')
@@ -1082,7 +1082,7 @@ def register_production_routes(app):
 
     @app.route('/inventory')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def inventory():
         items = InventoryItem.query.order_by(InventoryItem.name).all()
         transactions = InventoryTransaction.query.order_by(InventoryTransaction.transaction_date.desc(), InventoryTransaction.id.desc()).limit(50).all()
@@ -1116,7 +1116,7 @@ def register_production_routes(app):
 
     @app.route('/daily_log/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_daily_log(id):
         log = DailyLog.query.get_or_404(id)
 
@@ -1278,7 +1278,7 @@ def register_production_routes(app):
 
     @app.route('/daily_log', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def daily_log():
         if request.method == 'POST':
             house_id = request.form.get('house_id')
@@ -1563,14 +1563,14 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/charts')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_charts(id):
         flock = Flock.query.options(joinedload(Flock.house)).filter_by(id=id).first_or_404()
         return render_template('flock_charts.html', flock=flock)
 
     @app.route('/flock/<int:id>/spreadsheet')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_spreadsheet(id):
         if not current_user.role == 'Admin':
             flash('Access Denied: Admin only.', 'danger')
@@ -1605,7 +1605,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def view_flock(id):
         active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
@@ -2102,7 +2102,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/toggle_phase', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def toggle_phase(id):
         flock = Flock.query.get_or_404(id)
         if flock.phase == 'Rearing':
@@ -2154,10 +2154,10 @@ def register_production_routes(app):
 
     @app.route('/daily_log/photo/<int:photo_id>/delete', methods=['DELETE'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_daily_log_photo(photo_id):
         photo = DailyLogPhoto.query.get_or_404(photo_id)
-        # Check ownership/permissions if strict, but @dept_required('Farm') is enough for now.
+        # Check ownership/permissions if strict, but @dept_required('Breeder') is enough for now.
 
         # Delete file from disk
         if photo.file_path and os.path.exists(photo.file_path):
@@ -2172,7 +2172,7 @@ def register_production_routes(app):
 
     @app.route('/daily_log/delete/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_daily_log(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
@@ -2199,7 +2199,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/close', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def close_flock(id):
         flock = Flock.query.get_or_404(id)
         flock.status = 'Inactive'
@@ -2210,7 +2210,7 @@ def register_production_routes(app):
 
     @app.route('/flocks', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def manage_flocks():
         if request.method == 'POST':
             farm_id_str = request.form.get('farm_id')
@@ -2321,7 +2321,7 @@ def register_production_routes(app):
 
     @app.route('/flock_select')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_select():
         active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
@@ -2336,7 +2336,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/delete', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_flock(id):
         flock = Flock.query.get_or_404(id)
         flock_id_str = flock.flock_id
@@ -2350,7 +2350,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_flock(id):
         flock = Flock.query.get_or_404(id)
         if request.method == 'POST':
@@ -2417,7 +2417,7 @@ def register_production_routes(app):
 
     @app.route('/history')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def history():
         inactive_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Inactive').order_by(Flock.intake_date.desc()).all()
         return render_template('flock_history.html', inactive_flocks=inactive_flocks)

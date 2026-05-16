@@ -8,7 +8,7 @@
     <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="mb-3">
-        <label for="farm_id" class="form-label required">Farm</label>
+        <label for="farm_id" class="form-label required">Breeder</label>
         <select name="farm_id" id="farm_id" class="form-select" required>
           <option value="" disabled>Select a farm...</option>
           {% for farm in farms %}

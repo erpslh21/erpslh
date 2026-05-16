@@ -81,7 +81,7 @@
                             <input type="text" class="form-control" id="house_name" name="name" placeholder="Enter House Name (e.g. VA1)" required>
                         </div>
                         <div class="col-auto">
-                            <label for="farm_id" class="visually-hidden">Farm</label>
+                            <label for="farm_id" class="visually-hidden">Breeder</label>
                             <select class="form-select" id="farm_id" name="farm_id">
                                 <option value="">No Farm</option>
                                 {% for farm in farms %}
@@ -103,7 +103,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Farm</th>
+                                <th>Breeder</th>
                                 <th>Can Delete?</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -187,7 +187,7 @@
                         <input type="text" class="form-control" id="renameHouse{{ house.id }}" name="name" value="{{ house.name }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editFarm{{ house.id }}" class="form-label">Farm</label>
+                        <label for="editFarm{{ house.id }}" class="form-label">Breeder</label>
                         <select class="form-select" id="editFarm{{ house.id }}" name="farm_id">
                             <option value="">No Farm</option>
                             {% for farm in farms %}
