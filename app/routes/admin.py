@@ -758,8 +758,35 @@ def register_admin_routes(app):
         if not current_user.role == 'Admin':
             flash("Access Denied.", "danger")
             return redirect(get_dashboard_url(current_user))
-        users = User.query.order_by(User.username).all()
-        return render_template('admin/users.html', users=users)
+
+        dept_filter = request.args.get('dept_filter')
+        query = User.query
+
+        if dept_filter:
+            query = query.filter_by(dept=dept_filter)
+
+        users = query.all()
+
+        # Sort by Department -> Role Hierarchy -> Username
+        role_hierarchy = {
+            'Admin': 0,
+            'Management': 1,
+            'Manager': 2,
+            'Supervisor': 3,
+            'Worker': 4
+        }
+
+        users.sort(key=lambda u: (
+            u.dept or '',
+            role_hierarchy.get(u.role, 99),
+            u.username.lower() if u.username else ''
+        ))
+
+        # Get unique departments for the filter dropdown
+        departments = [d[0] for d in db.session.query(User.dept).filter(User.dept.isnot(None)).distinct().all()]
+        departments.sort()
+
+        return render_template('admin/users.html', users=users, departments=departments, current_filter=dept_filter)
 
     @app.route('/admin/rules/delete/<int:id>', methods=['POST'])
     def delete_notification_rule(id):
