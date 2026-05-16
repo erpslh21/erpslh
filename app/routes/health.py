@@ -114,11 +114,7 @@ def register_health_routes(app):
             flash("Bodyweight data saved successfully.", "success")
             return redirect(url_for('health_log_bodyweight'))
 
-        if current_user.role == 'Admin':
-            active_flocks = Flock.query.filter_by(status='Active').options(joinedload(Flock.house)).all()
-        else:
-            active_flocks = Flock.query.filter_by(status='Active', farm_id=current_user.farm_id).options(joinedload(Flock.house)).all()
-
+        active_flocks = Flock.query.filter_by(status='Active').options(joinedload(Flock.house)).all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))

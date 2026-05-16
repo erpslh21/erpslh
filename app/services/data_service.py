@@ -1470,26 +1470,30 @@ def update_log_from_request(log, req):
         if count_bw_m > 0: bw_m_val = sum_bw_m / count_bw_m
         if count_uni_m > 0: uni_m_val = sum_uni_m / count_uni_m
 
-    log.body_weight_male = round_to_whole(bw_m_val)
-    log.body_weight_female = round_to_whole(bw_f_val)
-    log.uniformity_male = uni_m_val if uni_m_val > 1.0 else (uni_m_val * 100) if uni_m_val > 0 else 0
-    log.uniformity_female = uni_f_val if uni_f_val > 1.0 else (uni_f_val * 100) if uni_f_val > 0 else 0
-
-    log.is_weighing_day = 'is_weighing_day' in req.form
-    log.bw_male_p1 = round_to_whole(req.form.get('bw_M1'))
-    log.bw_male_p2 = round_to_whole(req.form.get('bw_M2'))
-    log.unif_male_p1 = float(req.form.get('uni_M1') or 0)
-    log.unif_male_p2 = float(req.form.get('uni_M2') or 0)
-    log.bw_female_p1 = round_to_whole(req.form.get('bw_F1'))
-    log.bw_female_p2 = round_to_whole(req.form.get('bw_F2'))
-    log.bw_female_p3 = round_to_whole(req.form.get('bw_F3'))
-    log.bw_female_p4 = round_to_whole(req.form.get('bw_F4'))
-    log.unif_female_p1 = float(req.form.get('uni_F1') or 0)
-    log.unif_female_p2 = float(req.form.get('uni_F2') or 0)
-    log.unif_female_p3 = float(req.form.get('uni_F3') or 0)
-    log.unif_female_p4 = float(req.form.get('uni_F4') or 0)
-    log.standard_bw_male = round_to_whole(req.form.get('standard_bw_male'))
-    log.standard_bw_female = round_to_whole(req.form.get('standard_bw_female'))
+    # Only update bodyweight fields if 'is_weighing_day' is explicitly submitted
+    if 'is_weighing_day' in req.form:
+        log.is_weighing_day = True
+        log.body_weight_male = round_to_whole(bw_m_val)
+        log.body_weight_female = round_to_whole(bw_f_val)
+        log.uniformity_male = uni_m_val if uni_m_val > 1.0 else (uni_m_val * 100) if uni_m_val > 0 else 0
+        log.uniformity_female = uni_f_val if uni_f_val > 1.0 else (uni_f_val * 100) if uni_f_val > 0 else 0
+        log.bw_male_p1 = round_to_whole(req.form.get('bw_M1'))
+        log.bw_male_p2 = round_to_whole(req.form.get('bw_M2'))
+        log.unif_male_p1 = float(req.form.get('uni_M1') or 0)
+        log.unif_male_p2 = float(req.form.get('uni_M2') or 0)
+        log.bw_female_p1 = round_to_whole(req.form.get('bw_F1'))
+        log.bw_female_p2 = round_to_whole(req.form.get('bw_F2'))
+        log.bw_female_p3 = round_to_whole(req.form.get('bw_F3'))
+        log.bw_female_p4 = round_to_whole(req.form.get('bw_F4'))
+        log.unif_female_p1 = float(req.form.get('uni_F1') or 0)
+        log.unif_female_p2 = float(req.form.get('uni_F2') or 0)
+        log.unif_female_p3 = float(req.form.get('uni_F3') or 0)
+        log.unif_female_p4 = float(req.form.get('uni_F4') or 0)
+        log.standard_bw_male = round_to_whole(req.form.get('standard_bw_male'))
+        log.standard_bw_female = round_to_whole(req.form.get('standard_bw_female'))
+    # Otherwise, if it wasn't submitted but the form has an explicit 'clear_weighing_day' (for example if a checkbox is unchecked)
+    # The normal daily form doesn't even send the checkbox.
+    # To be safe, if we don't have is_weighing_day in the form, we leave the bodyweight fields alone.
 
     log.water_reading_1 = int(req.form.get('water_reading_1') or 0)
     log.water_reading_2 = int(req.form.get('water_reading_2') or 0)
