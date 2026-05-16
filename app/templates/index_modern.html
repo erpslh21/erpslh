@@ -1069,7 +1069,7 @@
               }
               pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
               firstPage = false;
-              continue; // Skip the rest for this house, no image backup needed
+              continue; // Skip the rest for this house
             }
 
             // Render HTML template dynamically into the container
@@ -1831,18 +1831,6 @@
             pdf.addPage();
             pdf.addImage(imgData2, "JPEG", 0, 0, 297, 210);
 
-            // Send backup to server
-            statusText.innerText = `Saving backup for ${houseName}...`;
-            await fetch('{{ url_for("backup_report_image") }}', {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                image: imgData,
-                date: date,
-                house: data.house_name,
-                age: data.age_week,
-              }),
-            });
           } catch (err) {
             console.error("Error processing " + houseName, err);
           }
