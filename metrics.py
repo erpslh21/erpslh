@@ -383,8 +383,7 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
             # BW (Use 0 if None/0 to keep data consistent, or None for charts?)
             # For data processing, 0 is safer for math, None better for charts.
             # We store raw values here.
-            'body_weight_male': log.body_weight_male,
-            'body_weight_female': log.body_weight_female,
+
             'uniformity_male': log.uniformity_male,
             'uniformity_female': log.uniformity_female,
 

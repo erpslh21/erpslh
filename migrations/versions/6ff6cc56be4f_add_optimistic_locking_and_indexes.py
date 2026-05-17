@@ -27,7 +27,7 @@ def has_column(table_name, column_name):
 def upgrade():
     tables_to_add_version = [
         'clinical_note', 'daily_log', 'daily_log_photo', 'farm', 'feed_code',
-        'floating_note', 'flock_grading', 'hatchability', 'house', 'imported_weekly_benchmark',
+        'floating_note', 'hatchability', 'house', 'imported_weekly_benchmark',
         'inventory_item', 'medication', 'partition_weight', 'sampling_event', 'standard',
         'ui_element', 'user', 'vaccine'
     ]

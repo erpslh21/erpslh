@@ -15,7 +15,7 @@ from flask_login import current_user
 from werkzeug.utils import secure_filename
 
 from app.database import db
-from app.models.models import Flock, DailyLog, Standard, Hatchability, ClinicalNote, UserActivityLog, User, House, ImportedWeeklyBenchmark, PartitionWeight, NotificationRule, GlobalStandard, Hatchability, DailyLogPhoto
+from app.models.models import Flock, DailyLog, FlockBodyweight, Standard, Hatchability, ClinicalNote, UserActivityLog, User, House, ImportedWeeklyBenchmark, PartitionWeight, NotificationRule, GlobalStandard, Hatchability, DailyLogPhoto
 from app.utils import round_to_whole, safe_commit, natural_sort_key, log_user_activity, save_note_photos, send_push_alert
 from metrics import enrich_flock_data, calculate_bio_week
 
@@ -424,12 +424,12 @@ def generate_spreadsheet_data(flock, logs, standards_by_week, standards_by_prod_
             log.cull_eggs_abnormal,
             log.cull_eggs_crack,
             True if log.is_weighing_day else False,
-            log.body_weight_male,
-            log.body_weight_female,
-            log.uniformity_male,
-            log.uniformity_female,
-            log.standard_bw_male,
-            log.standard_bw_female
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
         ]
 
         # Add partitions
@@ -946,8 +946,7 @@ def process_import(file, commit=True, preview=False):
             if not log:
                 log = DailyLog(
                     flock_id=flock_id,
-                    date=log_date,                    body_weight_male=0,
-                    body_weight_female=0
+                    date=log_date
                 )
                 db.session.add(log)
                 existing_logs_dict[log_date] = log
@@ -999,74 +998,25 @@ def process_import(file, commit=True, preview=False):
                 days_diff = (log.date - intake_date).days
                 week_num = calculate_bio_week(intake_date, log.date)
                 if week_num in standard_bw_map:
-                    log.standard_bw_male = round_to_whole(standard_bw_map[week_num][0])
-                    log.standard_bw_female = round_to_whole(standard_bw_map[week_num][1])
-
-                log.bw_male_p1 = round_to_whole(bw_m)
-                log.unif_male_p1 = unif_m
-                log.bw_female_p1 = round_to_whole(bw_f)
-                log.unif_female_p1 = unif_f
+                    pass
 
                 if i + 1 < len(data_rows):
                     row2 = data_rows[i+1]
                     bw_m2 = get_float(row2, idx_bw_m)
-                    bw_f2 = get_float(row2, idx_bw_f)
-                    if bw_m2 > 0 or bw_f2 > 0:
-                        log.bw_male_p2 = round_to_whole(bw_m2)
-                        log.unif_male_p2 = get_float(row2, idx_unif_m)
-                        log.bw_female_p2 = round_to_whole(bw_f2)
-                        log.unif_female_p2 = get_float(row2, idx_unif_f)
-                        partition_rows_indices.add(i+1)
+
 
                 if i + 2 < len(data_rows):
                     row3 = data_rows[i+2]
-                    bw_f3 = get_float(row3, idx_bw_f)
-                    if bw_f3 > 0:
-                        log.bw_female_p3 = round_to_whole(bw_f3)
-                        log.unif_female_p3 = get_float(row3, idx_unif_f)
-                        partition_rows_indices.add(i+2)
 
-                if i + 3 < len(data_rows):
-                    row4 = data_rows[i+3]
-                    bw_f4 = get_float(row4, idx_bw_f)
-                    if bw_f4 > 0:
-                        log.bw_female_p4 = round_to_whole(bw_f4)
-                        log.unif_female_p4 = get_float(row4, idx_unif_f)
-                        partition_rows_indices.add(i+3)
 
             if i in partition_rows_indices:
-                log.body_weight_male = 0
-                log.body_weight_female = 0
-                log.uniformity_male = 0
-                log.uniformity_female = 0
                 log.is_weighing_day = False
             else:
                 if has_bw:
                     m_count = 0
                     m_sum = 0
-                    if (log.bw_male_p1 or 0) > 0: m_sum += log.bw_male_p1; m_count += 1
-                    if (log.bw_male_p2 or 0) > 0: m_sum += log.bw_male_p2; m_count += 1
-                    log.body_weight_male = round_to_whole(m_sum / m_count) if m_count > 0 else 0
 
-                    f_count = 0
-                    f_sum = 0
-                    if (log.bw_female_p1 or 0) > 0: f_sum += log.bw_female_p1; f_count += 1
-                    if (log.bw_female_p2 or 0) > 0: f_sum += log.bw_female_p2; f_count += 1
-                    if (log.bw_female_p3 or 0) > 0: f_sum += log.bw_female_p3; f_count += 1
-                    if (log.bw_female_p4 or 0) > 0: f_sum += log.bw_female_p4; f_count += 1
-                    log.body_weight_female = round_to_whole(f_sum / f_count) if f_count > 0 else 0
 
-                    m_u_sum = 0
-                    if (log.unif_male_p1 or 0) > 0: m_u_sum += log.unif_male_p1
-                    if (log.unif_male_p2 or 0) > 0: m_u_sum += log.unif_male_p2
-                    log.uniformity_male = (m_u_sum / m_count) if m_count > 0 else 0
-
-                    f_u_sum = 0
-                    if (log.unif_female_p1 or 0) > 0: f_u_sum += log.unif_female_p1
-                    if (log.unif_female_p2 or 0) > 0: f_u_sum += log.unif_female_p2
-                    if (log.unif_female_p3 or 0) > 0: f_u_sum += log.unif_female_p3
-                    if (log.unif_female_p4 or 0) > 0: f_u_sum += log.unif_female_p4
-                    log.uniformity_female = (f_u_sum / f_count) if f_count > 0 else 0
 
             if preview:
                 # Capture change for preview
@@ -1473,24 +1423,6 @@ def update_log_from_request(log, req):
     # Only update bodyweight fields if 'is_weighing_day' is explicitly submitted
     if 'is_weighing_day' in req.form:
         log.is_weighing_day = True
-        log.body_weight_male = round_to_whole(bw_m_val)
-        log.body_weight_female = round_to_whole(bw_f_val)
-        log.uniformity_male = uni_m_val if uni_m_val > 1.0 else (uni_m_val * 100) if uni_m_val > 0 else 0
-        log.uniformity_female = uni_f_val if uni_f_val > 1.0 else (uni_f_val * 100) if uni_f_val > 0 else 0
-        log.bw_male_p1 = round_to_whole(req.form.get('bw_M1'))
-        log.bw_male_p2 = round_to_whole(req.form.get('bw_M2'))
-        log.unif_male_p1 = float(req.form.get('uni_M1') or 0)
-        log.unif_male_p2 = float(req.form.get('uni_M2') or 0)
-        log.bw_female_p1 = round_to_whole(req.form.get('bw_F1'))
-        log.bw_female_p2 = round_to_whole(req.form.get('bw_F2'))
-        log.bw_female_p3 = round_to_whole(req.form.get('bw_F3'))
-        log.bw_female_p4 = round_to_whole(req.form.get('bw_F4'))
-        log.unif_female_p1 = float(req.form.get('uni_F1') or 0)
-        log.unif_female_p2 = float(req.form.get('uni_F2') or 0)
-        log.unif_female_p3 = float(req.form.get('uni_F3') or 0)
-        log.unif_female_p4 = float(req.form.get('uni_F4') or 0)
-        log.standard_bw_male = round_to_whole(req.form.get('standard_bw_male'))
-        log.standard_bw_female = round_to_whole(req.form.get('standard_bw_female'))
     # Otherwise, if it wasn't submitted but the form has an explicit 'clear_weighing_day' (for example if a checkbox is unchecked)
     # The normal daily form doesn't even send the checkbox.
     # To be safe, if we don't have is_weighing_day in the form, we leave the bodyweight fields alone.
@@ -1748,12 +1680,12 @@ def get_weekly_data_aggregated(flocks):
             fd['feed_g_bird_sum_f'] += log.feed_female_gp_bird
             fd['feed_g_bird_count'] += 1
 
-        if log.body_weight_female > 0:
-            fd['bw_f_sum'] += log.body_weight_female
+        if 0 > 0:
+            fd['bw_f_sum'] += 0
             fd['bw_f_count'] += 1
 
-        if log.uniformity_female > 0:
-            fd['unif_f_sum'] += log.uniformity_female
+        if 0 > 0:
+            fd['unif_f_sum'] += 0
             fd['unif_f_count'] += 1
 
         fd['log_count'] += 1
