@@ -12,7 +12,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="override_validation" id="override_validation" value="false">
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-primary text-white">General Info</div>
+      <div class="card-header sticky-header bg-primary text-white">General Info <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label for="house_id" class="form-label">House</label>
@@ -49,31 +49,31 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-dark">Mortality & Culls (Production)</div>
+      <div class="card-header sticky-header bg-info text-dark">Mortality & Culls <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="row">
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="mortality_male" id="mortality_male" placeholder="Mortality Male (Prod)" value="{{ log.mortality_male if log else 0 }}">
-              <label for="mortality_male">Mortality Male (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="mortality_male" id="mortality_male" placeholder="Mortality Male" value="{{ log.mortality_male if log else 0 }}">
+              <label for="mortality_male">Mortality Male</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="mortality_female" id="mortality_female" placeholder="Mortality Female (Prod)" value="{{ log.mortality_female if log else 0 }}">
-              <label for="mortality_female">Mortality Female (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="mortality_female" id="mortality_female" placeholder="Mortality Female" value="{{ log.mortality_female if log else 0 }}">
+              <label for="mortality_female">Mortality Female</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="culls_male" id="culls_male" placeholder="Culls Male (Prod)" value="{{ log.culls_male if log else 0 }}">
-              <label for="culls_male">Culls Male (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="culls_male" id="culls_male" placeholder="Culls Male" value="{{ log.culls_male if log else 0 }}">
+              <label for="culls_male">Culls Male</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="culls_female" id="culls_female" placeholder="Culls Female (Prod)" value="{{ log.culls_female if log else 0 }}">
-              <label for="culls_female">Culls Female (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="culls_female" id="culls_female" placeholder="Culls Female" value="{{ log.culls_female if log else 0 }}">
+              <label for="culls_female">Culls Female</label>
             </div>
           </div>
         </div>
@@ -168,7 +168,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-success text-white">Feed & Lighting</div>
+      <div class="card-header sticky-header bg-success text-white">Feed & Lighting <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="row mb-3">
             <div class="col-12 col-md-6 mb-2">
@@ -247,7 +247,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-white">Water Readings (Enter Whole Numbers)</div>
+      <div class="card-header sticky-header bg-info text-white">Water Readings (Enter Whole Numbers) <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="row">
           <div class="col-12 col-md-4 mb-2">
@@ -278,7 +278,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-warning text-dark">Production</div>
+      <div class="card-header sticky-header bg-warning text-dark">Production <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Eggs Collected</label>
@@ -299,7 +299,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-dark text-white">Remarks</div>
+      <div class="card-header sticky-header bg-dark text-white">Remarks <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Supervisor Notes for the Day</label>
@@ -311,7 +311,7 @@
     {% if vaccines_due %}
     <div class="card mb-3 border-info">
       <div class="card-header sticky-header bg-info text-white d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#vaccinesSection">
-        <span>Vaccinations (Pending / Done Today)</span>
+        <span>Vaccinations (Pending / Done Today) <span class="house-name-display"></span></span>
         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
       </div>
       <div class="collapse" id="vaccinesSection">
@@ -591,7 +591,20 @@
             });
     }
 
+
+    function updateHouseNameDisplay() {
+        let select = document.getElementById('house_id');
+        if (select && select.options.length > 0 && select.selectedIndex >= 0) {
+            let houseName = select.options[select.selectedIndex].text.trim();
+            let displayElements = document.querySelectorAll('.house-name-display');
+            displayElements.forEach(el => {
+                el.innerText = `(${houseName})`;
+            });
+        }
+    }
+
     function onSelectionChange() {
+        updateHouseNameDisplay();
         fetchLatestLogDate();
         {% if request.endpoint == 'daily_log' %}
         let houseId = document.getElementById('house_id').value;
@@ -624,6 +637,7 @@
 
     // Initialize
     window.onload = function() {
+        updateHouseNameDisplay();
         prefillPreviousData(); // Always call to get global validation state
         {% if not log %}
         fetchLatestLogDate();
