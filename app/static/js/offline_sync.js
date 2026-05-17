@@ -280,7 +280,7 @@ window.renderFlockDetail = function(flockId) {
                                 <td>${l.feed_male_gp_bird !== null ? l.feed_male_gp_bird.toFixed(1) : '0.0'}g / ${l.feed_female_gp_bird !== null ? l.feed_female_gp_bird.toFixed(1) : '0.0'}g</td>
                                 <td class="fw-bold">${l.eggs_collected || 0}</td>
                                 <td class="${l.egg_prod_pct >= 85 ? 'bg-success text-white' : ''} fw-bold">${l.egg_prod_pct !== null ? l.egg_prod_pct.toFixed(2) : '0.00'}%</td>
-                                <td>${l.body_weight_male || 0} / ${l.body_weight_female || 0}</td>
+                                <td>0 / 0</td>
                                 <td>${l.uniformity_male !== null ? (l.uniformity_male <= 1 ? (l.uniformity_male * 100).toFixed(1) : l.uniformity_male.toFixed(1)) : '0.0'}% / ${l.uniformity_female !== null ? (l.uniformity_female <= 1 ? (l.uniformity_female * 100).toFixed(1) : l.uniformity_female.toFixed(1)) : '0.0'}%</td>
                             </tr>
                             `).join('')}
