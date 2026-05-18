@@ -221,34 +221,13 @@ class DailyLog(VersionedMixin, db.Model):
 
     egg_weight = db.Column(db.Float, default=0.0)
 
-    # Body Weight (Split by Sex)
-    body_weight_male = db.Column(db.Integer, default=0, nullable=False, server_default='0')
-    body_weight_female = db.Column(db.Integer, default=0, nullable=False, server_default='0')
-    uniformity_male = db.Column(db.Float, default=0.0, nullable=False, server_default='0')
-    uniformity_female = db.Column(db.Float, default=0.0, nullable=False, server_default='0')
+    # Body Weight & Uniformity removed: Now stored in FlockBodyweight model
 
     # Partitions & Weighing Day
     is_weighing_day = db.Column(db.Boolean, default=False)
 
     # Form submission status
     is_daily_entry_submitted = db.Column(db.Boolean, default=False)
-
-    bw_male_p1 = db.Column(db.Integer, default=0)
-    bw_male_p2 = db.Column(db.Integer, default=0)
-    unif_male_p1 = db.Column(db.Float, default=0.0)
-    unif_male_p2 = db.Column(db.Float, default=0.0)
-
-    bw_female_p1 = db.Column(db.Integer, default=0)
-    bw_female_p2 = db.Column(db.Integer, default=0)
-    bw_female_p3 = db.Column(db.Integer, default=0)
-    bw_female_p4 = db.Column(db.Integer, default=0)
-    unif_female_p1 = db.Column(db.Float, default=0.0)
-    unif_female_p2 = db.Column(db.Float, default=0.0)
-    unif_female_p3 = db.Column(db.Float, default=0.0)
-    unif_female_p4 = db.Column(db.Float, default=0.0)
-
-    standard_bw_male = db.Column(db.Integer, default=0)
-    standard_bw_female = db.Column(db.Integer, default=0)
 
     # Water (Readings 1, 2, 3)
     water_reading_1 = db.Column(db.Integer, default=0)

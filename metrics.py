@@ -124,6 +124,16 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
         for h in hatchability_data:
             hatch_map[h.setting_date] = h
 
+    # 1b. Setup Bodyweight Map
+    bw_map = {}
+    try:
+        from app.models.models import FlockBodyweight
+        bws = FlockBodyweight.query.filter_by(flock_id=flock.id).all()
+        for bw in bws:
+            bw_map[bw.date] = bw
+    except Exception:
+        pass
+
     # 2. Setup Stock Variables
     if custom_start_stock:
         # If custom stock is provided (e.g. from historical sum), use it
@@ -380,12 +390,11 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
             # Submission Status
             'is_daily_entry_submitted': log.is_daily_entry_submitted,
 
-            # BW (Use 0 if None/0 to keep data consistent, or None for charts?)
-            # For data processing, 0 is safer for math, None better for charts.
-            # We store raw values here.
-
-            'uniformity_male': log.uniformity_male,
-            'uniformity_female': log.uniformity_female,
+            # BW (from decoupled FlockBodyweight)
+            'body_weight_male': bw_map[log.date].body_weight_male if log.date in bw_map else None,
+            'body_weight_female': bw_map[log.date].body_weight_female if log.date in bw_map else None,
+            'uniformity_male': bw_map[log.date].uniformity_male if log.date in bw_map else None,
+            'uniformity_female': bw_map[log.date].uniformity_female if log.date in bw_map else None,
 
             # Derived %
             'mortality_male_pct': safe_div(mort_m, stock_m_start),
@@ -567,10 +576,10 @@ def aggregate_weekly_metrics(daily_stats):
         ws['stock_sum_female'] += d['stock_female_start']
 
         # Optimize dict lookups
-        bw_m = d['body_weight_male']
-        bw_f = d['body_weight_female']
-        unif_m = d['uniformity_male']
-        unif_f = d['uniformity_female']
+        bw_m = d.get('body_weight_male')
+        bw_f = d.get('body_weight_female')
+        unif_m = d.get('uniformity_male')
+        unif_f = d.get('uniformity_female')
         egg_wt = d.get('egg_weight')
         egg_set = d['egg_set']
         hatched = d['hatched_chicks']
@@ -745,10 +754,10 @@ def aggregate_monthly_metrics(daily_stats):
         ms['stock_sum_female'] += d['stock_female_start']
 
         # Optimize dict lookups
-        bw_m = d['body_weight_male']
-        bw_f = d['body_weight_female']
-        unif_m = d['uniformity_male']
-        unif_f = d['uniformity_female']
+        bw_m = d.get('body_weight_male')
+        bw_f = d.get('body_weight_female')
+        unif_m = d.get('uniformity_male')
+        unif_f = d.get('uniformity_female')
         egg_set = d['egg_set']
         hatched = d['hatched_chicks']
         log = d['log']
