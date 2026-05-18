@@ -48,7 +48,7 @@
                         </div>
 
                         <div id="medications-container">
-                            <div class="medication-row border p-3 mb-3 rounded position-relative bg-light">
+                            <div class="medication-row border p-3 mb-3 rounded position-relative bg-light-subtle">
                                 <div class="row mb-3">
                                     <div class="col-12 col-md-6 mb-3 mb-md-0">
                                         <label class="form-label required">Drug Name</label>
@@ -116,7 +116,7 @@
                         <form method="POST" action="{{ url_for('health_log_medication', flock_id=flock.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="card mb-4 border-primary">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0 text-primary">{{ flock.house.name }}</h5>
                                 <div>
                                     {% if is_editing %}

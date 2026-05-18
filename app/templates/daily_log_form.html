@@ -49,7 +49,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-dark">Mortality & Culls <span class="house-name-display"></span></div>
+      <div class="card-header sticky-header bg-info text-body">Mortality & Culls <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="row">
           <div class="col-12 col-md-6 mb-2">
@@ -83,8 +83,8 @@
                 Toggle Hospital Data (Male & Female)
             </button>
             <div class="collapse" id="hospitalSection">
-                <div class="card card-body bg-light">
-                    <h6 class="text-dark">Hospital Mortality & Culls</h6>
+                <div class="card card-body bg-light-subtle">
+                    <h6 class="text-body">Hospital Mortality & Culls</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Mortality Male (Hosp)</label>
@@ -112,8 +112,8 @@
                 Toggle Transfers (In/Out Production)
             </button>
             <div class="collapse" id="transferSection">
-                <div class="card card-body bg-light">
-                    <h6 class="text-dark">Transfers</h6>
+                <div class="card card-body bg-light-subtle">
+                    <h6 class="text-body">Transfers</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Males -> To Hospital</label>
@@ -142,7 +142,7 @@
                     </div>
                 </div>
                     <hr>
-                    <h6 class="text-dark">In/Out of Flock (Overall Stock)</h6>
+                    <h6 class="text-body">In/Out of Flock (Overall Stock)</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Males -> In Flock</label>
@@ -278,7 +278,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-warning text-dark">Production <span class="house-name-display"></span></div>
+      <div class="card-header sticky-header bg-warning text-body">Production <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Eggs Collected</label>
@@ -339,7 +339,7 @@
                                 {% if v.actual_date %}
                                     <span class="badge bg-success text-white">Done</span>
                                 {% else %}
-                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    <span class="badge bg-warning text-body">Pending</span>
                                 {% endif %}
                             </td>
                             <td>{{ v.age_code }}</td>
@@ -380,7 +380,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-warning icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width: 4rem; height: 4rem;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v2m0 4v.01" /><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" /></svg>
                   <h3>Are you sure?</h3>
                   <div class="text-muted" id="updateModalMessage">
-                      {{ 'Update' if log else 'Submit' }} <mark class="fw-bold bg-yellow text-dark px-1"><span id="modalHouseName"></span></mark> logs for <mark class="fw-bold bg-yellow text-dark px-1"><span id="modalDate"></span></mark>?
+                      {{ 'Update' if log else 'Submit' }} <mark class="fw-bold bg-yellow text-body px-1"><span id="modalHouseName"></span></mark> logs for <mark class="fw-bold bg-yellow text-body px-1"><span id="modalDate"></span></mark>?
                   </div>
                   <div id="fastingWarningDiv" class="alert alert-danger mt-3 d-none text-start small">
                       ⚠️ Alert: Today is a scheduled Fasting Day for this House based on the selected program. This will affect flock uniformity.
@@ -799,7 +799,7 @@
         if (mortPctF > 1.0) {
             mortFWarning = '<span class="badge bg-danger text-white ms-2">CRITICAL: Abnormal data (possible wrong input)</span>';
         } else if (mortPctF > 0.05) {
-            mortFWarning = '<span class="badge bg-warning text-dark ms-2">Warning: High mortality</span>';
+            mortFWarning = '<span class="badge bg-warning text-body ms-2">Warning: High mortality</span>';
         }
 
         let mortMWarning = '';
@@ -812,24 +812,24 @@
         let eggWarning = '';
         let eggDiff = eggPct - yesterdayEggPct;
         if (eggDiff < -2.0) {
-             eggWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Drop > 2%</span>';
+             eggWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 2%</span>';
         } else if (eggDiff > 2.0) {
              // Exception: Week 25-33
              if (flockAgeWeeks >= 25 && flockAgeWeeks <= 33) {
                  // Do not warn
              } else {
-                 eggWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Increase > 2%</span>';
+                 eggWarning = '<span class="badge bg-warning text-body ms-2">Warning: Increase > 2%</span>';
              }
         }
 
         let feedFWarning = '';
         if (inFeedF > 0 && (yesterdayFeedF - inFeedF) > 3) {
-             feedFWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Drop > 3g</span>';
+             feedFWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 3g</span>';
         }
 
         let feedMWarning = '';
         if (inFeedM > 0 && (yesterdayFeedM - inFeedM) > 3) {
-             feedMWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Drop > 3g</span>';
+             feedMWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 3g</span>';
         }
 
         let waterWarning = '';
@@ -840,7 +840,7 @@
         // Build HTML
         let html = `
             <div class="card border-0 shadow-none text-start">
-                <div class="card-header bg-light py-2">
+                <div class="card-header bg-light-subtle py-2">
                     <h5 class="card-title mb-0 text-muted">Summary Details</h5>
                 </div>
                 <ul class="list-group list-group-flush small">

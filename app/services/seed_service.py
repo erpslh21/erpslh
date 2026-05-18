@@ -114,10 +114,10 @@ def initialize_sampling_schedule(flock_id, commit=True):
 def initialize_users():
     # Helper to seed users if table is empty or missing specific users
     for u_data in INITIAL_USERS:
-        user = User.query.filter_by(username=u_data['username']).first()
+        user = User.query.filter_by(username=u_data.get('username')).first()
         if not user:
             user = User(
-                username=u_data['username'],
+                username=u_data.get('username'),
                 dept=u_data['dept'],
                 role=u_data['role']
             )
@@ -343,9 +343,3 @@ def seed_standards_from_file():
         return False, f"Error seeding standards: {str(e)}"
 
 
-INITIAL_USERS = [
-    {'name': 'Admin', 'role': 'Admin', 'dept': 'Admin', 'status': 'Active'},
-    {'name': 'Management', 'role': 'Management', 'dept': 'Management', 'status': 'Active'},
-    {'name': 'Hatchery User', 'role': 'User', 'dept': 'Hatchery', 'status': 'Active'},
-    {'name': 'Farm User', 'role': 'User', 'dept': 'Breeder', 'status': 'Active'}
-]

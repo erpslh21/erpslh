@@ -81,11 +81,11 @@
     <div class="row text-center mb-3">
       <div class="col-md-3 border-end">
           <span class="text-xs text-muted font-weight-bold text-uppercase">House</span><br>
-          <span class="text-dark font-weight-bold">{{ flock.house.name }}</span>
+          <span class="text-body font-weight-bold">{{ flock.house.name }}</span>
       </div>
       <div class="col-md-3 border-end">
           <span class="text-xs text-muted font-weight-bold text-uppercase">Breeder</span><br>
-          <span class="text-dark font-weight-bold">{{ flock.farm.name if flock.farm else 'N/A' }}</span>
+          <span class="text-body font-weight-bold">{{ flock.farm.name if flock.farm else 'N/A' }}</span>
       </div>
       <div class="col-md-3 border-end">
           <span class="text-xs text-muted font-weight-bold text-uppercase">Phase</span><br>
@@ -93,26 +93,26 @@
       </div>
       <div class="col-md-3">
           <span class="text-xs text-muted font-weight-bold text-uppercase">Intake Date</span><br>
-          <span class="text-dark font-weight-bold">{{ flock.intake_date | date_fmt }}</span>
+          <span class="text-body font-weight-bold">{{ flock.intake_date | date_fmt }}</span>
       </div>
     </div>
     <div class="row text-center bg-gray-100 p-2 border-radius-md">
       <div class="col-md-3 border-end">
           <span class="text-xs text-muted font-weight-bold text-uppercase">Intake</span><br>
-          <span class="text-dark font-weight-bold">{{ flock.intake_male }} M / {{ flock.intake_female }} F</span>
+          <span class="text-body font-weight-bold">{{ flock.intake_male }} M / {{ flock.intake_female }} F</span>
       </div>
       <div class="col-md-3 border-end">
           <span class="text-xs text-muted font-weight-bold text-uppercase">DOA</span><br>
-          <span class="text-dark font-weight-bold">{{ flock.doa_male }} M / {{ flock.doa_female }} F</span>
+          <span class="text-body font-weight-bold">{{ flock.doa_male }} M / {{ flock.doa_female }} F</span>
       </div>
       <div class="col-md-3 border-end">
           <span class="text-xs text-muted font-weight-bold text-uppercase">Current Prod</span><br>
-          <span class="text-dark font-weight-bold">{{ current_stats.male_prod }} M / {{ current_stats.female_prod }} F</span><br>
+          <span class="text-body font-weight-bold">{{ current_stats.male_prod }} M / {{ current_stats.female_prod }} F</span><br>
           <span class="text-xs text-info">Ratio: {{ "%.2f"|format(((current_stats.male_ratio or 0) | float)) }}%</span>
       </div>
       <div class="col-md-3">
           <span class="text-xs text-muted font-weight-bold text-uppercase">Current Hosp</span><br>
-          <span class="text-dark font-weight-bold">{{ current_stats.male_hosp }} M / {{ current_stats.female_hosp }} F</span>
+          <span class="text-body font-weight-bold">{{ current_stats.male_hosp }} M / {{ current_stats.female_hosp }} F</span>
       </div>
     </div>
   </div>
@@ -167,23 +167,23 @@
     <button class="nav-link active px-4 py-2 border rounded shadow-sm" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab" aria-controls="daily" aria-selected="true">Daily Logs</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-white" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" aria-controls="weekly" aria-selected="false">Weekly Summary</button>
+    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-body" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" aria-controls="weekly" aria-selected="false">Weekly Summary</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-white" id="hatchability-tab" data-bs-toggle="tab" data-bs-target="#hatchability" type="button" role="tab" aria-controls="hatchability" aria-selected="false">Hatchability</button>
+    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-body" id="hatchability-tab" data-bs-toggle="tab" data-bs-target="#hatchability" type="button" role="tab" aria-controls="hatchability" aria-selected="false">Hatchability</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-white" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab" aria-controls="charts" aria-selected="false">Performance Charts</button>
+    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-body" id="charts-tab" data-bs-toggle="tab" data-bs-target="#charts" type="button" role="tab" aria-controls="charts" aria-selected="false">Performance Charts</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-white" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">Production Summary</button>
+    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-body" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">Production Summary</button>
   </li>
   <li class="nav-item" role="presentation">
-    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-white" id="health-analytics-tab" data-bs-toggle="tab" data-bs-target="#health-analytics" type="button" role="tab" aria-controls="health-analytics" aria-selected="false">Health Analytics</button>
+    <button class="nav-link px-4 py-2 border rounded shadow-sm bg-body" id="health-analytics-tab" data-bs-toggle="tab" data-bs-target="#health-analytics" type="button" role="tab" aria-controls="health-analytics" aria-selected="false">Health Analytics</button>
   </li>
   {% if current_user.dept in ['Breeder', 'Admin', 'Management'] or current_user.role == 'Admin' %}
   <li class="nav-item" role="presentation">
-    <a href="{{ url_for('presentation_views.presentation_studio', flock_id=flock.id) }}" class="nav-link px-4 py-2 border rounded shadow-sm bg-white" style="text-decoration: none; color: inherit;">Presentation Studio</a>
+    <a href="{{ url_for('presentation_views.presentation_studio', flock_id=flock.id) }}" class="nav-link px-4 py-2 border rounded shadow-sm bg-body" style="text-decoration: none; color: inherit;">Presentation Studio</a>
   </li>
   {% endif %}
 </ul>
@@ -198,12 +198,12 @@
     </div>
     <div class="table-responsive table-responsive-sticky">
       <table class="table table-bordered table-sm text-center align-middle" style="font-size: 0.8rem;">
-        <thead class="sticky-table-header table-light text-dark">
+        <thead class="sticky-table-header table-light text-body">
           <tr>
             <th rowspan="2" class="align-middle">Date</th>
             <th rowspan="2" class="align-middle">House</th>
             <th rowspan="2" class="align-middle">Age</th>
-            <th colspan="2" class="bg-light">Stock</th>
+            <th colspan="2" class="bg-light-subtle">Stock</th>
             <th colspan="2" class="bg-danger text-white">Mortality</th>
             <th colspan="2" class="bg-warning text-white">Culls</th>
             <th rowspan="2" class="align-middle">Feed<br>(Kg)</th>
@@ -211,18 +211,18 @@
             <th rowspan="2" class="align-middle">Water<br>(ml/bird)</th>
             <th rowspan="2" class="align-middle">Medication</th>
             <th colspan="2" class="bg-info text-white">Production</th>
-            <th class="bg-light align-middle" rowspan="2">Jumbo</th>
-            <th class="bg-light align-middle" rowspan="2">Small</th>
-            <th class="bg-light align-middle" rowspan="2">Crack</th>
-            <th class="bg-light align-middle" rowspan="2">Abnormal</th>
+            <th class="bg-light-subtle align-middle" rowspan="2">Jumbo</th>
+            <th class="bg-light-subtle align-middle" rowspan="2">Small</th>
+            <th class="bg-light-subtle align-middle" rowspan="2">Crack</th>
+            <th class="bg-light-subtle align-middle" rowspan="2">Abnormal</th>
             <th class="bg-primary text-white align-middle" rowspan="2">Hatching</th>
             <th class="bg-secondary text-white align-middle" rowspan="2">Cull Eggs</th>
             <th rowspan="2" class="align-middle">Light<br>(Hr)</th>
             <th rowspan="2" class="align-middle">Actions</th>
           </tr>
           <tr>
-            <th class="bg-light">M</th>
-            <th class="bg-light">F</th>
+            <th class="bg-light-subtle">M</th>
+            <th class="bg-light-subtle">F</th>
             <th class="bg-danger text-white">M</th>
             <th class="bg-danger text-white">F</th>
             <th class="bg-warning text-white">M</th>
@@ -335,7 +335,7 @@
     <h3>Weekly Summary</h3>
     <div class="table-responsive table-responsive-sticky mb-4">
       <table class="table table-bordered table-sm align-middle text-center">
-        <thead class="table-light text-dark sticky-table-header text-dark">
+        <thead class="table-light text-body sticky-table-header text-body">
           <tr>
             <th>Week</th>
             <th class="bg-danger text-white">Male Mort</th>
@@ -411,7 +411,7 @@
     </div>
     <div class="table-responsive table-responsive-sticky">
       <table class="table table-bordered table-striped table-hover text-center align-middle" style="font-size: 0.85rem;">
-        <thead class="sticky-table-header table-light text-dark">
+        <thead class="sticky-table-header table-light text-body">
             <tr>
                 <th>Setting Date</th>
                 <th>Hatching Date</th>
@@ -453,17 +453,17 @@
   <div class="tab-pane fade" id="charts" role="tabpanel" aria-labelledby="charts-tab">
 
     <!-- Filter Control Bar -->
-    <div class="bg-light p-2 mb-3 rounded d-flex align-items-center flex-wrap gap-2 shadow-sm border" style="position: relative; z-index: 1;">
+    <div class="bg-light-subtle p-2 mb-3 rounded d-flex align-items-center flex-wrap gap-2 shadow-sm border" style="position: relative; z-index: 1;">
         <div class="input-group" id="globalDatePickerContainer" style="max-width: 450px;">
-            <span class="input-group-text bg-white"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2z" /></svg> Start</span>
+            <span class="input-group-text bg-body"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2z" /></svg> Start</span>
             <input type="text" id="startDateSlicer" class="form-control" placeholder="Start Date">
-            <span class="input-group-text bg-white"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2z" /></svg> End</span>
+            <span class="input-group-text bg-body"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2z" /></svg> End</span>
             <input type="text" id="endDateSlicer" class="form-control" placeholder="End Date">
         </div>
         <div class="input-group" id="globalWeekPickerContainer" style="max-width: 450px;">
-            <span class="input-group-text bg-white"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-stats" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 22l4 -4" /><path d="M19 22l4 -4" /><path d="M11.5 16h-3.5v-1" /></svg> Start Week</span>
+            <span class="input-group-text bg-body"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-stats" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 22l4 -4" /><path d="M19 22l4 -4" /><path d="M11.5 16h-3.5v-1" /></svg> Start Week</span>
             <select id="startWeekSlicer" class="form-select"></select>
-            <span class="input-group-text bg-white"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-stats" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 22l4 -4" /><path d="M19 22l4 -4" /><path d="M11.5 16h-3.5v-1" /></svg> End Week</span>
+            <span class="input-group-text bg-body"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-stats" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 22l4 -4" /><path d="M19 22l4 -4" /><path d="M11.5 16h-3.5v-1" /></svg> End Week</span>
             <select id="endWeekSlicer" class="form-select"></select>
         </div>
         <span id="ageRangeDisplay" class="fw-bold text-primary small ms-2"></span>
@@ -759,7 +759,7 @@
                     <ul class="list-unstyled mb-0 small">
                         <li class="d-flex justify-content-between mb-1">
                             <span class="text-secondary">Liveability:</span>
-                            <strong class="text-dark">{{ summary_dashboard.liveability }}%</strong>
+                            <strong class="text-body">{{ summary_dashboard.liveability }}%</strong>
                         </li>
                         <li class="d-flex justify-content-between mb-1">
                             <span class="text-secondary">Feed/100 Chicks:</span>
@@ -782,7 +782,7 @@
     <!-- Cumulative Table -->
     <div class="table-responsive table-responsive-sticky mb-4">
         <table class="table table-bordered table-sm text-center align-middle table-hover">
-            <thead class="table-light text-dark sticky-table-header text-dark">
+            <thead class="table-light text-body sticky-table-header text-body">
                 <tr>
                     <th rowspan="2" class="align-middle">Prod Week</th>
                     <th rowspan="2" class="align-middle">Age Week</th>
@@ -871,8 +871,8 @@
     </div>
 
     <div class="table-responsive">
-        <table class="table table-bordered table-hover align-middle bg-white">
-            <thead class="table-light text-dark">
+        <table class="table table-bordered table-hover align-middle bg-body">
+            <thead class="table-light text-body">
                 <tr>
                     <th style="width: 120px;">Date / Age</th>
                     <th style="width: 30%;">Clinical Signs & Prediction</th>
@@ -894,7 +894,7 @@
 
                         {% if event.predicted_diseases %}
                             {% for disease in event.predicted_diseases %}
-                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning text-dark' }} mb-1">
+                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning text-body' }} mb-1">
                                     {{ disease.name }}
                                 </span>
                             {% endfor %}
