@@ -26,7 +26,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="hidden" name="flock_id" value="{{ flock.id }}">
     <div class="card mb-4 border-primary">
-        <div class="card-header sticky-header bg-light d-flex justify-content-between align-items-center">
+        <div class="card-header sticky-header bg-light-subtle d-flex justify-content-between align-items-center">
             <h5 class="mb-0 text-primary">{{ flock.house.name }} - Age: {{ flock.current_week }} Weeks</h5>
             <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
         </div>
@@ -84,7 +84,7 @@
                             </td>
                             <td>
                                 {% if v.inventory_item_id %}
-                                    <span class="badge bg-light text-dark border d-block">{{ v.doses_per_unit }}</span>
+                                    <span class="badge bg-light-subtle text-body border d-block">{{ v.doses_per_unit }}</span>
                                 {% else %}
                                     <input type="number" name="v_dpu_{{ v.id }}" value="{{ v.doses_per_unit }}" class="form-control form-control-sm" style="width: 80px;">
                                 {% endif %}
@@ -137,7 +137,7 @@
                                 <input type="text" name="s_test_{{ s.id }}" value="{{ s.test_type }}" class="form-control form-control-sm">
                             </td>
                             <td>
-                                <span class="badge {% if s.actual_date or s.result_file or s.status == 'Completed' %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
+                                <span class="badge {% if s.actual_date or s.result_file or s.status == 'Completed' %}bg-success text-white{% else %}bg-warning text-body{% endif %}">
                                     {% if s.actual_date or s.result_file %}Completed{% else %}Pending{% endif %}
                                 </span>
                             </td>
@@ -210,7 +210,7 @@
             </div>
 
             <!-- Add Medication Form -->
-            <div class="bg-light p-3 rounded border">
+            <div class="bg-light-subtle p-3 rounded border">
                 <strong>Add New Medication Record</strong>
                 <div class="row g-2 mt-1">
                     <div class="col-md-3">

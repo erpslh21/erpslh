@@ -103,7 +103,7 @@ class InventoryItem(VersionedMixin, db.Model):
     cost_per_unit = db.Column(db.Float, default=0.0)
     category = db.Column(db.String(50), nullable=True)
     unit_of_measurement = db.Column(db.String(50), nullable=True)
-    location = db.Column(db.String(50), default='Farm')
+    location = db.Column(db.String(50), default='Breeder')
 
     transactions = db.relationship('InventoryTransaction', backref='item', lazy=True, cascade="all, delete-orphan")
     vaccines = db.relationship('Vaccine', backref='inventory_item', lazy=True)
@@ -116,7 +116,7 @@ class InventoryTransaction(VersionedMixin, db.Model):
     quantity = db.Column(db.Float, nullable=False)
     transaction_date = db.Column(db.Date, nullable=False, default=date.today, index=True)
     notes = db.Column(db.String(255), nullable=True)
-    location = db.Column(db.String(50), default='Farm')
+    location = db.Column(db.String(50), default='Breeder')
     classification = db.Column(db.String(50), nullable=True)
     batch_number = db.Column(db.String(50), nullable=True)
     expiry_date = db.Column(db.Date, nullable=True)
@@ -221,34 +221,13 @@ class DailyLog(VersionedMixin, db.Model):
 
     egg_weight = db.Column(db.Float, default=0.0)
 
-    # Body Weight (Split by Sex)
-    body_weight_male = db.Column(db.Integer, default=0, nullable=False, server_default='0')
-    body_weight_female = db.Column(db.Integer, default=0, nullable=False, server_default='0')
-    uniformity_male = db.Column(db.Float, default=0.0, nullable=False, server_default='0')
-    uniformity_female = db.Column(db.Float, default=0.0, nullable=False, server_default='0')
+    # Body Weight & Uniformity removed: Now stored in FlockBodyweight model
 
     # Partitions & Weighing Day
     is_weighing_day = db.Column(db.Boolean, default=False)
 
     # Form submission status
     is_daily_entry_submitted = db.Column(db.Boolean, default=False)
-
-    bw_male_p1 = db.Column(db.Integer, default=0)
-    bw_male_p2 = db.Column(db.Integer, default=0)
-    unif_male_p1 = db.Column(db.Float, default=0.0)
-    unif_male_p2 = db.Column(db.Float, default=0.0)
-
-    bw_female_p1 = db.Column(db.Integer, default=0)
-    bw_female_p2 = db.Column(db.Integer, default=0)
-    bw_female_p3 = db.Column(db.Integer, default=0)
-    bw_female_p4 = db.Column(db.Integer, default=0)
-    unif_female_p1 = db.Column(db.Float, default=0.0)
-    unif_female_p2 = db.Column(db.Float, default=0.0)
-    unif_female_p3 = db.Column(db.Float, default=0.0)
-    unif_female_p4 = db.Column(db.Float, default=0.0)
-
-    standard_bw_male = db.Column(db.Integer, default=0)
-    standard_bw_female = db.Column(db.Integer, default=0)
 
     # Water (Readings 1, 2, 3)
     water_reading_1 = db.Column(db.Integer, default=0)
@@ -315,6 +294,32 @@ class DailyLogPhoto(VersionedMixin, db.Model):
     note_id = db.Column(db.Integer, db.ForeignKey('clinical_note.id'), nullable=True, index=True)
     file_path = db.Column(db.String(200), nullable=False)
     original_filename = db.Column(db.String(200), nullable=True)
+
+
+class FlockBodyweight(VersionedMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    flock_id = db.Column(db.Integer, db.ForeignKey('flock.id'), nullable=False, index=True)
+    date = db.Column(db.Date, nullable=False, index=True)
+    age_week = db.Column(db.Integer, nullable=True) # Explicitly track the week
+
+    body_weight_male = db.Column(db.Float, default=0.0)
+    body_weight_female = db.Column(db.Float, default=0.0)
+    uniformity_male = db.Column(db.Float, default=0.0)
+    uniformity_female = db.Column(db.Float, default=0.0)
+
+    standard_bw_male = db.Column(db.Integer, nullable=True)
+    standard_bw_female = db.Column(db.Integer, nullable=True)
+
+    flock = db.relationship('Flock', backref=db.backref('bodyweights', cascade="all, delete-orphan"))
+
+class FlockBodyweightPartition(VersionedMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bodyweight_id = db.Column(db.Integer, db.ForeignKey('flock_bodyweight.id'), nullable=False, index=True)
+    partition_name = db.Column(db.String(10), nullable=False) # F1, F2, F3, F4, M1, M2
+    body_weight = db.Column(db.Float, default=0.0)
+    uniformity = db.Column(db.Float, default=0.0)
+
+    bodyweight = db.relationship('FlockBodyweight', backref=db.backref('partitions', cascade="all, delete-orphan"))
 
 class PartitionWeight(VersionedMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)

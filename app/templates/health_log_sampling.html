@@ -27,7 +27,7 @@
     <form method="POST" action="{{ url_for('health_log_sampling', year=year, month=month, flock_id=flock.id) }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <div class="card mb-4 border-primary">
-        <div class="card-header sticky-header bg-light d-flex justify-content-between align-items-center">
+        <div class="card-header sticky-header bg-light-subtle d-flex justify-content-between align-items-center">
             <h5 class="mb-0 text-primary">{{ flock.house.name }} - Age: {{ flock.current_week }} Weeks</h5>
             <div>
                 {% if is_editing %}
@@ -88,7 +88,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <span class="badge {% if s.actual_date or s.result_file or s.status == 'Completed' %}bg-success text-white{% else %}bg-warning text-dark{% endif %}">
+                                <span class="badge {% if s.actual_date or s.result_file or s.status == 'Completed' %}bg-success text-white{% else %}bg-warning text-body{% endif %}">
                                     {% if s.actual_date or s.result_file %}Completed{% else %}Pending{% endif %}
                                 </span>
                             </td>

@@ -26,40 +26,79 @@ def register_health_routes(app):
 
     @app.route('/health_log/bodyweight', methods=['GET', 'POST'])
     @login_required
-    @dept_required(['Farm', 'Management', 'Admin'])
+    @dept_required(['Breeder', 'Management', 'Admin'])
     def health_log_bodyweight():
         if request.method == 'POST':
             flock_id = request.form.get('flock_id')
             date_str = request.form.get('date')
 
             if not flock_id or not date_str:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({"success": False, "message": "House and Date are required."}), 400
                 flash("House and Date are required.", "danger")
                 return redirect(url_for('health_log_bodyweight'))
 
             try:
                 log_date = datetime.strptime(date_str, '%Y-%m-%d').date()
             except ValueError:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({"success": False, "message": "Invalid date format."}), 400
                 flash("Invalid date format.", "danger")
-                return redirect(url_for('weight_grading'))
+                return redirect(url_for('health_log_bodyweight'))
 
-            log = DailyLog.query.filter_by(flock_id=flock_id, date=log_date).first()
+            flock = Flock.query.get(flock_id)
+            if not flock:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({"success": False, "message": "Invalid flock."}), 400
+                flash("Invalid flock.", "danger")
+                return redirect(url_for('health_log_bodyweight'))
+
+            target_week = calculate_bio_week(flock.intake_date, log_date)
+
+            # Check for existing logs in the same week
+            existing_logs_in_week = FlockBodyweight.query.filter_by(flock_id=flock_id).all()
+            existing_logs_in_week = [log for log in existing_logs_in_week if calculate_bio_week(flock.intake_date, log.date) == target_week]
+
+            existing_log = next((log for log in existing_logs_in_week if log.date == log_date), None)
+            conflict_log = next((log for log in existing_logs_in_week if log.date != log_date), None)
+
+            confirm_overwrite = request.form.get('confirm_overwrite') == 'true'
+            confirm_new_week = request.form.get('confirm_new_week') == 'true'
+
+            if conflict_log and not confirm_overwrite and not confirm_new_week:
+                # Ask for confirmation
+                return jsonify({
+                    "requires_confirmation": True,
+                    "target_week": target_week,
+                    "conflict_date": conflict_log.date.strftime('%Y-%m-%d')
+                }), 200
+
+            # If overwrite, we delete the conflict log
+            if confirm_overwrite and conflict_log:
+                db.session.delete(conflict_log)
+                db.session.flush()
+
+            # Now we proceed to save
+            log = existing_log
             if not log:
-                log = DailyLog(
+                log = FlockBodyweight(
                     flock_id=flock_id,
-                    date=log_date,                body_weight_male=0,
-                    body_weight_female=0
+                    date=log_date,
+                    body_weight_male=0.0,
+                    body_weight_female=0.0
                 )
                 db.session.add(log)
                 db.session.flush()
 
-            log.is_weighing_day = True
+            # Optional explicitly assigned age_week
+            if confirm_new_week:
+                log.age_week = target_week + 1 # simplistic: push it to next week logically if "populate as new week", or we can just leave age_week blank and let it recalculate
 
             # Male weights
             if request.form.get('body_weight_male'):
                 log.body_weight_male = float(request.form.get('body_weight_male'))
             if request.form.get('uniformity_male'):
-                val = float(request.form.get('uniformity_male'))
-                log.uniformity_male = val
+                log.uniformity_male = float(request.form.get('uniformity_male'))
             if request.form.get('standard_bw_male'):
                 log.standard_bw_male = round_to_whole(request.form.get('standard_bw_male'))
 
@@ -67,13 +106,12 @@ def register_health_routes(app):
             if request.form.get('body_weight_female'):
                 log.body_weight_female = float(request.form.get('body_weight_female'))
             if request.form.get('uniformity_female'):
-                val = float(request.form.get('uniformity_female'))
-                log.uniformity_female = val
+                log.uniformity_female = float(request.form.get('uniformity_female'))
             if request.form.get('standard_bw_female'):
                 log.standard_bw_female = round_to_whole(request.form.get('standard_bw_female'))
 
             # Save Partitions
-            existing_partitions = {pw.partition_name: pw for pw in log.partition_weights}
+            existing_partitions = {pw.partition_name: pw for pw in log.partitions}
 
             def save_partition(name, bw_str, unif_str):
                 bw = float(bw_str) if bw_str else 0
@@ -83,7 +121,7 @@ def register_health_routes(app):
                         existing_partitions[name].body_weight = bw
                         existing_partitions[name].uniformity = unif
                     else:
-                        pw = PartitionWeight(log_id=log.id, partition_name=name, body_weight=bw, uniformity=unif)
+                        pw = FlockBodyweightPartition(bodyweight_id=log.id, partition_name=name, body_weight=bw, uniformity=unif)
                         db.session.add(pw)
                 elif name in existing_partitions:
                     db.session.delete(existing_partitions[name])
@@ -111,14 +149,13 @@ def register_health_routes(app):
             except Exception as e:
                 app.logger.error(f"Failed to send Bodyweight push alert: {str(e)}")
 
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({"success": True, "message": "Bodyweight data saved successfully."})
+
             flash("Bodyweight data saved successfully.", "success")
             return redirect(url_for('health_log_bodyweight'))
 
-        if current_user.role == 'Admin':
-            active_flocks = Flock.query.filter_by(status='Active').options(joinedload(Flock.house)).all()
-        else:
-            active_flocks = Flock.query.filter_by(status='Active', farm_id=current_user.farm_id).options(joinedload(Flock.house)).all()
-
+        active_flocks = Flock.query.filter_by(status='Active').options(joinedload(Flock.house)).all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))
@@ -140,11 +177,11 @@ def register_health_routes(app):
 
         # active_flocks is already fetched and sorted above
 
-        # Fetch bodyweight logs (is_weighing_day=True)
-        logs = DailyLog.query.join(Flock).join(House).options(
-            joinedload(DailyLog.partition_weights),
-            joinedload(DailyLog.flock).joinedload(Flock.house)
-        ).filter(DailyLog.is_weighing_day == True).order_by(DailyLog.date.desc()).all()
+        # Fetch bodyweight logs
+        logs = FlockBodyweight.query.join(Flock).join(House).options(
+            joinedload(FlockBodyweight.partitions),
+            joinedload(FlockBodyweight.flock).joinedload(Flock.house)
+        ).order_by(FlockBodyweight.date.desc()).all()
 
         # We also need grading reports to know if "Selection Report" is available
         reports = FlockGrading.query.all()
@@ -164,7 +201,7 @@ def register_health_routes(app):
         bodyweight_logs = []
 
         for log in logs:
-            age_weeks = calculate_bio_week(log.flock.intake_date, log.date)
+            age_weeks = log.age_week if log.age_week else calculate_bio_week(log.flock.intake_date, log.date)
 
             house_logs = logs_by_house[log.flock.house_id]
 
@@ -177,7 +214,7 @@ def register_health_routes(app):
 
             def get_p(l, name):
                 if not l: return None
-                for pw in l.partition_weights:
+                for pw in getattr(l, 'partitions', getattr(l, 'partition_weights', [])):
                     if pw.partition_name == name:
                         return pw
                 return None
@@ -298,7 +335,7 @@ def register_health_routes(app):
 
     @app.route('/upload_weights', methods=['POST'])
     @login_required
-    @dept_required(['Farm', 'Management'])
+    @dept_required(['Breeder', 'Management'])
     def upload_weights():
         house_id = request.form.get('house_id')
         age_week = request.form.get('age_week')
@@ -1075,7 +1112,7 @@ def register_health_routes(app):
 
     @app.route('/flock/<int:id>/sampling/<int:event_id>/upload', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def upload_sampling_result(id, event_id):
         event = SamplingEvent.query.get_or_404(event_id)
 
@@ -1150,7 +1187,7 @@ def register_health_routes(app):
 
     @app.route('/flock/<int:id>/vaccines', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_vaccines(id):
         flock = Flock.query.options(joinedload(Flock.house)).filter_by(id=id).first_or_404()
         if request.method == 'POST':
@@ -1353,7 +1390,7 @@ def register_health_routes(app):
 
     @app.route('/flock/<int:id>/sampling')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_sampling(id):
         flock = Flock.query.options(joinedload(Flock.house)).filter_by(id=id).first_or_404()
         events = SamplingEvent.query.filter_by(flock_id=id).order_by(SamplingEvent.age_week.asc()).all()
@@ -1361,7 +1398,7 @@ def register_health_routes(app):
 
     @app.route('/health_log/post_mortem', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def health_log_post_mortem():
         if request.method == 'POST':
             flock_id = request.form.get('flock_id')

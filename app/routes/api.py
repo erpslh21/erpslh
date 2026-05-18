@@ -24,6 +24,12 @@ def register_api_routes(app):
     from app.utils import safe_commit, send_push_alert, log_user_activity, dept_required, round_to_whole, get_gemini_response, get_dashboard_url
     from app.services.data_service import generate_spreadsheet_data, recalculate_flock_inventory
 
+    @app.route('/api/houses_by_farm/<int:farm_id>')
+    @login_required
+    def api_houses_by_farm(farm_id):
+        houses = House.query.filter_by(farm_id=farm_id).order_by(House.name).all()
+        return jsonify([{'id': h.id, 'name': h.name} for h in houses])
+
     @app.route('/api/offline_snapshot')
     @login_required
     def offline_snapshot():
@@ -37,7 +43,7 @@ def register_api_routes(app):
         # Restrict to allowed departments if not Admin/Management
         query = Flock.query.filter_by(status='Active')
         if not is_admin and user_role != 'Management':
-            if user_dept == 'Farm':
+            if user_dept == 'Breeder':
                 # This is a bit simplified, usually we might restrict by house or just Farm
                 pass
             elif user_dept == 'Hatchery':
@@ -100,10 +106,10 @@ def register_api_routes(app):
                                 'eggs_collected': log_obj.eggs_collected,
                                 'egg_weight': log_obj.egg_weight,
                                 'water_intake_calculated': log_obj.water_intake_calculated,
-                                'body_weight_male': log_obj.body_weight_male,
-                                'body_weight_female': log_obj.body_weight_female,
-                                'uniformity_male': log_obj.uniformity_male,
-                                'uniformity_female': log_obj.uniformity_female,
+                                'body_weight_male': d.get('body_weight_male'),
+                                'body_weight_female': d.get('body_weight_female'),
+                                'uniformity_male': d.get('uniformity_male'),
+                                'uniformity_female': d.get('uniformity_female'),
                                 'mortality_male_pct': d.get('mortality_male_pct', 0),
                                 'mortality_female_pct': d.get('mortality_female_pct', 0),
                                 'mortality_cum_male_pct': d.get('mortality_cum_male_pct', 0),
@@ -147,48 +153,6 @@ def register_api_routes(app):
             'timestamp': datetime.now().isoformat(),
             'flocks': snapshot_data
         })
-
-    @app.route('/api/reports/backup', methods=['POST'])
-    @login_required
-    def backup_report_image():
-        data = request.json
-        if not data or 'image' not in data or 'date' not in data or 'house' not in data or 'age' not in data:
-            return jsonify({'error': 'Missing data'}), 400
-
-        image_data = data['image']
-        if ',' in image_data:
-            image_data = image_data.split(',')[1]
-
-        date_str = data['date'] # YYYY-MM-DD
-        house_name = data['house']
-        age_week = data['age']
-
-        filename = f"{date_str}_{secure_filename(house_name)}_W{age_week}.jpg"
-
-        reports_dir = os.path.join(app.root_path, 'static', 'reports')
-        if not os.path.exists(reports_dir):
-            os.makedirs(reports_dir)
-
-        filepath = os.path.join(reports_dir, filename)
-
-        try:
-            with open(filepath, "wb") as fh:
-                fh.write(base64.b64decode(image_data))
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-
-        try:
-            current_time = datetime.now()
-            for f in os.listdir(reports_dir):
-                f_path = os.path.join(reports_dir, f)
-                if os.path.isfile(f_path):
-                    mtime = datetime.fromtimestamp(os.path.getmtime(f_path))
-                    if (current_time - mtime).days > 7:
-                        os.remove(f_path)
-        except Exception as e:
-            pass
-
-        return jsonify({'success': True, 'path': f'/static/reports/{filename}'})
 
     @app.route('/api/daily_log/trend')
     @login_required
@@ -373,8 +337,10 @@ def register_api_routes(app):
 
     @app.route('/api/health_log/bodyweight_edit', methods=['POST'])
     @login_required
-    @dept_required(['Farm', 'Management', 'Admin'])
+    @dept_required(['Breeder', 'Management', 'Admin'])
     def health_log_bodyweight_edit():
+        from app.models.models import FlockBodyweight, FlockBodyweightPartition
+
         log_id = request.form.get('log_id', type=int)
         new_date_str = request.form.get('new_date')
 
@@ -387,62 +353,30 @@ def register_api_routes(app):
             return jsonify({"success": False, "message": "Invalid date format."}), 400
 
         # Get original log
-        orig_log = DailyLog.query.get(log_id)
+        orig_log = FlockBodyweight.query.get(log_id)
         if not orig_log:
             return jsonify({"success": False, "message": "Original log not found."}), 404
 
         flock_id = orig_log.flock_id
 
-        # Check if target log exists for the new date
-        target_log = DailyLog.query.filter_by(flock_id=flock_id, date=new_date).first()
+        # Update date
+        orig_log.date = new_date
 
-        if not target_log:
-            target_log = DailyLog(
-                flock_id=flock_id,
-                date=new_date,            body_weight_male=0,
-                body_weight_female=0
-            )
-            db.session.add(target_log)
-            db.session.flush()
-
-        target_log.is_weighing_day = True
-
-        # If moving to a different date, clear original log's weight data
-        if orig_log.id != target_log.id:
-            # Transfer the standard bodyweight thresholds
-            target_log.standard_bw_male = orig_log.standard_bw_male
-            target_log.standard_bw_female = orig_log.standard_bw_female
-
-            orig_log.is_weighing_day = False
-            orig_log.body_weight_male = 0
-            orig_log.body_weight_female = 0
-            orig_log.uniformity_male = 0
-            orig_log.uniformity_female = 0
-            orig_log.standard_bw_male = None
-            orig_log.standard_bw_female = None
-
-            # Delete old partitions from original log
-            PartitionWeight.query.filter_by(log_id=orig_log.id).delete()
-
-        # Parse new weights and update target log
+        # Parse new weights and update log
         m_avg = request.form.get('avg_m', type=float) or 0.0
         f_avg = request.form.get('avg_f', type=float) or 0.0
         m_uni = request.form.get('uni_m', type=float) or 0.0
         f_uni = request.form.get('uni_f', type=float) or 0.0
 
-        target_log.body_weight_male = m_avg
-        target_log.body_weight_female = f_avg
+        orig_log.body_weight_male = m_avg
+        orig_log.body_weight_female = f_avg
 
         # Handle uniformity format
-        target_log.uniformity_male = m_uni if m_uni > 1.0 else (m_uni * 100) if m_uni > 0 else 0
-        target_log.uniformity_female = f_uni if f_uni > 1.0 else (f_uni * 100) if f_uni > 0 else 0
-
-        # We do not change standard_bw_male/female as it's typically set by the standard
-        # But if the user also submitted standard weights, we can update them
-        # target_log.standard_bw_male = orig_log.standard_bw_male (this logic is complex, keeping it as is or recalculating based on standard model)
+        orig_log.uniformity_male = m_uni if m_uni > 1.0 else (m_uni * 100) if m_uni > 0 else 0
+        orig_log.uniformity_female = f_uni if f_uni > 1.0 else (f_uni * 100) if f_uni > 0 else 0
 
         # Process partitions
-        existing_partitions = {pw.partition_name: pw for pw in target_log.partition_weights}
+        existing_partitions = {pw.partition_name: pw for pw in orig_log.partitions}
         new_partition_names = []
 
         # Iterate through possible partitions M1-M8, F1-F8
@@ -462,7 +396,7 @@ def register_api_routes(app):
                         existing_partitions[p_name].body_weight = bw
                         existing_partitions[p_name].uniformity = unif
                     else:
-                        pw = PartitionWeight(log_id=target_log.id, partition_name=p_name, body_weight=bw, uniformity=unif)
+                        pw = FlockBodyweightPartition(bodyweight_id=orig_log.id, partition_name=p_name, body_weight=bw, uniformity=unif)
                         db.session.add(pw)
 
         # Remove partitions that are no longer present
@@ -472,6 +406,25 @@ def register_api_routes(app):
 
         safe_commit()
         return jsonify({"success": True, "message": "Bodyweight updated successfully."}), 200
+
+    @app.route('/api/health_log/bodyweight_delete', methods=['POST'])
+    @login_required
+    @dept_required(['Breeder', 'Management', 'Admin'])
+    def health_log_bodyweight_delete():
+        log_id = request.form.get('log_id', type=int)
+
+        if not log_id:
+            return jsonify({"success": False, "message": "Log ID is required."}), 400
+
+        # Get original log from FlockBodyweight
+        from app.models.models import FlockBodyweight
+        log = FlockBodyweight.query.get(log_id)
+        if not log:
+            return jsonify({"success": False, "message": "Log not found."}), 404
+
+        db.session.delete(log)
+        safe_commit()
+        return jsonify({"success": True, "message": "Bodyweight entry deleted successfully."}), 200
 
     @app.route('/api/chat', methods=['POST'])
     @login_required
@@ -539,7 +492,7 @@ def register_api_routes(app):
 
     @app.route('/api/flock/<int:flock_id>/custom_data', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def get_custom_data(flock_id):
         flock = Flock.query.get_or_404(flock_id)
         req_data = request.get_json()
@@ -882,7 +835,7 @@ def register_api_routes(app):
 
                 float_fields = [
                     'feed_male_gp_bird', 'feed_female_gp_bird', 'egg_weight',
-                    'body_weight_male', 'body_weight_female', 'uniformity_male', 'uniformity_female',
+
                     'standard_bw_male', 'standard_bw_female'
                 ]
 
@@ -1009,10 +962,7 @@ def register_api_routes(app):
                             count_uni_f += 1
 
                 # Auto calculate average if not provided but partitions exist
-                if log.body_weight_male == 0 and count_bw_m > 0:
-                    log.body_weight_male = round_to_whole(sum_bw_m / count_bw_m)
-                if log.body_weight_female == 0 and count_bw_f > 0:
-                    log.body_weight_female = round_to_whole(sum_bw_f / count_bw_f)
+
                 if log.uniformity_male == 0.0 and count_uni_m > 0:
                     log.uniformity_male = sum_uni_m / count_uni_m
                 if log.uniformity_female == 0.0 and count_uni_f > 0:
@@ -1103,7 +1053,7 @@ def register_api_routes(app):
 
     @app.route('/api/chart_data/<int:flock_id>')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def get_chart_data(flock_id):
         flock = Flock.query.get_or_404(flock_id)
 

@@ -38,7 +38,7 @@
     <div class="card-header sticky-header bg-info text-white">Vaccine Schedule</div>
     <div class="card-body p-0">
         <table class="table table-bordered mb-0" style="table-layout: fixed;">
-            <thead class="table-light text-dark text-center">
+            <thead class="table-light text-body text-center">
                 <tr>
                     <th style="width: 14.28%;">Sun</th>
                     <th style="width: 14.28%;">Mon</th>
@@ -60,7 +60,7 @@
                         <div class="mt-1 overflow-auto" style="max-height: 80px;">
                             {% if day in vaccine_events_by_date %}
                                 {% for event in vaccine_events_by_date[day] %}
-                                    <div class="mb-1 p-1 rounded bg-info text-dark" style="font-size: 0.75rem;">
+                                    <div class="mb-1 p-1 rounded bg-info text-body" style="font-size: 0.75rem;">
                                         <strong>{{ event.flock.house.name }}</strong> | W{{ event.age }}<br>
                                         {{ event.obj.vaccine_name }}
                                     </div>
@@ -80,10 +80,10 @@
 {% if show_sampling %}
 <!-- Sampling Schedule Calendar -->
 <div class="card mb-4">
-    <div class="card-header sticky-header bg-warning text-dark">Sampling Schedule</div>
+    <div class="card-header sticky-header bg-warning text-body">Sampling Schedule</div>
     <div class="card-body p-0">
         <table class="table table-bordered mb-0" style="table-layout: fixed;">
-            <thead class="table-light text-dark text-center">
+            <thead class="table-light text-body text-center">
                 <tr>
                     <th style="width: 14.28%;">Sun</th>
                     <th style="width: 14.28%;">Mon</th>
@@ -105,7 +105,7 @@
                         <div class="mt-1 overflow-auto" style="max-height: 80px;">
                             {% if day in sampling_events_by_date %}
                                 {% for event in sampling_events_by_date[day] %}
-                                    <div class="mb-1 p-1 rounded bg-warning text-dark" style="font-size: 0.75rem;">
+                                    <div class="mb-1 p-1 rounded bg-warning text-body" style="font-size: 0.75rem;">
                                         <strong>{{ event.flock.house.name }}</strong> | W{{ event.age }}<br>
                                         {{ event.obj.test_type }}
                                     </div>

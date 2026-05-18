@@ -124,6 +124,16 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
         for h in hatchability_data:
             hatch_map[h.setting_date] = h
 
+    # 1b. Setup Bodyweight Map
+    bw_map = {}
+    try:
+        from app.models.models import FlockBodyweight
+        bws = FlockBodyweight.query.filter_by(flock_id=flock.id).all()
+        for bw in bws:
+            bw_map[bw.date] = bw
+    except Exception:
+        pass
+
     # 2. Setup Stock Variables
     if custom_start_stock:
         # If custom stock is provided (e.g. from historical sum), use it
@@ -272,6 +282,19 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
         if total_cull_eggs > 0:
             has_cull_eggs = True
 
+        # Lighting Hours Calculation
+        lighting_hours = 0
+        if log.light_on_time and log.light_off_time:
+            try:
+                fmt = '%H:%M'
+                t1 = datetime.strptime(log.light_on_time, fmt)
+                t2 = datetime.strptime(log.light_off_time, fmt)
+                diff = (t2 - t1).total_seconds() / 3600
+                if diff < 0: diff += 24
+                lighting_hours = round(diff, 1)
+            except:
+                pass
+
         # Feed Cleanup Hours Calculation
         feed_cleanup_hours = None
 
@@ -340,6 +363,7 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
 
             # Feed Cleanup Hours (SSOT Calculation)
             'feed_cleanup_hours': feed_cleanup_hours,
+            'lighting_hours': lighting_hours,
             # Raw
             'mortality_male': mort_m,
             'mortality_female': mort_f,
@@ -366,13 +390,11 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
             # Submission Status
             'is_daily_entry_submitted': log.is_daily_entry_submitted,
 
-            # BW (Use 0 if None/0 to keep data consistent, or None for charts?)
-            # For data processing, 0 is safer for math, None better for charts.
-            # We store raw values here.
-            'body_weight_male': log.body_weight_male,
-            'body_weight_female': log.body_weight_female,
-            'uniformity_male': log.uniformity_male,
-            'uniformity_female': log.uniformity_female,
+            # BW (from decoupled FlockBodyweight)
+            'body_weight_male': bw_map[log.date].body_weight_male if log.date in bw_map else None,
+            'body_weight_female': bw_map[log.date].body_weight_female if log.date in bw_map else None,
+            'uniformity_male': bw_map[log.date].uniformity_male if log.date in bw_map else None,
+            'uniformity_female': bw_map[log.date].uniformity_female if log.date in bw_map else None,
 
             # Derived %
             'mortality_male_pct': safe_div(mort_m, stock_m_start),
@@ -554,10 +576,10 @@ def aggregate_weekly_metrics(daily_stats):
         ws['stock_sum_female'] += d['stock_female_start']
 
         # Optimize dict lookups
-        bw_m = d['body_weight_male']
-        bw_f = d['body_weight_female']
-        unif_m = d['uniformity_male']
-        unif_f = d['uniformity_female']
+        bw_m = d.get('body_weight_male')
+        bw_f = d.get('body_weight_female')
+        unif_m = d.get('uniformity_male')
+        unif_f = d.get('uniformity_female')
         egg_wt = d.get('egg_weight')
         egg_set = d['egg_set']
         hatched = d['hatched_chicks']
@@ -732,10 +754,10 @@ def aggregate_monthly_metrics(daily_stats):
         ms['stock_sum_female'] += d['stock_female_start']
 
         # Optimize dict lookups
-        bw_m = d['body_weight_male']
-        bw_f = d['body_weight_female']
-        unif_m = d['uniformity_male']
-        unif_f = d['uniformity_female']
+        bw_m = d.get('body_weight_male')
+        bw_f = d.get('body_weight_female')
+        unif_m = d.get('uniformity_male')
+        unif_f = d.get('uniformity_female')
         egg_set = d['egg_set']
         hatched = d['hatched_chicks']
         log = d['log']

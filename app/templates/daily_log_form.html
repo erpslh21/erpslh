@@ -12,7 +12,7 @@
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <input type="hidden" name="override_validation" id="override_validation" value="false">
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-primary text-white">General Info</div>
+      <div class="card-header sticky-header bg-primary text-white">General Info <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label for="house_id" class="form-label">House</label>
@@ -49,31 +49,31 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-dark">Mortality & Culls (Production)</div>
+      <div class="card-header sticky-header bg-info text-body">Mortality & Culls <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="row">
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="mortality_male" id="mortality_male" placeholder="Mortality Male (Prod)" value="{{ log.mortality_male if log else 0 }}">
-              <label for="mortality_male">Mortality Male (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="mortality_male" id="mortality_male" placeholder="Mortality Male" value="{{ log.mortality_male if log else 0 }}">
+              <label for="mortality_male">Mortality Male</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="mortality_female" id="mortality_female" placeholder="Mortality Female (Prod)" value="{{ log.mortality_female if log else 0 }}">
-              <label for="mortality_female">Mortality Female (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="mortality_female" id="mortality_female" placeholder="Mortality Female" value="{{ log.mortality_female if log else 0 }}">
+              <label for="mortality_female">Mortality Female</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="culls_male" id="culls_male" placeholder="Culls Male (Prod)" value="{{ log.culls_male if log else 0 }}">
-              <label for="culls_male">Culls Male (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="culls_male" id="culls_male" placeholder="Culls Male" value="{{ log.culls_male if log else 0 }}">
+              <label for="culls_male">Culls Male</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="culls_female" id="culls_female" placeholder="Culls Female (Prod)" value="{{ log.culls_female if log else 0 }}">
-              <label for="culls_female">Culls Female (Prod)</label>
+              <input type="number" class="form-control form-control-lg" name="culls_female" id="culls_female" placeholder="Culls Female" value="{{ log.culls_female if log else 0 }}">
+              <label for="culls_female">Culls Female</label>
             </div>
           </div>
         </div>
@@ -83,8 +83,8 @@
                 Toggle Hospital Data (Male & Female)
             </button>
             <div class="collapse" id="hospitalSection">
-                <div class="card card-body bg-light">
-                    <h6 class="text-dark">Hospital Mortality & Culls</h6>
+                <div class="card card-body bg-light-subtle">
+                    <h6 class="text-body">Hospital Mortality & Culls</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Mortality Male (Hosp)</label>
@@ -112,8 +112,8 @@
                 Toggle Transfers (In/Out Production)
             </button>
             <div class="collapse" id="transferSection">
-                <div class="card card-body bg-light">
-                    <h6 class="text-dark">Transfers</h6>
+                <div class="card card-body bg-light-subtle">
+                    <h6 class="text-body">Transfers</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Males -> To Hospital</label>
@@ -142,7 +142,7 @@
                     </div>
                 </div>
                     <hr>
-                    <h6 class="text-dark">In/Out of Flock (Overall Stock)</h6>
+                    <h6 class="text-body">In/Out of Flock (Overall Stock)</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Males -> In Flock</label>
@@ -168,7 +168,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-success text-white">Feed & Lighting</div>
+      <div class="card-header sticky-header bg-success text-white">Feed & Lighting <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="row mb-3">
             <div class="col-12 col-md-6 mb-2">
@@ -247,7 +247,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-white">Water Readings (Enter Whole Numbers)</div>
+      <div class="card-header sticky-header bg-info text-white">Water Readings (Enter Whole Numbers) <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="row">
           <div class="col-12 col-md-4 mb-2">
@@ -278,7 +278,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-warning text-dark">Production</div>
+      <div class="card-header sticky-header bg-warning text-body">Production <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Eggs Collected</label>
@@ -299,7 +299,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-dark text-white">Remarks</div>
+      <div class="card-header sticky-header bg-dark text-white">Remarks <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Supervisor Notes for the Day</label>
@@ -311,7 +311,7 @@
     {% if vaccines_due %}
     <div class="card mb-3 border-info">
       <div class="card-header sticky-header bg-info text-white d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#vaccinesSection">
-        <span>Vaccinations (Pending / Done Today)</span>
+        <span>Vaccinations (Pending / Done Today) <span class="house-name-display"></span></span>
         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
       </div>
       <div class="collapse" id="vaccinesSection">
@@ -339,7 +339,7 @@
                                 {% if v.actual_date %}
                                     <span class="badge bg-success text-white">Done</span>
                                 {% else %}
-                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    <span class="badge bg-warning text-body">Pending</span>
                                 {% endif %}
                             </td>
                             <td>{{ v.age_code }}</td>
@@ -380,7 +380,7 @@
                   <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-warning icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width: 4rem; height: 4rem;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v2m0 4v.01" /><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" /></svg>
                   <h3>Are you sure?</h3>
                   <div class="text-muted" id="updateModalMessage">
-                      {{ 'Update' if log else 'Submit' }} <mark class="fw-bold bg-yellow text-dark px-1"><span id="modalHouseName"></span></mark> logs for <mark class="fw-bold bg-yellow text-dark px-1"><span id="modalDate"></span></mark>?
+                      {{ 'Update' if log else 'Submit' }} <mark class="fw-bold bg-yellow text-body px-1"><span id="modalHouseName"></span></mark> logs for <mark class="fw-bold bg-yellow text-body px-1"><span id="modalDate"></span></mark>?
                   </div>
                   <div id="fastingWarningDiv" class="alert alert-danger mt-3 d-none text-start small">
                       ⚠️ Alert: Today is a scheduled Fasting Day for this House based on the selected program. This will affect flock uniformity.
@@ -591,7 +591,20 @@
             });
     }
 
+
+    function updateHouseNameDisplay() {
+        let select = document.getElementById('house_id');
+        if (select && select.options.length > 0 && select.selectedIndex >= 0) {
+            let houseName = select.options[select.selectedIndex].text.trim();
+            let displayElements = document.querySelectorAll('.house-name-display');
+            displayElements.forEach(el => {
+                el.innerText = `(${houseName})`;
+            });
+        }
+    }
+
     function onSelectionChange() {
+        updateHouseNameDisplay();
         fetchLatestLogDate();
         {% if request.endpoint == 'daily_log' %}
         let houseId = document.getElementById('house_id').value;
@@ -624,6 +637,7 @@
 
     // Initialize
     window.onload = function() {
+        updateHouseNameDisplay();
         prefillPreviousData(); // Always call to get global validation state
         {% if not log %}
         fetchLatestLogDate();
@@ -785,7 +799,7 @@
         if (mortPctF > 1.0) {
             mortFWarning = '<span class="badge bg-danger text-white ms-2">CRITICAL: Abnormal data (possible wrong input)</span>';
         } else if (mortPctF > 0.05) {
-            mortFWarning = '<span class="badge bg-warning text-dark ms-2">Warning: High mortality</span>';
+            mortFWarning = '<span class="badge bg-warning text-body ms-2">Warning: High mortality</span>';
         }
 
         let mortMWarning = '';
@@ -798,24 +812,24 @@
         let eggWarning = '';
         let eggDiff = eggPct - yesterdayEggPct;
         if (eggDiff < -2.0) {
-             eggWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Drop > 2%</span>';
+             eggWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 2%</span>';
         } else if (eggDiff > 2.0) {
              // Exception: Week 25-33
              if (flockAgeWeeks >= 25 && flockAgeWeeks <= 33) {
                  // Do not warn
              } else {
-                 eggWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Increase > 2%</span>';
+                 eggWarning = '<span class="badge bg-warning text-body ms-2">Warning: Increase > 2%</span>';
              }
         }
 
         let feedFWarning = '';
         if (inFeedF > 0 && (yesterdayFeedF - inFeedF) > 3) {
-             feedFWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Drop > 3g</span>';
+             feedFWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 3g</span>';
         }
 
         let feedMWarning = '';
         if (inFeedM > 0 && (yesterdayFeedM - inFeedM) > 3) {
-             feedMWarning = '<span class="badge bg-warning text-dark ms-2">Warning: Drop > 3g</span>';
+             feedMWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 3g</span>';
         }
 
         let waterWarning = '';
@@ -826,7 +840,7 @@
         // Build HTML
         let html = `
             <div class="card border-0 shadow-none text-start">
-                <div class="card-header bg-light py-2">
+                <div class="card-header bg-light-subtle py-2">
                     <h5 class="card-title mb-0 text-muted">Summary Details</h5>
                 </div>
                 <ul class="list-group list-group-flush small">

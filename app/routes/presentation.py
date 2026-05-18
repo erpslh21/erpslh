@@ -32,7 +32,7 @@ def get_annotations(flock_id, chart_identifier):
 
 @presentation_bp.route('/create', methods=['POST'])
 @login_required
-@dept_required(['Admin', 'Farm', 'Management'])
+@dept_required(['Admin', 'Breeder', 'Management'])
 def create_annotation():
     data = request.get_json()
     if not data or 'flock_id' not in data or 'chart_identifier' not in data or 'anchor_data_x' not in data or 'anchor_data_y' not in data or 'fabric_json' not in data:
@@ -55,7 +55,7 @@ def create_annotation():
 
 @presentation_bp.route('/update/<int:annotation_id>', methods=['PUT'])
 @login_required
-@dept_required(['Admin', 'Farm', 'Management'])
+@dept_required(['Admin', 'Breeder', 'Management'])
 def update_annotation(annotation_id):
     data = request.get_json()
     if not data:
@@ -78,7 +78,7 @@ def update_annotation(annotation_id):
 
 @presentation_bp.route('/delete/<int:annotation_id>', methods=['DELETE'])
 @login_required
-@dept_required(['Admin', 'Farm', 'Management'])
+@dept_required(['Admin', 'Breeder', 'Management'])
 def delete_annotation(annotation_id):
     try:
         annotation = StudioAnnotation.query.get_or_404(annotation_id)

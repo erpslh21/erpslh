@@ -1,556 +1,761 @@
-{% extends 'base_tabler.html' %}
-
-{% block content %}
+{% extends 'base_tabler.html' %} {% block content %}
 <div class="container-xl">
-    <!-- Header -->
-    <div class="row align-items-center mb-3">
-        <div class="col">
-            <h2 class="page-title">
-                {{ flock.farm_name }} - {{ flock.house_name }}
-            </h2>
-            <div class="dropdown mt-2">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                    Switch Flock
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1" style="z-index: 1050;">
-                    {% for f in active_flocks %}
-                    <li><a class="dropdown-item switch-house-link" href="{{ url_for('broiler.flock_detail', flock_id=f.id) }}">{{ f.farm_name }} - {{ f.house_name }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div class="text-muted mt-2">
-                Intake Date: {{ flock.intake_date.strftime('%Y-%m-%d') if flock.intake_date else 'N/A' }}
-                &bull; Status:
-                {% if flock.is_active %}
-                    <span class="badge bg-success text-white">Active</span>
-                {% else %}
-                    <span class="badge bg-secondary text-white">Historical</span>
-                {% endif %}
-            </div>
-        </div>
-        <div class="col-auto ms-auto d-print-none">
-            {% if real_is_admin %}
-            <a href="#" class="btn btn-outline-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteFlockModal">
-                Delete Flock
-            </a>
-            {% endif %}
-            <button class="btn btn-outline-info me-2" data-bs-toggle="modal" data-bs-target="#generateBroilerReportModal">
-                Generate Daily House Report
-            </button>
-            <a href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}" class="btn btn-primary">
-                Add Daily Log
-            </a>
-        </div>
-    </div>
-
-    <!-- Tabs Layout -->
-    <div class="card">
-        <ul class="nav nav-tabs" data-bs-toggle="tabs">
-            <li class="nav-item">
-                <a href="#tabs-daily-logs" class="nav-link active" data-bs-toggle="tab">Daily Logs</a>
-            </li>
-            <li class="nav-item">
-                <a href="#tabs-performance-charts" class="nav-link" data-bs-toggle="tab">Performance Charts</a>
-            </li>
+  <!-- Header -->
+  <div class="row align-items-center mb-3">
+    <div class="col">
+      <h2 class="page-title">{{ flock.farm_name }} - {{ flock.house_name }}</h2>
+      <div class="dropdown mt-2">
+        <button
+          class="btn btn-secondary dropdown-toggle"
+          type="button"
+          id="dropdownMenuButton1"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          Switch Flock
+        </button>
+        <ul
+          class="dropdown-menu"
+          aria-labelledby="dropdownMenuButton1"
+          style="z-index: 1050"
+        >
+          {% for f in active_flocks %}
+          <li>
+            <a
+              class="dropdown-item switch-house-link"
+              href="{{ url_for('broiler.flock_detail', flock_id=f.id) }}"
+              >{{ f.farm_name }} - {{ f.house_name }}</a
+            >
+          </li>
+          {% endfor %}
         </ul>
-        <div class="card-body">
-            <div class="tab-content">
-                <!-- Tab 1: Daily Logs -->
-                <div class="tab-pane active show" id="tabs-daily-logs">
-                    <div class="table-responsive">
-                        <table class="table table-vcenter card-table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Day</th>
-                                    <th>Death Count</th>
-                                    <th>Balance</th>
-                                    <th>Feed Daily Use (kg)</th>
-                                    <th>Gram per Bird</th>
-                                    <th>Body Weight (g)</th>
-                                    <th>Weight Gain (g)</th>
-                                    <th>Cumulative FCR</th>
-                                    <th>Standard FCR</th>
-                                    <th>Remarks</th>
-                                    {% if real_is_admin %}
-                                    <th>Actions</th>
-                                    {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for m in metrics %}
-                                <tr>
-                                    <td>{{ m.get('date').strftime('%Y-%m-%d') if m.get('date') else '' }}</td>
-                                    <td>{{ m.get('day_number') }}</td>
-                                    <td>{{ m.get('death_count', 0) }}</td>
-                                    <td>{{ m.get('balance', 0) }}</td>
-                                    <td>{{ '%.2f'|format(((m.get('feed_daily_use_kg') or 0) | float)) }}</td>
-                                    <td>{{ '%.2f'|format(((m.get('gram_per_bird') or 0) | float)) }}</td>
-                                    <td>{{ '%.2f'|format(((m.get('body_weight_g') or 0) | float)) }}</td>
-                                    <td>{{ '%.2f'|format(((m.get('weight_gain') or 0) | float)) }}</td>
-                                    <td>{{ '%.3f'|format(((m.get('cumulative_fcr') or 0) | float)) }}</td>
-                                    <td>{{ '%.3f'|format(((m.get('standard_fcr') or 0) | float)) if m.get('standard_fcr') is not none else '-' }}</td>
-                                    <td>{{ m.get('remarks') or '' }}</td>
-                                    {% if real_is_admin %}
-                                    <td>
-                                        {% if m.get('log_id') %}
-                                        <form action="{{ url_for('broiler.delete_daily_log', log_id=m.get('log_id')) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this daily log? Metrics will be removed.');">
-                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <button class="btn btn-sm btn-outline-danger py-0 d-block w-100" style="font-size: 0.75rem;">Del</button>
-                                        </form>
-                                        {% endif %}
-                                    </td>
-                                    {% endif %}
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="12" class="text-center">No daily logs found.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Tab 2: Performance Charts -->
-                <div class="tab-pane" id="tabs-performance-charts">
-                    <!-- Day Picker -->
-                    <div class="d-flex align-items-center mb-3">
-                        <label class="me-2">Start Day:</label>
-                        <input type="number" id="startDay" class="form-control form-control-sm w-auto d-inline-block" min="1" value="1">
-                        <label class="ms-3 me-2">End Day:</label>
-                        <input type="number" id="endDay" class="form-control form-control-sm w-auto d-inline-block" min="1">
-                        <button class="btn btn-sm btn-outline-primary ms-3" onclick="filterCharts()">Apply Filter</button>
-                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="resetCharts()">Reset</button>
-                    </div>
-
-                    <div class="row row-cards">
-                        <!-- FCR Chart -->
-                        <div class="col-12 mb-3">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">FCR Tracking</h3>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="fcrChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Combined Body Weight and Mortality Chart -->
-                        <div class="col-12 mb-3">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h3 class="card-title">Mortality (%) and Bodyweight (g)</h3>
-                                </div>
-                                <div class="card-body">
-                                    <canvas id="combinedChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </div>
+      <div class="text-muted mt-2">
+        Intake Date: {{ flock.intake_date.strftime('%Y-%m-%d') if
+        flock.intake_date else 'N/A' }} &bull; Status: {% if flock.is_active %}
+        <span class="badge bg-success text-white">Active</span>
+        {% else %}
+        <span class="badge bg-secondary text-white">Historical</span>
+        {% endif %}
+      </div>
     </div>
+    <div class="col-auto ms-auto d-print-none">
+      {% if real_is_admin %}
+      <a
+        href="#"
+        class="btn btn-outline-danger me-2"
+        data-bs-toggle="modal"
+        data-bs-target="#deleteFlockModal"
+      >
+        Delete Flock
+      </a>
+      {% endif %}
+      <button
+        class="btn btn-outline-info me-2"
+        data-bs-toggle="modal"
+        data-bs-target="#generateBroilerReportModal"
+      >
+        Generate Daily House Report
+      </button>
+      <a
+        href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}"
+        class="btn btn-primary"
+      >
+        Add Daily Log
+      </a>
+    </div>
+  </div>
 
-<!-- Delete Flock Modal -->
-<div class="modal fade" id="deleteFlockModal" tabindex="-1" aria-labelledby="deleteFlockModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteFlockModalLabel">Delete Flock</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <!-- Tabs Layout -->
+  <div class="card">
+    <ul class="nav nav-tabs" data-bs-toggle="tabs">
+      <li class="nav-item">
+        <a href="#tabs-daily-logs" class="nav-link active" data-bs-toggle="tab"
+          >Daily Logs</a
+        >
+      </li>
+      <li class="nav-item">
+        <a href="#tabs-performance-charts" class="nav-link" data-bs-toggle="tab"
+          >Performance Charts</a
+        >
+      </li>
+    </ul>
+    <div class="card-body">
+      <div class="tab-content">
+        <!-- Tab 1: Daily Logs -->
+        <div class="tab-pane active show" id="tabs-daily-logs">
+          <div class="table-responsive">
+            <table class="table table-vcenter card-table table-striped">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Day</th>
+                  <th>Death Count</th>
+                  <th>Balance</th>
+                  <th>Feed Daily Use (kg)</th>
+                  <th>Gram per Bird</th>
+                  <th>Body Weight (g)</th>
+                  <th>Weight Gain (g)</th>
+                  <th>Cumulative FCR</th>
+                  <th>Standard FCR</th>
+                  <th>Remarks</th>
+                  {% if real_is_admin %}
+                  <th>Actions</th>
+                  {% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for m in metrics %}
+                <tr>
+                  <td>
+                    {{ m.get('date').strftime('%Y-%m-%d') if m.get('date') else
+                    '' }}
+                  </td>
+                  <td>{{ m.get('day_number') }}</td>
+                  <td>{{ m.get('death_count', 0) }}</td>
+                  <td>{{ m.get('balance', 0) }}</td>
+                  <td>
+                    {{ '%.2f'|format(((m.get('feed_daily_use_kg') or 0) |
+                    float)) }}
+                  </td>
+                  <td>
+                    {{ '%.2f'|format(((m.get('gram_per_bird') or 0) | float)) }}
+                  </td>
+                  <td>
+                    {{ '%.2f'|format(((m.get('body_weight_g') or 0) | float)) }}
+                  </td>
+                  <td>
+                    {{ '%.2f'|format(((m.get('weight_gain') or 0) | float)) }}
+                  </td>
+                  <td>
+                    {{ '%.3f'|format(((m.get('cumulative_fcr') or 0) | float))
+                    }}
+                  </td>
+                  <td>
+                    {{ '%.3f'|format(((m.get('standard_fcr') or 0) | float)) if
+                    m.get('standard_fcr') is not none else '-' }}
+                  </td>
+                  <td>{{ m.get('remarks') or '' }}</td>
+                  {% if real_is_admin %}
+                  <td>
+                    {% if m.get('log_id') %}
+                    <form
+                      action="{{ url_for('broiler.delete_daily_log', log_id=m.get('log_id')) }}"
+                      method="POST"
+                      class="d-inline"
+                      onsubmit="
+                        return confirm(
+                          'Delete this daily log? Metrics will be removed.',
+                        );
+                      "
+                    >
+                      <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token() }}"
+                      />
+                      <button
+                        class="btn btn-sm btn-outline-danger py-0 d-block w-100"
+                        style="font-size: 0.75rem"
+                      >
+                        Del
+                      </button>
+                    </form>
+                    {% endif %}
+                  </td>
+                  {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="12" class="text-center">No daily logs found.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Performance Charts -->
+        <div class="tab-pane" id="tabs-performance-charts">
+          <!-- Day Picker -->
+          <div class="d-flex align-items-center mb-3">
+            <label class="me-2">Start Day:</label>
+            <input
+              type="number"
+              id="startDay"
+              class="form-control form-control-sm w-auto d-inline-block"
+              min="1"
+              value="1"
+            />
+            <label class="ms-3 me-2">End Day:</label>
+            <input
+              type="number"
+              id="endDay"
+              class="form-control form-control-sm w-auto d-inline-block"
+              min="1"
+            />
+            <button
+              class="btn btn-sm btn-outline-primary ms-3"
+              onclick="filterCharts()"
+            >
+              Apply Filter
+            </button>
+            <button
+              class="btn btn-sm btn-outline-secondary ms-2"
+              onclick="resetCharts()"
+            >
+              Reset
+            </button>
+          </div>
+
+          <div class="row row-cards">
+            <!-- FCR Chart -->
+            <div class="col-12 mb-3">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">FCR Tracking</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="fcrChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Combined Body Weight and Mortality Chart -->
+            <div class="col-12 mb-3">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Mortality (%) and Bodyweight (g)</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="combinedChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="modal-body">
-        Are you sure you want to delete this flock? This action cannot be undone and will delete all associated daily logs.
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-link link-secondary me-auto" data-bs-dismiss="modal">Cancel</button>
-        <form action="{{ url_for('broiler.delete_flock', flock_id=flock.id) }}" method="POST">
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-          <button type="submit" class="btn btn-danger">Yes, Delete Flock</button>
-        </form>
+    </div>
+  </div>
+
+  <!-- Delete Flock Modal -->
+  <div
+    class="modal fade"
+    id="deleteFlockModal"
+    tabindex="-1"
+    aria-labelledby="deleteFlockModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteFlockModalLabel">Delete Flock</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this flock? This action cannot be
+          undone and will delete all associated daily logs.
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-link link-secondary me-auto"
+            data-bs-dismiss="modal"
+          >
+            Cancel
+          </button>
+          <form
+            action="{{ url_for('broiler.delete_flock', flock_id=flock.id) }}"
+            method="POST"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn btn-danger">
+              Yes, Delete Flock
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-</div>
-
 <!-- Generate Broiler Daily Report Modal -->
-<div class="modal modal-blur fade" id="generateBroilerReportModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div
+  class="modal modal-blur fade"
+  id="generateBroilerReportModal"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Generate Daily House Report</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
           <label class="form-label">Report Date</label>
-          <input type="date" class="form-control" id="broilerReportDate" value="{{ datetime.now().date().strftime('%Y-%m-%d') }}">
+          <input
+            type="date"
+            class="form-control"
+            id="broilerReportDate"
+            value="{{ datetime.now().date().strftime('%Y-%m-%d') }}"
+          />
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn me-auto" data-bs-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" id="btnGenerateBroilerReport">Generate PDF</button>
+        <button type="button" class="btn me-auto" data-bs-dismiss="modal">
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="btnGenerateBroilerReport"
+        >
+          Generate PDF
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Hidden container for rendering charts and canvas before converting to PDF -->
-<div id="broilerReportRenderContainer" style="position: absolute; left: -9999px; top: -9999px; width: 297mm; height: 210mm; background: white; box-sizing: border-box; padding: 10mm; font-family: sans-serif;">
+<div
+  id="broilerReportRenderContainer"
+  style="
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    width: 297mm;
+    height: 210mm;
+    background: white;
+    box-sizing: border-box;
+    padding: 10mm;
+    font-family: sans-serif;
+  "
+></div>
+
+<div
+  id="broilerReportGenerationOverlay"
+  style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 9999;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  "
+>
+  <div
+    class="spinner-border text-primary"
+    role="status"
+    style="width: 3rem; height: 3rem; margin-bottom: 20px"
+  ></div>
+  <p
+    class="loader-text"
+    id="broilerReportGenerationStatus"
+    style="font-size: 1.25rem; font-weight: 500; color: #333"
+  >
+    Initializing...
+  </p>
 </div>
 
-<div id="broilerReportGenerationOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; justify-content: center; align-items: center;">
-    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; margin-bottom: 20px;"></div>
-    <p class="loader-text" id="broilerReportGenerationStatus" style="font-size: 1.25rem; font-weight: 500; color: #333;">Initializing...</p>
-</div>
-
-{% endblock %}
-
-{% block extra_scripts %}
+{% endblock %} {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>
-    Chart.register(ChartDataLabels);
-    document.addEventListener("DOMContentLoaded", function() {
-        // Parse chart data from backend
-        const chartData = {{ chart_data | tojson }};
-        const labels = chartData.days;
+  Chart.register(ChartDataLabels);
+  document.addEventListener("DOMContentLoaded", function() {
+      // Parse chart data from backend
+      const chartData = {{ chart_data | tojson }};
+      const labels = chartData.days;
 
-        let chartFCR, chartCombined;
+      let chartFCR, chartCombined;
 
-        // FCR Chart
-        const ctxFCR = document.getElementById('fcrChart');
-        if (ctxFCR) {
-            chartFCR = new Chart(ctxFCR, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Actual FCR',
-                            data: chartData.actual_fcr,
-                            borderColor: 'blue',
-                            backgroundColor: 'rgba(0, 0, 255, 0.1)',
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.1,
-                            datalabels: {
-                                display: true,
-                                color: 'blue',
-                                align: 'top',
-                                anchor: 'end',
-                                formatter: function(value) {
-                                    return value.toFixed(2);
-                                }
-                            }
-                        },
-                        {
-                            label: 'Standard FCR',
-                            data: chartData.standard_fcr,
-                            borderColor: 'gray',
-                            borderDash: [5, 5],
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.1,
-                            datalabels: {
-                                display: false
-                            }
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        tooltip: {
-                            enabled: false
-                        },
-                        datalabels: {
-                            font: {
-                                size: 10
-                            },
-                            formatter: function(value, context) {
-                                return value.toFixed(2);
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Day of Life'
-                            }
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: 'FCR'
-                            },
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        }
+      // FCR Chart
+      const ctxFCR = document.getElementById('fcrChart');
+      if (ctxFCR) {
+          chartFCR = new Chart(ctxFCR, {
+              type: 'line',
+              data: {
+                  labels: labels,
+                  datasets: [
+                      {
+                          label: 'Actual FCR',
+                          data: chartData.actual_fcr,
+                          borderColor: 'blue',
+                          backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                          borderWidth: 2,
+                          fill: false,
+                          tension: 0.1,
+                          datalabels: {
+                              display: true,
+                              color: 'blue',
+                              align: 'top',
+                              anchor: 'end',
+                              formatter: function(value) {
+                                  return value.toFixed(2);
+                              }
+                          }
+                      },
+                      {
+                          label: 'Standard FCR',
+                          data: chartData.standard_fcr,
+                          borderColor: 'gray',
+                          borderDash: [5, 5],
+                          borderWidth: 2,
+                          fill: false,
+                          tension: 0.1,
+                          datalabels: {
+                              display: false
+                          }
+                      }
+                  ]
+              },
+              options: {
+                  responsive: true,
+                  plugins: {
+                      tooltip: {
+                          enabled: false
+                      },
+                      datalabels: {
+                          font: {
+                              size: 10
+                          },
+                          formatter: function(value, context) {
+                              return value.toFixed(2);
+                          }
+                      }
+                  },
+                  scales: {
+                      x: {
+                          title: {
+                              display: true,
+                              text: 'Day of Life'
+                          }
+                      },
+                      y: {
+                          title: {
+                              display: true,
+                              text: 'FCR'
+                          },
+                          beginAtZero: true
+                      }
+                  }
+              }
+          });
+      }
 
-        // Combined Body Weight & Mortality Chart
-        const ctxCombined = document.getElementById('combinedChart');
-        if (ctxCombined) {
-            chartCombined = new Chart(ctxCombined, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: 'Body weight (g)',
-                            data: chartData.body_weights,
-                            backgroundColor: 'rgba(237, 125, 49, 1)',
-                            yAxisID: 'y1',
-                            order: 2,
-                            datalabels: {
-                                display: true,
-                                color: 'rgba(237, 125, 49, 1)',
-                                align: 'top',
-                                anchor: 'end',
-                                formatter: function(value) {
-                                    return Math.round(value);
-                                }
-                            }
-                        },
-                        {
-                            label: 'Weight Gain (g)',
-                            data: chartData.weight_gains,
-                            backgroundColor: 'rgba(56, 118, 29, 1)',
-                            yAxisID: 'y1',
-                            order: 3,
-                            datalabels: {
-                                display: false
-                            }
-                        },
-                        {
-                            label: 'Mortality %',
-                            data: chartData.mortality_pct,
-                            type: 'line',
-                            borderColor: 'rgba(21, 96, 130, 1)',
-                            backgroundColor: 'rgba(21, 96, 130, 1)',
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0.1,
-                            yAxisID: 'y2',
-                            order: 1,
-                            datalabels: {
-                                display: true,
-                                color: 'rgba(21, 96, 130, 1)',
-                                align: 'top',
-                                anchor: 'end',
-                                formatter: function(value) {
-                                    return value.toFixed(2) + '%';
-                                }
-                            }
-                        },
-                        {
-                            label: 'Standard Mortality %',
-                            data: labels.map(day => day <= 7 ? 0.5 : 0.05),
-                            type: 'line',
-                            borderColor: 'red',
-                            borderDash: [5, 5],
-                            borderWidth: 2,
-                            fill: false,
-                            tension: 0,
-                            yAxisID: 'y2',
-                            order: 0,
-                            datalabels: {
-                                display: false
-                            }
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        tooltip: {
-                            enabled: false
-                        },
-                        datalabels: {
-                            font: {
-                                size: 10
-                            }
-                        }
-                    },
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: 'Day of Life'
-                            }
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            title: {
-                                display: true,
-                                text: 'Weight (g)'
-                            },
-                            beginAtZero: true,
-                            grid: {
-                                drawOnChartArea: false, // only want the grid lines for one axis to show up
-                            }
-                        },
-                        y2: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                            title: {
-                                display: true,
-                                text: 'Mortality (%)'
-                            },
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return value + '%';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
+      // Combined Body Weight & Mortality Chart
+      const ctxCombined = document.getElementById('combinedChart');
+      if (ctxCombined) {
+          chartCombined = new Chart(ctxCombined, {
+              type: 'bar',
+              data: {
+                  labels: labels,
+                  datasets: [
+                      {
+                          label: 'Body weight (g)',
+                          data: chartData.body_weights,
+                          backgroundColor: 'rgba(237, 125, 49, 1)',
+                          yAxisID: 'y1',
+                          order: 2,
+                          datalabels: {
+                              display: true,
+                              color: 'rgba(237, 125, 49, 1)',
+                              align: 'top',
+                              anchor: 'end',
+                              formatter: function(value) {
+                                  return Math.round(value);
+                              }
+                          }
+                      },
+                      {
+                          label: 'Weight Gain (g)',
+                          data: chartData.weight_gains,
+                          backgroundColor: 'rgba(56, 118, 29, 1)',
+                          yAxisID: 'y1',
+                          order: 3,
+                          datalabels: {
+                              display: false
+                          }
+                      },
+                      {
+                          label: 'Mortality %',
+                          data: chartData.mortality_pct,
+                          type: 'line',
+                          borderColor: 'rgba(21, 96, 130, 1)',
+                          backgroundColor: 'rgba(21, 96, 130, 1)',
+                          borderWidth: 2,
+                          fill: false,
+                          tension: 0.1,
+                          yAxisID: 'y2',
+                          order: 1,
+                          datalabels: {
+                              display: true,
+                              color: 'rgba(21, 96, 130, 1)',
+                              align: 'top',
+                              anchor: 'end',
+                              formatter: function(value) {
+                                  return value.toFixed(2) + '%';
+                              }
+                          }
+                      },
+                      {
+                          label: 'Standard Mortality %',
+                          data: labels.map(day => day <= 7 ? 0.5 : 0.05),
+                          type: 'line',
+                          borderColor: 'red',
+                          borderDash: [5, 5],
+                          borderWidth: 2,
+                          fill: false,
+                          tension: 0,
+                          yAxisID: 'y2',
+                          order: 0,
+                          datalabels: {
+                              display: false
+                          }
+                      }
+                  ]
+              },
+              options: {
+                  responsive: true,
+                  plugins: {
+                      tooltip: {
+                          enabled: false
+                      },
+                      datalabels: {
+                          font: {
+                              size: 10
+                          }
+                      }
+                  },
+                  interaction: {
+                      mode: 'index',
+                      intersect: false,
+                  },
+                  scales: {
+                      x: {
+                          title: {
+                              display: true,
+                              text: 'Day of Life'
+                          }
+                      },
+                      y1: {
+                          type: 'linear',
+                          display: true,
+                          position: 'right',
+                          title: {
+                              display: true,
+                              text: 'Weight (g)'
+                          },
+                          beginAtZero: true,
+                          grid: {
+                              drawOnChartArea: false, // only want the grid lines for one axis to show up
+                          }
+                      },
+                      y2: {
+                          type: 'linear',
+                          display: true,
+                          position: 'left',
+                          title: {
+                              display: true,
+                              text: 'Mortality (%)'
+                          },
+                          beginAtZero: true,
+                          ticks: {
+                              callback: function(value) {
+                                  return value + '%';
+                              }
+                          }
+                      }
+                  }
+              }
+          });
+      }
 
-        // Fix blank chart issue by resizing when tab is shown
-        const chartTabButton = document.querySelector('a[href="#tabs-performance-charts"]');
-        if (chartTabButton) {
-            chartTabButton.addEventListener('shown.bs.tab', function (e) {
-                if (chartFCR) chartFCR.resize();
-                if (chartCombined) chartCombined.resize();
-            });
-        }
+      // Fix blank chart issue by resizing when tab is shown
+      const chartTabButton = document.querySelector('a[href="#tabs-performance-charts"]');
+      if (chartTabButton) {
+          chartTabButton.addEventListener('shown.bs.tab', function (e) {
+              if (chartFCR) chartFCR.resize();
+              if (chartCombined) chartCombined.resize();
+          });
+      }
 
-        // Setup filter defaults
-        if (labels.length > 0) {
-            document.getElementById('endDay').value = labels[labels.length - 1];
-        }
+      // Setup filter defaults
+      if (labels.length > 0) {
+          document.getElementById('endDay').value = labels[labels.length - 1];
+      }
 
-        window.filterCharts = function() {
-            let start = parseInt(document.getElementById('startDay').value);
-            let end = parseInt(document.getElementById('endDay').value);
+      window.filterCharts = function() {
+          let start = parseInt(document.getElementById('startDay').value);
+          let end = parseInt(document.getElementById('endDay').value);
 
-            if (isNaN(start)) start = 1;
-            if (isNaN(end)) end = labels[labels.length - 1] || 1;
+          if (isNaN(start)) start = 1;
+          if (isNaN(end)) end = labels[labels.length - 1] || 1;
 
-            let startIndex = labels.findIndex(day => day >= start);
-            let endIndex = labels.findIndex(day => day > end);
-            if (startIndex === -1) startIndex = 0;
-            if (endIndex === -1) endIndex = labels.length;
+          let startIndex = labels.findIndex(day => day >= start);
+          let endIndex = labels.findIndex(day => day > end);
+          if (startIndex === -1) startIndex = 0;
+          if (endIndex === -1) endIndex = labels.length;
 
-            const filteredLabels = labels.slice(startIndex, endIndex);
+          const filteredLabels = labels.slice(startIndex, endIndex);
 
-            // Filter FCR Chart
-            if (chartFCR) {
-                chartFCR.data.labels = filteredLabels;
-                chartFCR.data.datasets[0].data = chartData.actual_fcr.slice(startIndex, endIndex);
-                chartFCR.data.datasets[1].data = chartData.standard_fcr.slice(startIndex, endIndex);
-                chartFCR.update();
-            }
+          // Filter FCR Chart
+          if (chartFCR) {
+              chartFCR.data.labels = filteredLabels;
+              chartFCR.data.datasets[0].data = chartData.actual_fcr.slice(startIndex, endIndex);
+              chartFCR.data.datasets[1].data = chartData.standard_fcr.slice(startIndex, endIndex);
+              chartFCR.update();
+          }
 
-            // Filter Combined Chart
-            if (chartCombined) {
-                chartCombined.data.labels = filteredLabels;
-                chartCombined.data.datasets[0].data = chartData.body_weights.slice(startIndex, endIndex);
-                chartCombined.data.datasets[1].data = chartData.weight_gains.slice(startIndex, endIndex);
-                chartCombined.data.datasets[2].data = chartData.mortality_pct.slice(startIndex, endIndex);
-                chartCombined.data.datasets[3].data = filteredLabels.map(day => day <= 7 ? 0.5 : 0.05);
-                chartCombined.update();
-            }
-        };
+          // Filter Combined Chart
+          if (chartCombined) {
+              chartCombined.data.labels = filteredLabels;
+              chartCombined.data.datasets[0].data = chartData.body_weights.slice(startIndex, endIndex);
+              chartCombined.data.datasets[1].data = chartData.weight_gains.slice(startIndex, endIndex);
+              chartCombined.data.datasets[2].data = chartData.mortality_pct.slice(startIndex, endIndex);
+              chartCombined.data.datasets[3].data = filteredLabels.map(day => day <= 7 ? 0.5 : 0.05);
+              chartCombined.update();
+          }
+      };
 
-        window.resetCharts = function() {
-            document.getElementById('startDay').value = 1;
-            document.getElementById('endDay').value = labels.length > 0 ? labels[labels.length - 1] : '';
+      window.resetCharts = function() {
+          document.getElementById('startDay').value = 1;
+          document.getElementById('endDay').value = labels.length > 0 ? labels[labels.length - 1] : '';
 
-            if (chartFCR) {
-                chartFCR.data.labels = labels;
-                chartFCR.data.datasets[0].data = chartData.actual_fcr;
-                chartFCR.data.datasets[1].data = chartData.standard_fcr;
-                chartFCR.update();
-            }
+          if (chartFCR) {
+              chartFCR.data.labels = labels;
+              chartFCR.data.datasets[0].data = chartData.actual_fcr;
+              chartFCR.data.datasets[1].data = chartData.standard_fcr;
+              chartFCR.update();
+          }
 
-            if (chartCombined) {
-                chartCombined.data.labels = labels;
-                chartCombined.data.datasets[0].data = chartData.body_weights;
-                chartCombined.data.datasets[1].data = chartData.weight_gains;
-                chartCombined.data.datasets[2].data = chartData.mortality_pct;
-                chartCombined.data.datasets[3].data = labels.map(day => day <= 7 ? 0.5 : 0.05);
-                chartCombined.update();
-            }
-        };
-    });
+          if (chartCombined) {
+              chartCombined.data.labels = labels;
+              chartCombined.data.datasets[0].data = chartData.body_weights;
+              chartCombined.data.datasets[1].data = chartData.weight_gains;
+              chartCombined.data.datasets[2].data = chartData.mortality_pct;
+              chartCombined.data.datasets[3].data = labels.map(day => day <= 7 ? 0.5 : 0.05);
+              chartCombined.update();
+          }
+      };
+  });
 </script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- We assume Chart.js and chartjs-plugin-datalabels are loaded in base or here -->
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const btnGenerate = document.getElementById('btnGenerateBroilerReport');
-        if (!btnGenerate) return;
+  document.addEventListener("DOMContentLoaded", function () {
+    const btnGenerate = document.getElementById("btnGenerateBroilerReport");
+    if (!btnGenerate) return;
 
-        btnGenerate.addEventListener('click', async function() {
-            const dateStr = document.getElementById('broilerReportDate').value;
-            if (!dateStr) {
-                alert("Please select a date.");
-                return;
-            }
+    btnGenerate.addEventListener("click", async function () {
+      const dateStr = document.getElementById("broilerReportDate").value;
+      if (!dateStr) {
+        alert("Please select a date.");
+        return;
+      }
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById('generateBroilerReportModal'));
-            modal.hide();
+      const modal = bootstrap.Modal.getInstance(
+        document.getElementById("generateBroilerReportModal"),
+      );
+      modal.hide();
 
-            const overlay = document.getElementById('broilerReportGenerationOverlay');
-            const statusText = document.getElementById('broilerReportGenerationStatus');
-            const container = document.getElementById('broilerReportRenderContainer');
+      const overlay = document.getElementById("broilerReportGenerationOverlay");
+      const statusText = document.getElementById(
+        "broilerReportGenerationStatus",
+      );
+      const container = document.getElementById("broilerReportRenderContainer");
 
-            overlay.style.display = 'flex';
-            statusText.innerText = "Fetching data...";
+      overlay.style.display = "flex";
+      statusText.innerText = "Fetching data...";
 
-            try {
-                const response = await fetch(`/api/broiler/report_data?flock_id={{ flock.id }}&date=${dateStr}`);
-                if (!response.ok) throw new Error("Network response was not ok");
-                const data = await response.json();
+      // Temporarily force light mode for PDF generation
+      const originalTheme =
+        document.documentElement.getAttribute("data-bs-theme");
+      document.documentElement.setAttribute("data-bs-theme", "light");
+      window.dispatchEvent(
+        new CustomEvent("themeChanged", { detail: { theme: "light" } }),
+      );
 
-                if (data.empty) {
-                    alert("No data available for this date.");
-                    overlay.style.display = 'none';
-                    return;
-                }
+      try {
+        const response = await fetch(
+          `/api/broiler/report_data?flock_id={{ flock.id }}&date=${dateStr}`,
+        );
+        if (!response.ok) throw new Error("Network response was not ok");
+        const data = await response.json();
 
-                // Filter data to last 10 days for the PDF charts
-                const takeLast10 = (arr) => arr ? arr.slice(-10) : [];
-                data.charts.days = takeLast10(data.charts.days);
-                data.charts.mortality_actual = takeLast10(data.charts.mortality_actual);
-                data.charts.cull_actual = takeLast10(data.charts.cull_actual);
-                data.charts.mortality_standard = takeLast10(data.charts.mortality_standard);
-                data.charts.bodyweight_actual = takeLast10(data.charts.bodyweight_actual);
-                data.charts.bodyweight_standard = takeLast10(data.charts.bodyweight_standard);
-                data.charts.weight_gain_actual = takeLast10(data.charts.weight_gain_actual);
-                data.charts.weight_gain_standard = takeLast10(data.charts.weight_gain_standard);
-                data.charts.actual_fcr = takeLast10(data.charts.actual_fcr);
-                data.charts.standard_fcr = takeLast10(data.charts.standard_fcr);
+        if (data.empty) {
+          alert("No data available for this date.");
+          if (originalTheme) {
+            document.documentElement.setAttribute(
+              "data-bs-theme",
+              originalTheme,
+            );
+            window.dispatchEvent(
+              new CustomEvent("themeChanged", {
+                detail: { theme: originalTheme },
+              }),
+            );
+          } else {
+            document.documentElement.removeAttribute("data-bs-theme");
+            window.dispatchEvent(
+              new CustomEvent("themeChanged", { detail: { theme: "light" } }),
+            );
+          }
+          overlay.style.display = "none";
+          return;
+        }
 
-                statusText.innerText = "Rendering PDF...";
+        // Filter data to last 10 days for the PDF charts
+        const takeLast10 = (arr) => (arr ? arr.slice(-10) : []);
+        data.charts.days = takeLast10(data.charts.days);
+        data.charts.mortality_actual = takeLast10(data.charts.mortality_actual);
+        data.charts.cull_actual = takeLast10(data.charts.cull_actual);
+        data.charts.mortality_standard = takeLast10(
+          data.charts.mortality_standard,
+        );
+        data.charts.bodyweight_actual = takeLast10(
+          data.charts.bodyweight_actual,
+        );
+        data.charts.bodyweight_standard = takeLast10(
+          data.charts.bodyweight_standard,
+        );
+        data.charts.weight_gain_actual = takeLast10(
+          data.charts.weight_gain_actual,
+        );
+        data.charts.weight_gain_standard = takeLast10(
+          data.charts.weight_gain_standard,
+        );
+        data.charts.actual_fcr = takeLast10(data.charts.actual_fcr);
+        data.charts.standard_fcr = takeLast10(data.charts.standard_fcr);
 
-                // Set bold fonts globally for charts
-                Chart.defaults.font.weight = 'bold';
+        statusText.innerText = "Rendering PDF...";
 
-                // PAGE 1 HTML
-                let htmlPage1 = `
+        // Set bold fonts globally for charts
+        Chart.defaults.font.weight = "bold";
+
+        // PAGE 1 HTML
+        let htmlPage1 = `
                 <div style="width: 297mm; height: 210mm; background: white; padding: 15mm; border: 1px solid #ddd; font-family: sans-serif; box-sizing: border-box; display: flex; flex-direction: column; font-weight: bold;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
                         <div>
@@ -585,121 +790,157 @@
                 </div>
                 `;
 
-                container.innerHTML = htmlPage1;
+        container.innerHTML = htmlPage1;
 
-                // Render Page 1 Charts
-                const ctxMort = document.getElementById('pdfChartMortCull').getContext('2d');
-                new Chart(ctxMort, {
-                    type: 'bar',
-                    data: {
-                        labels: data.charts.days,
-                        datasets: [
-                            {
-                                type: 'line',
-                                label: 'Standard Mort %',
-                                data: data.charts.mortality_standard,
-                                borderColor: 'red',
-                                borderWidth: 2,
-                                fill: false,
-                                datalabels: { display: false }
-                            },
-                            {
-                                type: 'bar',
-                                label: 'Daily Mort %',
-                                data: data.charts.mortality_actual,
-                                backgroundColor: 'rgba(255, 99, 132, 0.6)', datalabels: { formatter: (value) => value !== null ? value.toFixed(2) : '', font: { weight: 'bold' } }
-                            },
-                            {
-                                type: 'bar',
-                                label: 'Daily Cull %',
-                                data: data.charts.cull_actual,
-                                backgroundColor: 'rgba(54, 162, 235, 0.6)', datalabels: { formatter: (value) => value !== null ? value.toFixed(2) : '', font: { weight: 'bold' } }
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: false,
-                        plugins: {
-                            legend: { position: 'top', labels: { font: { weight: 'bold' } } }
-                        },
-                        scales: {
-                            y: {
-                                suggestedMax: function(context) {
-                                    const maxVal = Math.max(...data.charts.mortality_actual, ...data.charts.cull_actual);
-                                    return maxVal * 1.10; // 10% buffer
-                                },
-                                ticks: { font: { weight: 'bold' } }
-                            },
-                            x: {
-                                ticks: { font: { weight: 'bold' } }
-                            }
-                        }
-                    }
-                });
+        // Render Page 1 Charts
+        const ctxMort = document
+          .getElementById("pdfChartMortCull")
+          .getContext("2d");
+        new Chart(ctxMort, {
+          type: "bar",
+          data: {
+            labels: data.charts.days,
+            datasets: [
+              {
+                type: "line",
+                label: "Standard Mort %",
+                data: data.charts.mortality_standard,
+                borderColor: "red",
+                borderWidth: 2,
+                fill: false,
+                datalabels: { display: false },
+              },
+              {
+                type: "bar",
+                label: "Daily Mort %",
+                data: data.charts.mortality_actual,
+                backgroundColor: "rgba(255, 99, 132, 0.6)",
+                datalabels: {
+                  formatter: (value) =>
+                    value !== null ? value.toFixed(2) : "",
+                  font: { weight: "bold" },
+                },
+              },
+              {
+                type: "bar",
+                label: "Daily Cull %",
+                data: data.charts.cull_actual,
+                backgroundColor: "rgba(54, 162, 235, 0.6)",
+                datalabels: {
+                  formatter: (value) =>
+                    value !== null ? value.toFixed(2) : "",
+                  font: { weight: "bold" },
+                },
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+              legend: { position: "top", labels: { font: { weight: "bold" } } },
+            },
+            scales: {
+              y: {
+                suggestedMax: function (context) {
+                  const maxVal = Math.max(
+                    ...data.charts.mortality_actual,
+                    ...data.charts.cull_actual,
+                  );
+                  return maxVal * 1.1; // 10% buffer
+                },
+                ticks: { font: { weight: "bold" } },
+              },
+              x: {
+                ticks: { font: { weight: "bold" } },
+              },
+            },
+          },
+        });
 
-                const ctxBW = document.getElementById('pdfChartBW').getContext('2d');
-                new Chart(ctxBW, {
-                    type: 'bar',
-                    data: {
-                        labels: data.charts.days,
-                        datasets: [
-                            {
-                                type: 'line',
-                                label: 'Standard BW',
-                                data: data.charts.bodyweight_standard,
-                                borderColor: 'orange',
-                                fill: false,
-                                datalabels: { display: false }
-                            },
-                            {
-                                type: 'line',
-                                label: 'Actual BW',
-                                data: data.charts.bodyweight_actual,
-                                borderColor: 'blue',
-                                fill: false,
-                                datalabels: { display: true, formatter: (value) => value !== null ? value.toFixed(1) : '', align: 'top', anchor: 'end', font: { weight: 'bold' } }
-                            },
-                            {
-                                type: 'bar',
-                                label: 'Standard Gain',
-                                data: data.charts.weight_gain_standard,
-                                backgroundColor: 'rgba(255, 159, 64, 0.3)', datalabels: { formatter: (value) => value !== null ? value.toFixed(1) : '', font: { weight: 'bold' } }
-                            },
-                            {
-                                type: 'bar',
-                                label: 'Actual Gain',
-                                data: data.charts.weight_gain_actual,
-                                backgroundColor: 'rgba(75, 192, 192, 0.6)', datalabels: { formatter: (value) => value !== null ? value.toFixed(1) : '', font: { weight: 'bold' } }
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: false,
-                        plugins: {
-                            legend: { position: 'top', labels: { font: { weight: 'bold' } } }
-                        },
-                        scales: {
-                            y: { ticks: { font: { weight: 'bold' } } },
-                            x: { ticks: { font: { weight: 'bold' } } }
-                        }
-                    }
-                });
+        const ctxBW = document.getElementById("pdfChartBW").getContext("2d");
+        new Chart(ctxBW, {
+          type: "bar",
+          data: {
+            labels: data.charts.days,
+            datasets: [
+              {
+                type: "line",
+                label: "Standard BW",
+                data: data.charts.bodyweight_standard,
+                borderColor: "orange",
+                fill: false,
+                datalabels: { display: false },
+              },
+              {
+                type: "line",
+                label: "Actual BW",
+                data: data.charts.bodyweight_actual,
+                borderColor: "blue",
+                fill: false,
+                datalabels: {
+                  display: true,
+                  formatter: (value) =>
+                    value !== null ? value.toFixed(1) : "",
+                  align: "top",
+                  anchor: "end",
+                  font: { weight: "bold" },
+                },
+              },
+              {
+                type: "bar",
+                label: "Standard Gain",
+                data: data.charts.weight_gain_standard,
+                backgroundColor: "rgba(255, 159, 64, 0.3)",
+                datalabels: {
+                  formatter: (value) =>
+                    value !== null ? value.toFixed(1) : "",
+                  font: { weight: "bold" },
+                },
+              },
+              {
+                type: "bar",
+                label: "Actual Gain",
+                data: data.charts.weight_gain_actual,
+                backgroundColor: "rgba(75, 192, 192, 0.6)",
+                datalabels: {
+                  formatter: (value) =>
+                    value !== null ? value.toFixed(1) : "",
+                  font: { weight: "bold" },
+                },
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+              legend: { position: "top", labels: { font: { weight: "bold" } } },
+            },
+            scales: {
+              y: { ticks: { font: { weight: "bold" } } },
+              x: { ticks: { font: { weight: "bold" } } },
+            },
+          },
+        });
 
-                await new Promise(r => setTimeout(r, 500)); // wait for rendering
-                const canvasPage1 = await html2canvas(container.firstElementChild, { scale: 2 });
-                const imgData1 = canvasPage1.toDataURL('image/jpeg', 0.85);
+        await new Promise((r) => setTimeout(r, 500)); // wait for rendering
+        const canvasPage1 = await html2canvas(container.firstElementChild, {
+          scale: 2,
+        });
+        const imgData1 = canvasPage1.toDataURL("image/jpeg", 0.85);
 
-                const pdf = new jspdf.jsPDF('l', 'mm', 'a4');
-                pdf.addImage(imgData1, 'JPEG', 0, 0, 297, 210);
+        const pdf = new jspdf.jsPDF("l", "mm", "a4");
+        pdf.addImage(imgData1, "JPEG", 0, 0, 297, 210);
 
-                // PAGE 2
-                pdf.addPage();
+        // PAGE 2
+        pdf.addPage();
 
-                let tableRows = (data.weekly_summary || []).map(w => `
+        let tableRows = (data.weekly_summary || [])
+          .map(
+            (w) => `
                     <tr>
                         <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Week ${w.week}</td>
                         <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${w.death_count}</td>
@@ -708,12 +949,14 @@
                         <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.avg_bodyweight_g || 0).toFixed(2)}</td>
                         <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.fcr || 0).toFixed(2)}</td>
                     </tr>
-                `).join('');
+                `,
+          )
+          .join("");
 
-                // Add cumulative row
-                let cum = data.cumulative_summary;
-                if (cum) {
-                    tableRows += `
+        // Add cumulative row
+        let cum = data.cumulative_summary;
+        if (cum) {
+          tableRows += `
                         <tr style="background-color: #f0f0f0;">
                             <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Cumulative</td>
                             <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cum.death_count}</td>
@@ -723,9 +966,9 @@
                             <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.fcr || 0).toFixed(2)}</td>
                         </tr>
                     `;
-                }
+        }
 
-                let htmlPage2 = `
+        let htmlPage2 = `
                 <div style="width: 297mm; height: 210mm; background: white; padding: 15mm; border: 1px solid #ddd; font-family: sans-serif; box-sizing: border-box; display: flex; flex-direction: column; font-weight: bold;">
                     <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
                         <h2 style="margin: 0; font-weight: bold;">${data.farm_name} (${data.house_name}) - Page 2</h2>
@@ -761,59 +1004,83 @@
                 </div>
                 `;
 
-                container.innerHTML = htmlPage2;
+        container.innerHTML = htmlPage2;
 
-                const ctxFCR = document.getElementById('pdfChartFCR').getContext('2d');
-                new Chart(ctxFCR, {
-                    type: 'line',
-                    data: {
-                        labels: data.charts.days,
-                        datasets: [
-                            {
-                                label: 'Standard FCR',
-                                data: data.charts.standard_fcr,
-                                borderColor: 'green',
-                                fill: false,
-                                datalabels: { display: false }
-                            },
-                            {
-                                label: 'Actual FCR',
-                                data: data.charts.actual_fcr,
-                                borderColor: 'red',
-                                fill: false,
-                                datalabels: { display: true, formatter: (value) => value !== null ? value.toFixed(2) : '', align: 'top', anchor: 'end', font: { weight: 'bold' } }
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: false,
-                        plugins: {
-                            legend: { position: 'top', labels: { font: { weight: 'bold' } } }
-                        },
-                        scales: {
-                            y: { ticks: { font: { weight: 'bold' } } },
-                            x: { ticks: { font: { weight: 'bold' } } }
-                        }
-                    }
-                });
-
-                await new Promise(r => setTimeout(r, 500));
-                const canvasPage2 = await html2canvas(container.firstElementChild, { scale: 2 });
-                const imgData2 = canvasPage2.toDataURL('image/jpeg', 0.85);
-
-                pdf.addImage(imgData2, 'JPEG', 0, 0, 297, 210);
-
-                pdf.save(`Broiler_Daily_House_Report_${data.house_name}_${data.report_date}.pdf`);
-
-            } catch (err) {
-                console.error(err);
-                alert("Error generating report: " + err.message);
-            } finally {
-                overlay.style.display = 'none';
-            }
+        const ctxFCR = document.getElementById("pdfChartFCR").getContext("2d");
+        new Chart(ctxFCR, {
+          type: "line",
+          data: {
+            labels: data.charts.days,
+            datasets: [
+              {
+                label: "Standard FCR",
+                data: data.charts.standard_fcr,
+                borderColor: "green",
+                fill: false,
+                datalabels: { display: false },
+              },
+              {
+                label: "Actual FCR",
+                data: data.charts.actual_fcr,
+                borderColor: "red",
+                fill: false,
+                datalabels: {
+                  display: true,
+                  formatter: (value) =>
+                    value !== null ? value.toFixed(2) : "",
+                  align: "top",
+                  anchor: "end",
+                  font: { weight: "bold" },
+                },
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            plugins: {
+              legend: { position: "top", labels: { font: { weight: "bold" } } },
+            },
+            scales: {
+              y: { ticks: { font: { weight: "bold" } } },
+              x: { ticks: { font: { weight: "bold" } } },
+            },
+          },
         });
+
+        await new Promise((r) => setTimeout(r, 500));
+        const canvasPage2 = await html2canvas(container.firstElementChild, {
+          scale: 2,
+        });
+        const imgData2 = canvasPage2.toDataURL("image/jpeg", 0.85);
+
+        pdf.addImage(imgData2, "JPEG", 0, 0, 297, 210);
+
+        pdf.save(
+          `Broiler_Daily_House_Report_${data.house_name}_${data.report_date}.pdf`,
+        );
+      } catch (err) {
+        console.error(err);
+        alert("Error generating report: " + err.message);
+      } finally {
+        if (originalTheme) {
+          document.documentElement.setAttribute("data-bs-theme", originalTheme);
+          window.dispatchEvent(
+            new CustomEvent("themeChanged", {
+              detail: { theme: originalTheme },
+            }),
+          );
+        } else {
+          document.documentElement.removeAttribute("data-bs-theme");
+          window.dispatchEvent(
+            new CustomEvent("themeChanged", { detail: { theme: "light" } }),
+          );
+        }
+        overlay.style.display = "none";
+        container.innerHTML = "";
+      }
     });
+  });
 </script>
 {% endblock %}

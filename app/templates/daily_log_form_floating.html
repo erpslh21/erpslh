@@ -45,7 +45,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-dark">Mortality & Culls (Production)</div>
+      <div class="card-header sticky-header bg-info text-body">Mortality & Culls (Production)</div>
       <div class="card-body">
         <div class="row">
           <div class="col-12 col-md-6 mb-2">
@@ -79,8 +79,8 @@
                 Toggle Hospital Data (Male & Female)
             </button>
             <div class="collapse" id="hospitalSection">
-                <div class="card card-body bg-light">
-                    <h6 class="text-dark">Hospital Mortality & Culls</h6>
+                <div class="card card-body bg-light-subtle">
+                    <h6 class="text-body">Hospital Mortality & Culls</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Mortality Male (Hosp)</label>
@@ -108,8 +108,8 @@
                 Toggle Transfers (In/Out Production)
             </button>
             <div class="collapse" id="transferSection">
-                <div class="card card-body bg-light">
-                    <h6 class="text-dark">Transfers</h6>
+                <div class="card card-body bg-light-subtle">
+                    <h6 class="text-body">Transfers</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Males -> To Hospital</label>
@@ -130,7 +130,7 @@
                     </div>
                 </div>
                     <hr>
-                    <h6 class="text-dark">In/Out of Flock (Overall Stock)</h6>
+                    <h6 class="text-body">In/Out of Flock (Overall Stock)</h6>
                     <div class="row">
                         <div class="col-12 col-md-6 mb-2">
                             <label class="form-label small">Males -> In Flock</label>
@@ -249,7 +249,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-warning text-dark">Production</div>
+      <div class="card-header sticky-header bg-warning text-body">Production</div>
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Eggs Collected</label>
@@ -305,7 +305,7 @@
                     <!-- If existing log has data, show it. Otherwise hide P3-P8 initially -->
                     {% set show_style = 'display:flex;' if (bw_val > 0 or i <= 2) else 'display:none;' %}
                     <div class="row mb-2 partition-row-M" id="row_M{{i}}" style="{{ show_style }}">
-                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light text-dark">M{{i}}</span></div>
+                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light-subtle text-body">M{{i}}</span></div>
                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="bw_M{{i}}" placeholder="BW" value="{{ bw_val or '' }}" onchange="calcAvg()"></div>
                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="uni_M{{i}}" placeholder="Unif" value="{{ uni_val or '' }}" onchange="calcAvg()"></div>
                         <div class="col-2"><button type="button" class="btn btn-sm text-danger" onclick="removePartition('M', {{i}})">&times;</button></div>
@@ -324,7 +324,7 @@
                     {% set uni_val = get_partition_val(log, 'F' ~ i, 'uni') %}
                     {% set show_style = 'display:flex;' if (bw_val > 0 or i <= 4) else 'display:none;' %}
                     <div class="row mb-2 partition-row-F" id="row_F{{i}}" style="{{ show_style }}">
-                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light text-dark">F{{i}}</span></div>
+                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light-subtle text-body">F{{i}}</span></div>
                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="bw_F{{i}}" placeholder="BW" value="{{ bw_val or '' }}" onchange="calcAvg()"></div>
                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="uni_F{{i}}" placeholder="Unif" value="{{ uni_val or '' }}" onchange="calcAvg()"></div>
                         <div class="col-2"><button type="button" class="btn btn-sm text-danger" onclick="removePartition('F', {{i}})">&times;</button></div>
@@ -338,25 +338,25 @@
         <div class="row" id="average_section">
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" step="0.01" class="form-control form-control-lg" name="body_weight_male" id="body_weight_male" placeholder="Avg Male BW" value="{{ log.body_weight_male if log and log.body_weight_male else '' }}">
+              <input type="number" step="0.01" class="form-control form-control-lg" name="body_weight_male" id="body_weight_male" placeholder="Avg Male BW" value="">
               <label for="body_weight_male">Avg Male BW</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" step="0.01" class="form-control form-control-lg" name="body_weight_female" id="body_weight_female" placeholder="Avg Female BW" value="{{ log.body_weight_female if log and log.body_weight_female else '' }}">
+              <input type="number" step="0.01" class="form-control form-control-lg" name="body_weight_female" id="body_weight_female" placeholder="Avg Female BW" value="">
               <label for="body_weight_female">Avg Female BW</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" step="0.01" class="form-control form-control-lg" name="uniformity_male" id="uniformity_male" placeholder="Avg Male Unif %" value="{{ log.uniformity_male if log and log.uniformity_male else '' }}">
+              <input type="number" step="0.01" class="form-control form-control-lg" name="uniformity_male" id="uniformity_male" placeholder="Avg Male Unif %" value="">
               <label for="uniformity_male">Avg Male Unif %</label>
             </div>
           </div>
           <div class="col-12 col-md-6 mb-2">
             <div class="form-floating">
-              <input type="number" step="0.01" class="form-control form-control-lg" name="uniformity_female" id="uniformity_female" placeholder="Avg Female Unif %" value="{{ log.uniformity_female if log and log.uniformity_female else '' }}">
+              <input type="number" step="0.01" class="form-control form-control-lg" name="uniformity_female" id="uniformity_female" placeholder="Avg Female Unif %" value="">
               <label for="uniformity_female">Avg Female Unif %</label>
             </div>
           </div>
@@ -499,7 +499,7 @@
                             {% if v.actual_date %}
                                 <span class="badge bg-success text-white">Done</span>
                             {% else %}
-                                <span class="badge bg-warning text-dark">Pending</span>
+                                <span class="badge bg-warning text-body">Pending</span>
                             {% endif %}
                         </td>
                         <td>{{ v.age_code }}</td>
@@ -733,10 +733,10 @@
             let el = document.getElementById(id);
             if(readonly) {
                 el.setAttribute('readonly', true);
-                el.classList.add('bg-light');
+                el.classList.add('bg-light-subtle');
             } else {
                 el.removeAttribute('readonly');
-                el.classList.remove('bg-light');
+                el.classList.remove('bg-light-subtle');
             }
         });
     }

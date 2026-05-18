@@ -1,36 +1,91 @@
-{% extends "base_tabler.html" %}
-
-{% block content %}
+{% extends "base_tabler.html" %} {% block content %}
 <!-- Page Header -->
 <div class="page-header d-print-none mb-3">
   <div class="row align-items-center">
     <div class="col">
-      <h2 class="page-title">
-        Farm Dashboard
-      </h2>
+      <h2 class="page-title">Farm Dashboard</h2>
       <div class="text-muted mt-1">{{ today.strftime('%d %B %Y') }}</div>
     </div>
     <div class="col-auto ms-auto d-print-none">
       <div class="btn-list">
-        <a href="{{ url_for('daily_log') }}" class="btn btn-primary d-none d-sm-inline-block">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
+        <a
+          href="{{ url_for('daily_log') }}"
+          class="btn btn-primary d-none d-sm-inline-block"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
           Add Daily Log
         </a>
-        <a href="{{ url_for('manage_flocks') }}" class="btn btn-outline-primary d-none d-sm-inline-block">
+        <a
+          href="{{ url_for('manage_flocks') }}"
+          class="btn btn-outline-primary d-none d-sm-inline-block"
+        >
           Manage Flocks
         </a>
-        <button type="button" class="btn btn-outline-secondary d-none d-sm-inline-block" data-bs-toggle="modal" data-bs-target="#generateReportModal">
-          <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M9 15l2 2l4 -4" /></svg>
+        <button
+          type="button"
+          class="btn btn-outline-secondary d-none d-sm-inline-block"
+          data-bs-toggle="modal"
+          data-bs-target="#generateReportModal"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+            <path
+              d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"
+            />
+            <path d="M9 15l2 2l4 -4" />
+          </svg>
           Generate Daily Report
         </button>
         <!-- Mobile Dropdown -->
         <div class="dropdown d-sm-none">
-            <a href="#" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">Actions</a>
-            <div class="dropdown-menu dropdown-menu-end">
-                <a href="{{ url_for('daily_log') }}" class="dropdown-item">Add Daily Log</a>
-                <a href="{{ url_for('manage_flocks') }}" class="dropdown-item">Manage Flocks</a>
-                <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#generateReportModal">Generate Daily Report</a>
-            </div>
+          <a
+            href="#"
+            class="btn btn-primary dropdown-toggle"
+            data-bs-toggle="dropdown"
+            >Actions</a
+          >
+          <div class="dropdown-menu dropdown-menu-end">
+            <a href="{{ url_for('daily_log') }}" class="dropdown-item"
+              >Add Daily Log</a
+            >
+            <a href="{{ url_for('manage_flocks') }}" class="dropdown-item"
+              >Manage Flocks</a
+            >
+            <a
+              href="#"
+              class="dropdown-item"
+              data-bs-toggle="modal"
+              data-bs-target="#generateReportModal"
+              >Generate Daily Report</a
+            >
+          </div>
         </div>
       </div>
     </div>
@@ -39,404 +94,823 @@
 
 <ul class="nav nav-tabs mb-3" id="dashboardTabs" role="tablist">
   <li class="nav-item">
-    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#flocks">Flock Overview</button>
+    <button
+      class="nav-link active"
+      data-bs-toggle="tab"
+      data-bs-target="#flocks"
+    >
+      Flock Overview
+    </button>
   </li>
   <li class="nav-item">
-    <button class="nav-link position-relative" data-bs-toggle="tab" data-bs-target="#inventory">
-        Inventory Status
-        {% if low_stock_count is not none and low_stock_count > 0 %}
-        <span class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle">
-            <span class="visually-hidden">New alerts</span>
-        </span>
-        {% endif %}
+    <button
+      class="nav-link position-relative"
+      data-bs-toggle="tab"
+      data-bs-target="#inventory"
+    >
+      Inventory Status {% if low_stock_count is not none and low_stock_count > 0
+      %}
+      <span
+        class="position-absolute top-0 start-100 translate-middle p-2 bg-danger border border-light rounded-circle"
+      >
+        <span class="visually-hidden">New alerts</span>
+      </span>
+      {% endif %}
     </button>
   </li>
 </ul>
 
 <div class="tab-content">
-<div class="tab-pane fade show active" id="flocks">
-
-{% if low_stock_count is not none and low_stock_count > 0 %}
-<div class="alert alert-warning alert-dismissible shadow-sm border-warning" role="alert">
-  <div class="d-flex">
-    <div>
-      <svg xmlns="http://www.w3.org/2000/svg" class="icon alert-icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v2m0 4v.01" /><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" /></svg>
-    </div>
-    <div>
-      <h4 class="alert-title">Low Inventory Alert</h4>
-      <div class="text-secondary">{{ low_stock_count }} items have fallen below their minimum stock level. <button type="button" class="btn btn-sm btn-link p-0 m-0 alert-link" onclick="document.querySelector('[data-bs-target=\'#inventory\']').click();">Review Inventory</button></div>
-    </div>
-  </div>
-  <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
-</div>
-{% endif %}
-
-<div class="row mb-4">
-  <div class="col-12">
-    <div class="card shadow-sm border-top border-3 border-info">
-      <div class="card-header bg-transparent border-bottom-0 pb-0">
-        <h3 class="card-title text-info mb-0">Upcoming Vaccine Schedule</h3>
-      </div>
-      <div class="card-body pt-3">
-        <div class="row">
-          <div class="col-md-6 mb-3 mb-md-0">
-            <h4 class="text-muted border-bottom pb-2">This Week</h4>
-            {% if this_week_vaccines %}
-              <div class="table-responsive">
-                <table class="table table-vcenter table-sm table-borderless table-striped text-nowrap">
-                  <thead>
-                    <tr>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Date</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">House</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Age</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Vaccine</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Route</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for v in this_week_vaccines %}
-                    <tr>
-                      <td class="text-muted">{{ v.est_date.strftime('%d %b') if v.est_date else 'N/A' }}</td>
-                      <td class="font-weight-medium text-dark">{{ v.flock.house.name }}</td>
-                      <td class="text-muted">{{ v.age_code }}</td>
-                      <td class="text-muted">{{ v.vaccine_name }}</td>
-                      <td class="text-muted">{{ v.route or '-' }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <div class="alert alert-secondary p-2 text-center text-muted mb-0">
-                No vaccines scheduled for this week.
-              </div>
-            {% endif %}
-          </div>
-          <div class="col-md-6">
-            <h4 class="text-muted border-bottom pb-2">Next Week</h4>
-            {% if next_week_vaccines %}
-              <div class="table-responsive">
-                <table class="table table-vcenter table-sm table-borderless table-striped text-nowrap">
-                  <thead>
-                    <tr>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Date</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">House</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Age</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Vaccine</th>
-                      <th class="text-muted text-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: .04em;">Route</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {% for v in next_week_vaccines %}
-                    <tr>
-                      <td class="text-muted">{{ v.est_date.strftime('%d %b') if v.est_date else 'N/A' }}</td>
-                      <td class="font-weight-medium text-dark">{{ v.flock.house.name }}</td>
-                      <td class="text-muted">{{ v.age_code }}</td>
-                      <td class="text-muted">{{ v.vaccine_name }}</td>
-                      <td class="text-muted">{{ v.route or '-' }}</td>
-                    </tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            {% else %}
-              <div class="alert alert-secondary p-2 text-center text-muted mb-0">
-                No vaccines scheduled for next week.
-              </div>
-            {% endif %}
-          </div>
+  <div class="tab-pane fade show active" id="flocks">
+    {% if low_stock_count is not none and low_stock_count > 0 %}
+    <div
+      class="alert alert-warning alert-dismissible shadow-sm border-warning"
+      role="alert"
+    >
+      <div class="d-flex">
+        <div>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="icon alert-icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <path d="M12 9v2m0 4v.01" />
+            <path
+              d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75"
+            />
+          </svg>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="row">
-  {% for flock in active_flocks %}
-  <div class="col-sm-6 col-lg-4 mb-4">
-    <div class="card shadow-sm h-100 border {% if flock.calculated_phase == 'Brooding' %}border-primary{% elif flock.calculated_phase == 'Growing' %}border-info{% elif flock.calculated_phase == 'Pre-lay' %}border-warning{% else %}border-success{% endif %}" style="border-width: 2px !important; border-radius: 8px;">
-      <div class="card-body">
-
-        <div class="d-flex align-items-center justify-content-between mb-3">
-          <h3 class="m-0 font-weight-bold">{{ flock.house.name }} - Week {{ flock.current_week }}</h3>
-          <span class="badge text-white {% if flock.calculated_phase == 'Brooding' %}bg-primary{% elif flock.calculated_phase == 'Growing' %}bg-info{% elif flock.calculated_phase == 'Pre-lay' %}bg-warning{% else %}bg-success{% endif %} rounded-pill px-3 py-2" style="font-size: 0.85rem;">
-            {{ flock.calculated_phase }}
-          </span>
-        </div>
-
-        <div class="row mb-2">
-            <div class="col-6">
-                <span class="text-muted">Intake: {{ flock.intake_date | date_fmt }}</span><br>
-                <small class="text-muted fw-bold">Age: {{ flock.age_weeks }}W {{ flock.age_days }}D</small>
-            </div>
-            <div class="col-6 text-end">
-                <span class="text-muted">Start: {{ flock.intake_male }}M / {{ flock.intake_female }}F</span><br>
-                {% if flock.daily_stats.show_data %}
-                    <small class="fw-bold">End Stock: {{ flock.daily_stats.stock_m_end }}M / {{ flock.daily_stats.stock_f_end }}F</small>
-                {% endif %}
-            </div>
-        </div>
-        <hr>
-        <div class="row text-center">
-            {% if flock.calculated_phase in ['Brooding', 'Growing', 'Pre-lay'] %}
-            <div class="col-6 border-end text-center bg-light rounded-start p-2">
-                <small class="text-uppercase text-muted fw-bold" style="font-size: 0.65rem;">Rearing Mort %</small><br>
-                <div class="mt-1">
-                    <span class="text-dark">M: {{ "%.2f"|format(((flock.rearing_mort_m_pct or 0) | float)) }}%</span><br>
-                    <span class="text-dark">F: {{ "%.2f"|format(((flock.rearing_mort_f_pct or 0) | float)) }}%</span>
-                </div>
-            </div>
-            <div class="col-6 text-center bg-light rounded-end p-2">
-                <small class="text-uppercase text-muted fw-bold" style="font-size: 0.65rem;">Daily Mort %</small>
-                {% if not flock.daily_stats.has_today and flock.daily_stats.data_date %}
-                <br><small class="text-warning fw-bold" style="font-size: 0.6rem;">(Last: {{ flock.daily_stats.data_date.strftime('%d %b') }})</small>
-                {% endif %}
-                <br>
-                {% if flock.daily_stats.show_data %}
-                    <span class="text-dark">M: {{ flock.daily_stats.mort_m }} ({{ "%.2f"|format(((flock.daily_stats.mort_m_pct or 0) | float)) }}%)</span>
-                    {% if flock.daily_stats.mort_m_trend == 'up' %}<span class="text-danger fw-bold ms-1" style="font-size: 0.7rem;">↑</span>{% elif flock.daily_stats.mort_m_trend == 'down' %}<span class="text-success fw-bold ms-1" style="font-size: 0.7rem;">↓</span>{% endif %}
-                    <br>
-                    <span class="text-dark">F: {{ flock.daily_stats.mort_f }} ({{ "%.2f"|format(((flock.daily_stats.mort_f_pct or 0) | float)) }}%)</span>
-                    {% if flock.daily_stats.mort_f_trend == 'up' %}<span class="text-danger fw-bold ms-1" style="font-size: 0.7rem;">↑</span>{% elif flock.daily_stats.mort_f_trend == 'down' %}<span class="text-success fw-bold ms-1" style="font-size: 0.7rem;">↓</span>{% endif %}
-                {% else %}
-                    <span class="text-muted">-</span>
-                {% endif %}
-                <br>
-                <small class="text-muted mt-2 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Male Ratio</small>
-                <span class="text-dark">{{ "%.2f"|format(((flock.male_ratio_pct or 0) | float)) }}%</span>
-            </div>
-            {% else %}
-            <div class="col-4 border-end text-center bg-light rounded-start p-2">
-                <small class="text-uppercase text-muted fw-bold" style="font-size: 0.65rem;">Prod Mort %</small><br>
-                <div class="mt-1">
-                    <span class="text-dark">M: {{ "%.2f"|format(((flock.prod_mort_m_pct or 0) | float)) }}%</span><br>
-                    <span class="text-dark">F: {{ "%.2f"|format(((flock.prod_mort_f_pct or 0) | float)) }}%</span>
-                </div>
-            </div>
-            <div class="col-4 border-end text-center bg-light p-2">
-                <small class="text-uppercase text-muted fw-bold" style="font-size: 0.65rem;">Daily Mort %</small>
-                {% if not flock.daily_stats.has_today and flock.daily_stats.data_date %}
-                <br><small class="text-warning fw-bold" style="font-size: 0.6rem;">(Last: {{ flock.daily_stats.data_date.strftime('%d %b') }})</small>
-                {% endif %}
-                <br>
-                {% if flock.daily_stats.show_data %}
-                    <span class="text-dark">M: {{ flock.daily_stats.mort_m }} ({{ "%.2f"|format(((flock.daily_stats.mort_m_pct or 0) | float)) }}%)</span>
-                    {% if flock.daily_stats.mort_m_trend == 'up' %}<span class="text-danger fw-bold ms-1" style="font-size: 0.7rem;">↑</span>{% elif flock.daily_stats.mort_m_trend == 'down' %}<span class="text-success fw-bold ms-1" style="font-size: 0.7rem;">↓</span>{% endif %}
-                    <br>
-                    <span class="text-dark">F: {{ flock.daily_stats.mort_f }} ({{ "%.2f"|format(((flock.daily_stats.mort_f_pct or 0) | float)) }}%)</span>
-                    {% if flock.daily_stats.mort_f_trend == 'up' %}<span class="text-danger fw-bold ms-1" style="font-size: 0.7rem;">↑</span>{% elif flock.daily_stats.mort_f_trend == 'down' %}<span class="text-success fw-bold ms-1" style="font-size: 0.7rem;">↓</span>{% endif %}
-                {% else %}
-                    <span class="text-muted">-</span>
-                {% endif %}
-                <br>
-                <small class="text-muted mt-2 d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Male Ratio</small>
-                <span class="text-dark">{{ "%.2f"|format(((flock.male_ratio_pct or 0) | float)) }}%</span>
-            </div>
-            <div class="col-4 text-center bg-light rounded-end p-2">
-                <small class="text-uppercase text-muted fw-bold" style="font-size: 0.65rem;">Egg Prod.</small>
-                {% if not flock.daily_stats.has_today and flock.daily_stats.data_date %}
-                <br><small class="text-warning fw-bold" style="font-size: 0.6rem;">(Last: {{ flock.daily_stats.data_date.strftime('%d %b') }})</small>
-                {% endif %}
-                <br>
-                {% if flock.daily_stats.show_data %}
-                    <div class="m-0 text-dark font-weight-bold mt-1">
-                        {{ flock.daily_stats.eggs }} ({{ "%.1f"|format(((flock.daily_stats.egg_pct or 0) | float)) }}%)
-                    </div>
-                    <div class="mt-1">
-                    {% if flock.daily_stats.egg_trend == 'up' %}
-                        <span class="text-success fw-bold" style="font-size: 0.8rem;">↑ ({{ "+%.1f"|format(((flock.daily_stats.egg_diff or 0) | float)) }}%)</span>
-                    {% elif flock.daily_stats.egg_trend == 'down' %}
-                        <span class="text-danger fw-bold" style="font-size: 0.8rem;">↓ ({{ "%.1f"|format(((flock.daily_stats.egg_diff or 0) | float)) }}%)</span>
-                    {% else %}
-                        <span class="text-muted" style="font-size: 0.8rem;">-</span>
-                    {% endif %}
-                    </div>
-                {% else %}
-                    <span class="text-muted">-</span>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-      </div>
-      <div class="card-footer bg-transparent border-0 pt-0">
-          <div class="d-flex justify-content-between align-items-center">
-            <a href="{{ url_for('view_flock', id=flock.id) }}" class="btn btn-outline-primary btn-sm mb-0">See Details <i class="fas fa-arrow-right ms-1"></i></a>
-            {% if flock.calculated_phase in ['Brooding', 'Growing', 'Pre-lay'] %}
-            <button type="button" class="btn btn-link text-warning text-sm mb-0 px-0 ms-2" data-bs-toggle="modal" data-bs-target="#mixMaleModal{{ flock.id }}">
-                Mix Male
+        <div>
+          <h4 class="alert-title">Low Inventory Alert</h4>
+          <div class="text-secondary">
+            {{ low_stock_count }} items have fallen below their minimum stock
+            level.
+            <button
+              type="button"
+              class="btn btn-sm btn-link p-0 m-0 alert-link"
+              onclick="
+                document
+                  .querySelector('[data-bs-target=\'#inventory\']')
+                  .click()
+              "
+            >
+              Review Inventory
             </button>
-
-            <div class="modal modal-blur fade" id="mixMaleModal{{ flock.id }}" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable">
-                <form action="{{ url_for('toggle_phase', id=flock.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <div class="modal-content">
-                    <div class="modal-header">
-                    <h5 class="modal-title">Mix Male (Start Production)</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body text-start">
-                    <p>Please confirm the <strong>Production Start Date</strong> for {{ flock.house.name }}.</p>
-                    <div class="mb-3">
-                        <label for="prodDate{{ flock.id }}" class="form-label">Start Date</label>
-                        <input type="date" class="form-control" id="prodDate{{ flock.id }}" name="production_start_date" value="{{ today }}" required>
-                    </div>
-                    <hr>
-                    <h6 class="text-primary">Production Start Counts (Baseline)</h6>
-                    <div class="row">
-                        <div class="col-6 mb-2">
-                            <label class="form-label small">Males (Prod)</label>
-                            <input type="number" class="form-control form-control-sm" name="prod_start_male" required value="0">
-                        </div>
-                        <div class="col-6 mb-2">
-                            <label class="form-label small">Females (Prod)</label>
-                            <input type="number" class="form-control form-control-sm" name="prod_start_female" required value="0">
-                        </div>
-                    </div>
-                    <h6 class="text-danger mt-3">Hospital Start Counts</h6>
-                    <div class="row">
-                        <div class="col-6 mb-2">
-                            <label class="form-label small">Males (Hosp)</label>
-                            <input type="number" class="form-control form-control-sm" name="prod_start_male_hosp" value="0">
-                        </div>
-                        <div class="col-6 mb-2">
-                            <label class="form-label small">Females (Hosp)</label>
-                            <input type="number" class="form-control form-control-sm" name="prod_start_female_hosp" value="0">
-                        </div>
-                    </div>
-                    <p class="small text-muted mt-2">Statistics will be calculated as 'Production' starting from this date using these counts as the new baseline.</p>
-                    </div>
-                    <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Mix Male</button>
-                    </div>
-                </div>
-                </form>
-                </div>
-            </div>
-            {% endif %}
           </div>
-      </div>
-    </div>
-  </div>
-  {% else %}
-  <div class="col-12">
-    <div class="empty bg-white rounded shadow-sm py-5">
-      <div class="empty-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon text-muted" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9" /><line x1="9" y1="12" x2="15" y2="12" /><line x1="12" y1="9" x2="12" y2="15" /></svg>
-      </div>
-      <p class="empty-title">No active flocks</p>
-      <p class="empty-subtitle text-muted">
-        There are currently no active flocks being managed.
-      </p>
-      <div class="empty-action">
-        <a href="{{ url_for('manage_flocks') }}" class="btn btn-primary">
-          Create New Flock
-        </a>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
-</div>
-
-</div> <!-- End Flocks Tab -->
-
-<div class="tab-pane fade" id="inventory">
-    <div class="card border-danger mb-4">
-        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Low Stock Alerts ({{ low_stock_count }})</h5>
         </div>
-        <div class="card-body">
-            {% if low_stock_items %}
-                <div class="table-responsive table-responsive-sticky">
-                    <table class="table table-striped">
-                        <thead class="sticky-table-header">
-                            <tr>
-                                <th>Item</th>
-                                <th>Type</th>
-                                <th>Current</th>
-                                <th>Min Level</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in low_stock_items %}
-                            <tr>
-                                <td>{{ item.name }}</td>
-                                <td>{{ item.type }}</td>
-                                <td class="fw-bold text-danger">{{ item.current_stock }} {{ item.unit }}</td>
-                                <td>{{ item.min_stock_level }} {{ item.unit }}</td>
-                                <td><span class="badge bg-danger text-white">Low</span></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+      </div>
+      <a class="btn-close" data-bs-dismiss="alert" aria-label="close"></a>
+    </div>
+    {% endif %}
+
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="card shadow-sm border-top border-3 border-info">
+          <div class="card-header bg-transparent border-bottom-0 pb-0">
+            <h3 class="card-title text-info mb-0">Upcoming Vaccine Schedule</h3>
+          </div>
+          <div class="card-body pt-3">
+            <div class="row">
+              <div class="col-md-6 mb-3 mb-md-0">
+                <h4 class="text-muted border-bottom pb-2">This Week</h4>
+                {% if this_week_vaccines %}
+                <div class="table-responsive">
+                  <table
+                    class="table table-vcenter table-sm table-borderless table-striped text-nowrap"
+                  >
+                    <thead>
+                      <tr>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Date
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          House
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Age
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Vaccine
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Route
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for v in this_week_vaccines %}
+                      <tr>
+                        <td class="text-muted">
+                          {{ v.est_date.strftime('%d %b') if v.est_date else
+                          'N/A' }}
+                        </td>
+                        <td class="font-weight-medium text-body">
+                          {{ v.flock.house.name }}
+                        </td>
+                        <td class="text-muted">{{ v.age_code }}</td>
+                        <td class="text-muted">{{ v.vaccine_name }}</td>
+                        <td class="text-muted">{{ v.route or '-' }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
                 </div>
-            {% else %}
-                <p class="text-success mb-0">No low stock alerts.</p>
-            {% endif %}
+                {% else %}
+                <div
+                  class="alert alert-secondary p-2 text-center text-muted mb-0"
+                >
+                  No vaccines scheduled for this week.
+                </div>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <h4 class="text-muted border-bottom pb-2">Next Week</h4>
+                {% if next_week_vaccines %}
+                <div class="table-responsive">
+                  <table
+                    class="table table-vcenter table-sm table-borderless table-striped text-nowrap"
+                  >
+                    <thead>
+                      <tr>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Date
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          House
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Age
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Vaccine
+                        </th>
+                        <th
+                          class="text-muted text-uppercase font-weight-bold"
+                          style="font-size: 0.65rem; letter-spacing: 0.04em"
+                        >
+                          Route
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for v in next_week_vaccines %}
+                      <tr>
+                        <td class="text-muted">
+                          {{ v.est_date.strftime('%d %b') if v.est_date else
+                          'N/A' }}
+                        </td>
+                        <td class="font-weight-medium text-body">
+                          {{ v.flock.house.name }}
+                        </td>
+                        <td class="text-muted">{{ v.age_code }}</td>
+                        <td class="text-muted">{{ v.vaccine_name }}</td>
+                        <td class="text-muted">{{ v.route or '-' }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                {% else %}
+                <div
+                  class="alert alert-secondary p-2 text-center text-muted mb-0"
+                >
+                  No vaccines scheduled for next week.
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <div class="row">
+      {% for flock in active_flocks %}
+      <div class="col-sm-6 col-lg-4 mb-4">
+        <div
+          class="card shadow-sm h-100 border {% if flock.calculated_phase == 'Brooding' %}border-primary{% elif flock.calculated_phase == 'Growing' %}border-info{% elif flock.calculated_phase == 'Pre-lay' %}border-warning{% else %}border-success{% endif %}"
+          style="border-width: 2px !important; border-radius: 8px"
+        >
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h3 class="m-0 font-weight-bold">
+                {{ flock.house.name }} - Week {{ flock.current_week }}
+              </h3>
+              <span
+                class="badge text-white {% if flock.calculated_phase == 'Brooding' %}bg-primary{% elif flock.calculated_phase == 'Growing' %}bg-info{% elif flock.calculated_phase == 'Pre-lay' %}bg-warning{% else %}bg-success{% endif %} rounded-pill px-3 py-2"
+                style="font-size: 0.85rem"
+              >
+                {{ flock.calculated_phase }}
+              </span>
+            </div>
+
+            <div class="row mb-2">
+              <div class="col-6">
+                <span class="text-muted"
+                  >Intake: {{ flock.intake_date | date_fmt }}</span
+                ><br />
+                <small class="text-muted fw-bold"
+                  >Age: {{ flock.age_weeks }}W {{ flock.age_days }}D</small
+                >
+              </div>
+              <div class="col-6 text-end">
+                <span class="text-muted"
+                  >Start: {{ flock.intake_male }}M / {{ flock.intake_female
+                  }}F</span
+                ><br />
+                {% if flock.daily_stats.show_data %}
+                <small class="fw-bold"
+                  >End Stock: {{ flock.daily_stats.stock_m_end }}M / {{
+                  flock.daily_stats.stock_f_end }}F</small
+                >
+                {% endif %}
+              </div>
+            </div>
+            <hr />
+            <div class="row text-center">
+              {% if flock.calculated_phase in ['Brooding', 'Growing', 'Pre-lay']
+              %}
+              <div
+                class="col-6 border-end text-center bg-light-subtle rounded-start p-2"
+              >
+                <small
+                  class="text-uppercase text-muted fw-bold"
+                  style="font-size: 0.65rem"
+                  >Rearing Mort %</small
+                ><br />
+                <div class="mt-1">
+                  <span class="text-body"
+                    >M: {{ "%.2f"|format(((flock.rearing_mort_m_pct or 0) |
+                    float)) }}%</span
+                  ><br />
+                  <span class="text-body"
+                    >F: {{ "%.2f"|format(((flock.rearing_mort_f_pct or 0) |
+                    float)) }}%</span
+                  >
+                </div>
+              </div>
+              <div class="col-6 text-center bg-light-subtle rounded-end p-2">
+                <small
+                  class="text-uppercase text-muted fw-bold"
+                  style="font-size: 0.65rem"
+                  >Daily Mort %</small
+                >
+                {% if not flock.daily_stats.has_today and
+                flock.daily_stats.data_date %}
+                <br /><small
+                  class="text-warning fw-bold"
+                  style="font-size: 0.6rem"
+                  >(Last: {{ flock.daily_stats.data_date.strftime('%d %b')
+                  }})</small
+                >
+                {% endif %}
+                <br />
+                {% if flock.daily_stats.show_data %}
+                <span class="text-body"
+                  >M: {{ flock.daily_stats.mort_m }} ({{
+                  "%.2f"|format(((flock.daily_stats.mort_m_pct or 0) | float))
+                  }}%)</span
+                >
+                {% if flock.daily_stats.mort_m_trend == 'up' %}<span
+                  class="text-danger fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↑</span
+                >{% elif flock.daily_stats.mort_m_trend == 'down' %}<span
+                  class="text-success fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↓</span
+                >{% endif %}
+                <br />
+                <span class="text-body"
+                  >F: {{ flock.daily_stats.mort_f }} ({{
+                  "%.2f"|format(((flock.daily_stats.mort_f_pct or 0) | float))
+                  }}%)</span
+                >
+                {% if flock.daily_stats.mort_f_trend == 'up' %}<span
+                  class="text-danger fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↑</span
+                >{% elif flock.daily_stats.mort_f_trend == 'down' %}<span
+                  class="text-success fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↓</span
+                >{% endif %} {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+                <br />
+                <small
+                  class="text-muted mt-2 d-block text-uppercase fw-bold"
+                  style="font-size: 0.65rem"
+                  >Male Ratio</small
+                >
+                <span class="text-body"
+                  >{{ "%.2f"|format(((flock.male_ratio_pct or 0) | float))
+                  }}%</span
+                >
+              </div>
+              {% else %}
+              <div
+                class="col-4 border-end text-center bg-light-subtle rounded-start p-2"
+              >
+                <small
+                  class="text-uppercase text-muted fw-bold"
+                  style="font-size: 0.65rem"
+                  >Prod Mort %</small
+                ><br />
+                <div class="mt-1">
+                  <span class="text-body"
+                    >M: {{ "%.2f"|format(((flock.prod_mort_m_pct or 0) | float))
+                    }}%</span
+                  ><br />
+                  <span class="text-body"
+                    >F: {{ "%.2f"|format(((flock.prod_mort_f_pct or 0) | float))
+                    }}%</span
+                  >
+                </div>
+              </div>
+              <div class="col-4 border-end text-center bg-light-subtle p-2">
+                <small
+                  class="text-uppercase text-muted fw-bold"
+                  style="font-size: 0.65rem"
+                  >Daily Mort %</small
+                >
+                {% if not flock.daily_stats.has_today and
+                flock.daily_stats.data_date %}
+                <br /><small
+                  class="text-warning fw-bold"
+                  style="font-size: 0.6rem"
+                  >(Last: {{ flock.daily_stats.data_date.strftime('%d %b')
+                  }})</small
+                >
+                {% endif %}
+                <br />
+                {% if flock.daily_stats.show_data %}
+                <span class="text-body"
+                  >M: {{ flock.daily_stats.mort_m }} ({{
+                  "%.2f"|format(((flock.daily_stats.mort_m_pct or 0) | float))
+                  }}%)</span
+                >
+                {% if flock.daily_stats.mort_m_trend == 'up' %}<span
+                  class="text-danger fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↑</span
+                >{% elif flock.daily_stats.mort_m_trend == 'down' %}<span
+                  class="text-success fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↓</span
+                >{% endif %}
+                <br />
+                <span class="text-body"
+                  >F: {{ flock.daily_stats.mort_f }} ({{
+                  "%.2f"|format(((flock.daily_stats.mort_f_pct or 0) | float))
+                  }}%)</span
+                >
+                {% if flock.daily_stats.mort_f_trend == 'up' %}<span
+                  class="text-danger fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↑</span
+                >{% elif flock.daily_stats.mort_f_trend == 'down' %}<span
+                  class="text-success fw-bold ms-1"
+                  style="font-size: 0.7rem"
+                  >↓</span
+                >{% endif %} {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+                <br />
+                <small
+                  class="text-muted mt-2 d-block text-uppercase fw-bold"
+                  style="font-size: 0.65rem"
+                  >Male Ratio</small
+                >
+                <span class="text-body"
+                  >{{ "%.2f"|format(((flock.male_ratio_pct or 0) | float))
+                  }}%</span
+                >
+              </div>
+              <div class="col-4 text-center bg-light-subtle rounded-end p-2">
+                <small
+                  class="text-uppercase text-muted fw-bold"
+                  style="font-size: 0.65rem"
+                  >Egg Prod.</small
+                >
+                {% if not flock.daily_stats.has_today and
+                flock.daily_stats.data_date %}
+                <br /><small
+                  class="text-warning fw-bold"
+                  style="font-size: 0.6rem"
+                  >(Last: {{ flock.daily_stats.data_date.strftime('%d %b')
+                  }})</small
+                >
+                {% endif %}
+                <br />
+                {% if flock.daily_stats.show_data %}
+                <div class="m-0 text-body font-weight-bold mt-1">
+                  {{ flock.daily_stats.eggs }} ({{
+                  "%.1f"|format(((flock.daily_stats.egg_pct or 0) | float)) }}%)
+                </div>
+                <div class="mt-1">
+                  {% if flock.daily_stats.egg_trend == 'up' %}
+                  <span class="text-success fw-bold" style="font-size: 0.8rem"
+                    >↑ ({{ "+%.1f"|format(((flock.daily_stats.egg_diff or 0) |
+                    float)) }}%)</span
+                  >
+                  {% elif flock.daily_stats.egg_trend == 'down' %}
+                  <span class="text-danger fw-bold" style="font-size: 0.8rem"
+                    >↓ ({{ "%.1f"|format(((flock.daily_stats.egg_diff or 0) |
+                    float)) }}%)</span
+                  >
+                  {% else %}
+                  <span class="text-muted" style="font-size: 0.8rem">-</span>
+                  {% endif %}
+                </div>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-footer bg-transparent border-0 pt-0">
+            <div class="d-flex justify-content-between align-items-center">
+              <a
+                href="{{ url_for('view_flock', id=flock.id) }}"
+                class="btn btn-outline-primary btn-sm mb-0"
+                >See Details <i class="fas fa-arrow-right ms-1"></i
+              ></a>
+              {% if flock.calculated_phase in ['Brooding', 'Growing', 'Pre-lay']
+              %}
+              <button
+                type="button"
+                class="btn btn-link text-warning text-sm mb-0 px-0 ms-2"
+                data-bs-toggle="modal"
+                data-bs-target="#mixMaleModal{{ flock.id }}"
+              >
+                Mix Male
+              </button>
+
+              <div
+                class="modal modal-blur fade"
+                id="mixMaleModal{{ flock.id }}"
+                tabindex="-1"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog modal-dialog-scrollable">
+                  <form
+                    action="{{ url_for('toggle_phase', id=flock.id) }}"
+                    method="POST"
+                  >
+                    <input
+                      type="hidden"
+                      name="csrf_token"
+                      value="{{ csrf_token() }}"
+                    />
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Mix Male (Start Production)</h5>
+                        <button
+                          type="button"
+                          class="btn-close"
+                          data-bs-dismiss="modal"
+                          aria-label="Close"
+                        ></button>
+                      </div>
+                      <div class="modal-body text-start">
+                        <p>
+                          Please confirm the
+                          <strong>Production Start Date</strong> for {{
+                          flock.house.name }}.
+                        </p>
+                        <div class="mb-3">
+                          <label for="prodDate{{ flock.id }}" class="form-label"
+                            >Start Date</label
+                          >
+                          <input
+                            type="date"
+                            class="form-control"
+                            id="prodDate{{ flock.id }}"
+                            name="production_start_date"
+                            value="{{ today }}"
+                            required
+                          />
+                        </div>
+                        <hr />
+                        <h6 class="text-primary">
+                          Production Start Counts (Baseline)
+                        </h6>
+                        <div class="row">
+                          <div class="col-6 mb-2">
+                            <label class="form-label small">Males (Prod)</label>
+                            <input
+                              type="number"
+                              class="form-control form-control-sm"
+                              name="prod_start_male"
+                              required
+                              value="0"
+                            />
+                          </div>
+                          <div class="col-6 mb-2">
+                            <label class="form-label small"
+                              >Females (Prod)</label
+                            >
+                            <input
+                              type="number"
+                              class="form-control form-control-sm"
+                              name="prod_start_female"
+                              required
+                              value="0"
+                            />
+                          </div>
+                        </div>
+                        <h6 class="text-danger mt-3">Hospital Start Counts</h6>
+                        <div class="row">
+                          <div class="col-6 mb-2">
+                            <label class="form-label small">Males (Hosp)</label>
+                            <input
+                              type="number"
+                              class="form-control form-control-sm"
+                              name="prod_start_male_hosp"
+                              value="0"
+                            />
+                          </div>
+                          <div class="col-6 mb-2">
+                            <label class="form-label small"
+                              >Females (Hosp)</label
+                            >
+                            <input
+                              type="number"
+                              class="form-control form-control-sm"
+                              name="prod_start_female_hosp"
+                              value="0"
+                            />
+                          </div>
+                        </div>
+                        <p class="small text-muted mt-2">
+                          Statistics will be calculated as 'Production' starting
+                          from this date using these counts as the new baseline.
+                        </p>
+                      </div>
+                      <div class="modal-footer">
+                        <button
+                          type="button"
+                          class="btn btn-secondary"
+                          data-bs-dismiss="modal"
+                        >
+                          Cancel
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                          Mix Male
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="col-12">
+        <div class="empty bg-body rounded shadow-sm py-5">
+          <div class="empty-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="icon text-muted"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              stroke-width="2"
+              stroke="currentColor"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <circle cx="12" cy="12" r="9" />
+              <line x1="9" y1="12" x2="15" y2="12" />
+              <line x1="12" y1="9" x2="12" y2="15" />
+            </svg>
+          </div>
+          <p class="empty-title">No active flocks</p>
+          <p class="empty-subtitle text-muted">
+            There are currently no active flocks being managed.
+          </p>
+          <div class="empty-action">
+            <a href="{{ url_for('manage_flocks') }}" class="btn btn-primary">
+              Create New Flock
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <!-- End Flocks Tab -->
+
+  <div class="tab-pane fade" id="inventory">
+    <div class="card border-danger mb-4">
+      <div
+        class="card-header bg-danger text-white d-flex justify-content-between align-items-center"
+      >
+        <h5 class="mb-0">Low Stock Alerts ({{ low_stock_count }})</h5>
+      </div>
+      <div class="card-body">
+        {% if low_stock_items %}
+        <div class="table-responsive table-responsive-sticky">
+          <table class="table table-striped">
+            <thead class="sticky-table-header">
+              <tr>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Current</th>
+                <th>Min Level</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in low_stock_items %}
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.type }}</td>
+                <td class="fw-bold text-danger">
+                  {{ item.current_stock }} {{ item.unit }}
+                </td>
+                <td>{{ item.min_stock_level }} {{ item.unit }}</td>
+                <td><span class="badge bg-danger text-white">Low</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-success mb-0">No low stock alerts.</p>
+        {% endif %}
+      </div>
     </div>
 
     <div class="card border-success mb-4">
-        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Available Stock</h5>
-            <a href="{{ url_for('inventory') }}" class="btn btn-sm btn-light text-success fw-bold">Manage Full Inventory</a>
+      <div
+        class="card-header bg-success text-white d-flex justify-content-between align-items-center"
+      >
+        <h5 class="mb-0">Available Stock</h5>
+        <a
+          href="{{ url_for('inventory') }}"
+          class="btn btn-sm btn-light text-success fw-bold"
+          >Manage Full Inventory</a
+        >
+      </div>
+      <div class="card-body">
+        {% if normal_stock_items %}
+        <div class="table-responsive table-responsive-sticky">
+          <table class="table table-striped">
+            <thead class="sticky-table-header">
+              <tr>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Current</th>
+                <th>Min Level</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in normal_stock_items %}
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.type }}</td>
+                <td class="fw-bold text-success">
+                  {{ item.current_stock }} {{ item.unit }}
+                </td>
+                <td>{{ item.min_stock_level }} {{ item.unit }}</td>
+                <td><span class="badge bg-success text-white">Normal</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-        <div class="card-body">
-            {% if normal_stock_items %}
-                <div class="table-responsive table-responsive-sticky">
-                    <table class="table table-striped">
-                        <thead class="sticky-table-header">
-                            <tr>
-                                <th>Item</th>
-                                <th>Type</th>
-                                <th>Current</th>
-                                <th>Min Level</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in normal_stock_items %}
-                            <tr>
-                                <td>{{ item.name }}</td>
-                                <td>{{ item.type }}</td>
-                                <td class="fw-bold text-success">{{ item.current_stock }} {{ item.unit }}</td>
-                                <td>{{ item.min_stock_level }} {{ item.unit }}</td>
-                                <td><span class="badge bg-success text-white">Normal</span></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-muted mb-0">No other inventory items found.</p>
-            {% endif %}
-        </div>
+        {% else %}
+        <p class="text-muted mb-0">No other inventory items found.</p>
+        {% endif %}
+      </div>
     </div>
+  </div>
 </div>
-
-</div> <!-- End Tab Content -->
+<!-- End Tab Content -->
 
 <!-- Overlay for PDF Generation (Added to fix null reference on display) -->
-<div id="reportGenerationOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); z-index: 9999; flex-direction: column; justify-content: center; align-items: center;">
-    <div style="text-align: center;">
-        <svg class="slh-logo mb-3" viewBox="-14 -14 128 128" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="64" fill="#ffffff" />
-            <g fill="none" stroke="#005eb8" stroke-linecap="round" stroke-linejoin="round" transform="translate(0, -6)">
-                <path class="custom-logo-path drawBreeder" d="m78.14 54.345 0.0026-0.28244c-0.0283 5.3531-0.97265 7.988-3.9396 12.32 0 0 0.46373 3.5974 1.0821 5.6 1.0595 3.4311 3.2798 6.8098 4.3272 10.4 2.0178 6.9167 1.0516 14.202-6.0322 15.69" stroke-width="2.6457"/>
-                <path class="custom-logo-path slh-eye blinkEye" d="m65.286 56.508 0.05668 0.07851" stroke-width="7.5591"/>
-                <path class="custom-logo-path drawBreeder" d="m36.428 46.586c-4.3086 3.3052-12.213 18.443-14.207 22.975-3.3406 7.5952-4.0449 13.587-5.142 23.537" stroke-width="2.6457"/>
-                <path class="custom-logo-path drawBreeder" d="m78.152 53.839c-1.965-6.7001-9.8729-14.401-20.105-14.614-6.0786-0.12664-12.418 2.4074-17.6 5.2086-2.3866 1.2901-4.2248 2.6267-7.2 1.7926-6.5183-1.8275-11.381-14.927-5.3772-20.378 3.0047-2.7277 8.4544 0.26719 9.7865 2.1708-0.11421-2.8074 0.17607-8.4781 3.0135-10.641 4.3843-3.3414 10.195 3.6196 11.963 5.9337 0.75757-2.9175 2.9364-8.474 7.0257-8.5769 5.4617-0.13744 9.8604 10.598 10.637 10.633 0.63106 0.02814 1.137-6.6833 4.5926-5.7878 3.8393 0.99495 6.945 9.2974 7.3992 11.31 0.41019 1.8173 1.0486 6.6207 0.71243 9.0916-0.83596 6.1454-1.5141 11.284-4.8478 13.894 2.2642-0.08264 4.323 2.3963 7.4699 4.9891 0.74514 0.61392 5.4132 4.645 6.768 8.1934 0.85452 2.2382-7.5759-0.61032-13.543-1.208-2.2242-0.22276-3.9924-0.25544-6.4 0.34136-2.0416 0.50606-3.0152 1.1589-4.7969 2.7056-6.1463 5.3354-10.377 15.576-6.7451 23.081 2.868 5.9265 7.7202 7.5046 13.142 5.9752 0.33347 3.8243 1.9984 7.5108 2.4 12.428" stroke-width="2.6457"/>
-            </g>
-        </svg>
-        <p class="loader-text" id="reportGenerationStatus" style="font-size: 1.25rem; font-weight: 500; color: #333;">Initializing...</p>
-    </div>
+<div
+  id="reportGenerationOverlay"
+  style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 9999;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  "
+>
+  <div style="text-align: center">
+    <svg
+      class="slh-logo mb-3"
+      viewBox="-14 -14 128 128"
+      width="80"
+      height="80"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="50" cy="50" r="64" fill="#ffffff" />
+      <g
+        fill="none"
+        stroke="#005eb8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        transform="translate(0, -6)"
+      >
+        <path
+          class="custom-logo-path drawBreeder"
+          d="m78.14 54.345 0.0026-0.28244c-0.0283 5.3531-0.97265 7.988-3.9396 12.32 0 0 0.46373 3.5974 1.0821 5.6 1.0595 3.4311 3.2798 6.8098 4.3272 10.4 2.0178 6.9167 1.0516 14.202-6.0322 15.69"
+          stroke-width="2.6457"
+        />
+        <path
+          class="custom-logo-path slh-eye blinkEye"
+          d="m65.286 56.508 0.05668 0.07851"
+          stroke-width="7.5591"
+        />
+        <path
+          class="custom-logo-path drawBreeder"
+          d="m36.428 46.586c-4.3086 3.3052-12.213 18.443-14.207 22.975-3.3406 7.5952-4.0449 13.587-5.142 23.537"
+          stroke-width="2.6457"
+        />
+        <path
+          class="custom-logo-path drawBreeder"
+          d="m78.152 53.839c-1.965-6.7001-9.8729-14.401-20.105-14.614-6.0786-0.12664-12.418 2.4074-17.6 5.2086-2.3866 1.2901-4.2248 2.6267-7.2 1.7926-6.5183-1.8275-11.381-14.927-5.3772-20.378 3.0047-2.7277 8.4544 0.26719 9.7865 2.1708-0.11421-2.8074 0.17607-8.4781 3.0135-10.641 4.3843-3.3414 10.195 3.6196 11.963 5.9337 0.75757-2.9175 2.9364-8.474 7.0257-8.5769 5.4617-0.13744 9.8604 10.598 10.637 10.633 0.63106 0.02814 1.137-6.6833 4.5926-5.7878 3.8393 0.99495 6.945 9.2974 7.3992 11.31 0.41019 1.8173 1.0486 6.6207 0.71243 9.0916-0.83596 6.1454-1.5141 11.284-4.8478 13.894 2.2642-0.08264 4.323 2.3963 7.4699 4.9891 0.74514 0.61392 5.4132 4.645 6.768 8.1934 0.85452 2.2382-7.5759-0.61032-13.543-1.208-2.2242-0.22276-3.9924-0.25544-6.4 0.34136-2.0416 0.50606-3.0152 1.1589-4.7969 2.7056-6.1463 5.3354-10.377 15.576-6.7451 23.081 2.868 5.9265 7.7202 7.5046 13.142 5.9752 0.33347 3.8243 1.9984 7.5108 2.4 12.428"
+          stroke-width="2.6457"
+        />
+      </g>
+    </svg>
+    <p
+      class="loader-text"
+      id="reportGenerationStatus"
+      style="font-size: 1.25rem; font-weight: 500; color: #333"
+    >
+      Initializing...
+    </p>
+  </div>
 </div>
 
 <!-- Hidden container for rendering charts and canvas before converting to PDF/Image -->
-<div id="reportRenderContainer" style="position: absolute; left: -9999px; top: -9999px; width: 297mm; height: 210mm; background: white; box-sizing: border-box; padding: 20px;">
-</div>
+<div
+  id="reportRenderContainer"
+  style="
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    width: 297mm;
+    height: 210mm;
+    background: white;
+    box-sizing: border-box;
+    padding: 20px;
+  "
+></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -444,29 +918,50 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- Generate Daily Report Modal -->
-<div class="modal modal-blur fade" id="generateReportModal" tabindex="-1" role="dialog" aria-hidden="true">
+<div
+  class="modal modal-blur fade"
+  id="generateReportModal"
+  tabindex="-1"
+  role="dialog"
+  aria-hidden="true"
+>
   <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Generate Daily House Report</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
           <label class="form-label">Report Date</label>
-          <input type="date" class="form-control" id="reportDate">
+          <input type="date" class="form-control" id="reportDate" />
         </div>
 
         <div class="mb-3">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <label class="form-label mb-0">Select Houses</label>
-            <a href="#" id="selectAllHouses" class="text-primary text-decoration-none">Select All</a>
+            <a
+              href="#"
+              id="selectAllHouses"
+              class="text-primary text-decoration-none"
+              >Select All</a
+            >
           </div>
           <div class="row">
             {% for flock in active_flocks %}
             <div class="col-6 mb-2">
               <label class="form-check">
-                <input class="form-check-input house-checkbox" type="checkbox" value="{{ flock.id }}" data-house-name="{{ flock.house.name }}">
+                <input
+                  class="form-check-input house-checkbox"
+                  type="checkbox"
+                  value="{{ flock.id }}"
+                  data-house-name="{{ flock.house.name }}"
+                />
                 <span class="form-check-label">{{ flock.house.name }}</span>
               </label>
             </div>
@@ -474,87 +969,111 @@
           </div>
         </div>
 
-        <div class="text-muted" style="font-size: 0.85rem;">
+        <div class="text-muted" style="font-size: 0.85rem">
           Tip: Images are automatically saved for 7 days for quick sharing.
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary w-100" id="btnGenerateReport">Generate Report</button>
+        <button
+          type="button"
+          class="btn btn-primary w-100"
+          id="btnGenerateReport"
+        >
+          Generate Report
+        </button>
       </div>
     </div>
   </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('reportDate').value = today;
+  document.addEventListener("DOMContentLoaded", () => {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("reportDate").value = today;
 
-        document.getElementById('selectAllHouses').addEventListener('click', (e) => {
-            e.preventDefault();
-            const checkboxes = document.querySelectorAll('.house-checkbox');
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            checkboxes.forEach(cb => cb.checked = !allChecked);
-        });
+    document
+      .getElementById("selectAllHouses")
+      .addEventListener("click", (e) => {
+        e.preventDefault();
+        const checkboxes = document.querySelectorAll(".house-checkbox");
+        const allChecked = Array.from(checkboxes).every((cb) => cb.checked);
+        checkboxes.forEach((cb) => (cb.checked = !allChecked));
+      });
 
-        document.getElementById('btnGenerateReport').addEventListener('click', async () => {
-            const date = document.getElementById('reportDate').value;
-            const checkboxes = document.querySelectorAll('.house-checkbox:checked');
-            if (checkboxes.length === 0) {
-                alert('Please select at least one house.');
-                return;
+    document
+      .getElementById("btnGenerateReport")
+      .addEventListener("click", async () => {
+        const date = document.getElementById("reportDate").value;
+        const checkboxes = document.querySelectorAll(".house-checkbox:checked");
+        if (checkboxes.length === 0) {
+          alert("Please select at least one house.");
+          return;
+        }
+
+        const modal = bootstrap.Modal.getInstance(
+          document.getElementById("generateReportModal"),
+        );
+        modal.hide();
+
+        const overlay = document.getElementById("reportGenerationOverlay");
+        const statusText = document.getElementById("reportGenerationStatus");
+        const container = document.getElementById("reportRenderContainer");
+
+        overlay.style.display = "flex";
+
+        // Temporarily force light mode for PDF generation
+        const originalTheme =
+          document.documentElement.getAttribute("data-bs-theme");
+        document.documentElement.setAttribute("data-bs-theme", "light");
+        window.dispatchEvent(
+          new CustomEvent("themeChanged", { detail: { theme: "light" } }),
+        );
+
+        const pdf = new jspdf.jsPDF("l", "mm", "a4");
+        let firstPage = true;
+
+        for (let i = 0; i < checkboxes.length; i++) {
+          const flockId = checkboxes[i].value;
+          const houseName = checkboxes[i].getAttribute("data-house-name");
+          statusText.innerText = `Fetching data for ${houseName}...`;
+
+          try {
+            const response = await fetch(
+              `/api/daily_log/trend?flock_id=${flockId}&date=${date}`,
+            );
+            if (!response.ok) {
+              console.error(`Skipping ${houseName}, error fetching data.`);
+              continue;
             }
+            const data = await response.json();
 
-            const modal = bootstrap.Modal.getInstance(document.getElementById('generateReportModal'));
-            modal.hide();
+            statusText.innerText = `Rendering report for ${houseName}...`;
 
-            const overlay = document.getElementById('reportGenerationOverlay');
-            const statusText = document.getElementById('reportGenerationStatus');
-            const container = document.getElementById('reportRenderContainer');
-
-            overlay.style.display = 'flex';
-
-            const pdf = new jspdf.jsPDF('l', 'mm', 'a4');
-            let firstPage = true;
-
-            for (let i = 0; i < checkboxes.length; i++) {
-                const flockId = checkboxes[i].value;
-                const houseName = checkboxes[i].getAttribute('data-house-name');
-                statusText.innerText = `Fetching data for ${houseName}...`;
-
-                try {
-                    const response = await fetch(`/api/daily_log/trend?flock_id=${flockId}&date=${date}`);
-                    if (!response.ok) {
-                        console.error(`Skipping ${houseName}, error fetching data.`);
-                        continue;
-                    }
-                    const data = await response.json();
-
-                    statusText.innerText = `Rendering report for ${houseName}...`;
-
-                    if (data.empty) {
-                        // Render ZERO DATA page
-                        container.innerHTML = `
+            if (data.empty) {
+              // Render ZERO DATA page
+              container.innerHTML = `
                             <div style="width: 297mm; height: 210mm; background: white; padding: 15mm; font-family: sans-serif; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid #ddd;">
                                 <h1 style="color: #666; font-size: 32px; letter-spacing: 2px;">HOUSE ${data.house_name}</h1>
                                 <h2 style="color: #999; font-size: 24px;">NO DATA LOGGED FOR ${data.date}</h2>
                             </div>
                         `;
 
-                        await new Promise(r => setTimeout(r, 50));
-                        const canvas = await html2canvas(container.firstElementChild, { scale: 2 });
-                        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+              await new Promise((r) => setTimeout(r, 50));
+              const canvas = await html2canvas(container.firstElementChild, {
+                scale: 2,
+              });
+              const imgData = canvas.toDataURL("image/jpeg", 0.85);
 
-                        if (!firstPage) {
-                            pdf.addPage();
-                        }
-                        pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
-                        firstPage = false;
-                        continue; // Skip the rest for this house, no image backup needed
-                    }
+              if (!firstPage) {
+                pdf.addPage();
+              }
+              pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+              firstPage = false;
+              continue; // Skip the rest for this house
+            }
 
-                    // Render HTML template dynamically into the container
-                    container.innerHTML = `
+            // Render HTML template dynamically into the container
+            container.innerHTML = `
                         <div style="width: 297mm; height: 210mm; background: white; padding: 15mm; font-family: sans-serif; box-sizing: border-box; position: relative;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                                 <div>
@@ -581,259 +1100,380 @@
 
                             <div style="margin-top: 15px; font-size: 16px; line-height: 1.5;">
                                 <div><strong>Egg weight:</strong> ${data.egg_weight}g (Std: ${data.std_egg_weight}g)</div>
-                                <div><strong>Feed (Prog: ${data.feed_program || 'N/A'}) g/b:</strong> (M: ${data.feed_m}g | F: ${data.feed_f}g) &nbsp;&nbsp;&nbsp; <strong>Total feed:</strong> ${data.total_feed_kg}kg &nbsp;&nbsp;&nbsp; <strong>Feed Time:</strong> ${data.feed_cleanup_hours} h</div>
+                                <div><strong>Feed (Prog: ${data.feed_program || "N/A"}) g/b:</strong> (M: ${data.feed_m}g | F: ${data.feed_f}g) &nbsp;&nbsp;&nbsp; <strong>Total feed:</strong> ${data.total_feed_kg}kg &nbsp;&nbsp;&nbsp; <strong>Feed Time:</strong> ${data.feed_cleanup_hours} h</div>
                                 <div><strong>Medication:</strong> ${data.medication}</div>
-                                ${data.vaccination ? `<div><strong>Vaccination:</strong> ${data.vaccination}</div>` : ''}
+                                ${data.vaccination ? `<div><strong>Vaccination:</strong> ${data.vaccination}</div>` : ""}
                                 <div><strong>Clinical notes:</strong> ${data.notes}</div>
-                                <div><strong>Remarks:</strong> ${data.remarks || 'None'}</div>
+                                <div><strong>Remarks:</strong> ${data.remarks || "None"}</div>
                             </div>
                         </div>
                     `;
 
-                    await new Promise(r => setTimeout(r, 50));
+            await new Promise((r) => setTimeout(r, 50));
 
-                    const trend = data.trend;
-                    const labels = trend.map(t => t.date.split('-').reverse().slice(0, 2).join('-')); // DD-MM
+            const trend = data.trend;
+            const labels = trend.map((t) =>
+              t.date.split("-").reverse().slice(0, 2).join("-"),
+            ); // DD-MM
 
-                    // Chart Configs with Current Day Distinction
-                    const pointRadii = trend.map(t => t.is_target_day ? 6 : 3);
-                    const pointBorderWidths = trend.map(t => t.is_target_day ? 3 : 1);
-                    const barBorderWidths = trend.map(t => t.is_target_day ? {top:2, right:2, bottom:0, left:2} : 0);
-                    const borderColors = trend.map(t => t.is_target_day ? 'black' : 'transparent');
+            // Chart Configs with Current Day Distinction
+            const pointRadii = trend.map((t) => (t.is_target_day ? 6 : 3));
+            const pointBorderWidths = trend.map((t) =>
+              t.is_target_day ? 3 : 1,
+            );
+            const barBorderWidths = trend.map((t) =>
+              t.is_target_day ? { top: 2, right: 2, bottom: 0, left: 2 } : 0,
+            );
+            const borderColors = trend.map((t) =>
+              t.is_target_day ? "black" : "transparent",
+            );
 
-                    // Chart 1: Mortality & Egg Production
-                    const ctx1 = document.getElementById('chart1').getContext('2d');
-                    new Chart(ctx1, {
-                        type: 'bar',
-                        plugins: [ChartDataLabels],
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    type: 'line',
-                                    label: 'Actual Egg Prod %',
-                                    data: trend.map(t => t.egg_prod_pct),
-                                    borderColor: 'blue',
-                                    backgroundColor: 'blue',
-                                    yAxisID: 'yRight',
-                                    pointRadius: pointRadii,
-                                    pointBorderWidth: pointBorderWidths,
-                                    pointBorderColor: 'black',
-                                    datalabels: { align: 'top', anchor: 'end', color: 'blue', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, formatter: v => v > 0 ? v.toFixed(1) : '' }
-                                },
-                                {
-                                    type: 'line',
-                                    label: 'Std Egg Prod %',
-                                    data: trend.map(t => t.std_egg_prod),
-                                    borderColor: 'red',
-                                    backgroundColor: 'red',
-                                    yAxisID: 'yRight',
-                                    pointRadius: 0,
-                                    datalabels: { display: false }
-                                },
-                                {
-                                    type: 'line',
-                                    label: `Std Mortality ${trend.length > 0 ? trend[0].std_mortality : 0.05}%`,
-                                    data: trend.map(t => t.std_mortality),
-                                    borderColor: 'orange',
-                                    borderDash: [5, 5],
-                                    borderWidth: 2.25,
-                                    yAxisID: 'yLeft',
-                                    pointRadius: 0,
-                                    datalabels: { display: false }
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Male Mort %',
-                                    data: trend.map(t => t.mort_m_pct),
-                                    backgroundColor: 'darkred',
-                                    borderColor: borderColors,
-                                    borderWidth: barBorderWidths,
-                                    yAxisID: 'yLeft',
-                                    datalabels: { align: 'top', anchor: 'end', color: 'darkred', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, font: {size: 10}, formatter: v => v > 0 ? v.toFixed(2) : '' }
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Female Mort %',
-                                    data: trend.map(t => t.mort_f_pct),
-                                    backgroundColor: '#ff6666',
-                                    borderColor: borderColors,
-                                    borderWidth: barBorderWidths,
-                                    yAxisID: 'yLeft',
-                                    datalabels: { align: 'top', anchor: 'end', color: '#ff6666', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, font: {size: 10}, formatter: v => v > 0 ? v.toFixed(2) : '' }
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: false,
-                            scales: {
-                                yLeft: {
-                                    type: 'linear',
-                                    position: 'left',
-                                    min: 0,
-                                    max: (() => {
-                                        const vals = [...trend.map(t => t.mort_m_pct || 0), ...trend.map(t => t.mort_f_pct || 0), 0.05];
-                                        const maxV = Math.max(...vals);
-                                        return maxV > 0 ? maxV / 0.65 : 1; // Limit bars to bottom 65%
-                                    })(),
-                                    ticks: { callback: function(value) { return (this.chart.scales.yLeft.max < 1) ? value.toFixed(2) : (Number.isInteger(value) ? value : ''); } }
-                                },
-                                yRight: {
-                                    type: 'linear',
-                                    position: 'right',
-                                    grid: { drawOnChartArea: false },
-                                    min: (() => {
-                                        const vals = [...trend.map(t => t.egg_prod_pct || 0), ...trend.map(t => t.std_egg_prod || 0)].filter(v => v > 0);
-                                        if (vals.length === 0) return 0;
-                                        const minV = Math.min(...vals);
-                                        const maxV = Math.max(...vals);
-                                        let dataRange = maxV - minV;
-                                        if (dataRange < 5) dataRange = Math.max(5, maxV * 0.1);
-                                        let desiredTotalRange = dataRange / 0.30;
-                                        let minScale = minV - (desiredTotalRange * 0.65);
-                                        return minScale < 0 ? 0 : minScale;
-                                    })(),
-                                    max: (() => {
-                                        const vals = [...trend.map(t => t.egg_prod_pct || 0), ...trend.map(t => t.std_egg_prod || 0)].filter(v => v > 0);
-                                        if (vals.length === 0) return 100;
-                                        const minV = Math.min(...vals);
-                                        const maxV = Math.max(...vals);
-                                        let dataRange = maxV - minV;
-                                        if (dataRange < 5) dataRange = Math.max(5, maxV * 0.1);
-                                        let desiredTotalRange = dataRange / 0.30;
-                                        let minScale = minV - (desiredTotalRange * 0.65);
-                                        if (minScale < 0) {
-                                            return maxV / 0.90; // if clamped to 0, just put maxV at 90%
-                                        }
-                                        return minScale + desiredTotalRange;
-                                    })(),
-                                    ticks: { callback: function(value) { return Number.isInteger(value) ? value : ''; } }
-                                }
-                            }
-                        }
-                    });
+            // Chart 1: Mortality & Egg Production
+            const ctx1 = document.getElementById("chart1").getContext("2d");
+            new Chart(ctx1, {
+              type: "bar",
+              plugins: [ChartDataLabels],
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    type: "line",
+                    label: "Actual Egg Prod %",
+                    data: trend.map((t) => t.egg_prod_pct),
+                    borderColor: "blue",
+                    backgroundColor: "blue",
+                    yAxisID: "yRight",
+                    pointRadius: pointRadii,
+                    pointBorderWidth: pointBorderWidths,
+                    pointBorderColor: "black",
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "blue",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      formatter: (v) => (v > 0 ? v.toFixed(1) : ""),
+                    },
+                  },
+                  {
+                    type: "line",
+                    label: "Std Egg Prod %",
+                    data: trend.map((t) => t.std_egg_prod),
+                    borderColor: "red",
+                    backgroundColor: "red",
+                    yAxisID: "yRight",
+                    pointRadius: 0,
+                    datalabels: { display: false },
+                  },
+                  {
+                    type: "line",
+                    label: `Std Mortality ${trend.length > 0 ? trend[0].std_mortality : 0.05}%`,
+                    data: trend.map((t) => t.std_mortality),
+                    borderColor: "orange",
+                    borderDash: [5, 5],
+                    borderWidth: 2.25,
+                    yAxisID: "yLeft",
+                    pointRadius: 0,
+                    datalabels: { display: false },
+                  },
+                  {
+                    type: "bar",
+                    label: "Male Mort %",
+                    data: trend.map((t) => t.mort_m_pct),
+                    backgroundColor: "darkred",
+                    borderColor: borderColors,
+                    borderWidth: barBorderWidths,
+                    yAxisID: "yLeft",
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "darkred",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      font: { size: 10 },
+                      formatter: (v) => (v > 0 ? v.toFixed(2) : ""),
+                    },
+                  },
+                  {
+                    type: "bar",
+                    label: "Female Mort %",
+                    data: trend.map((t) => t.mort_f_pct),
+                    backgroundColor: "#ff6666",
+                    borderColor: borderColors,
+                    borderWidth: barBorderWidths,
+                    yAxisID: "yLeft",
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "#ff6666",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      font: { size: 10 },
+                      formatter: (v) => (v > 0 ? v.toFixed(2) : ""),
+                    },
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                  yLeft: {
+                    type: "linear",
+                    position: "left",
+                    min: 0,
+                    max: (() => {
+                      const vals = [
+                        ...trend.map((t) => t.mort_m_pct || 0),
+                        ...trend.map((t) => t.mort_f_pct || 0),
+                        0.05,
+                      ];
+                      const maxV = Math.max(...vals);
+                      return maxV > 0 ? maxV / 0.65 : 1; // Limit bars to bottom 65%
+                    })(),
+                    ticks: {
+                      callback: function (value) {
+                        return this.chart.scales.yLeft.max < 1
+                          ? value.toFixed(2)
+                          : Number.isInteger(value)
+                            ? value
+                            : "";
+                      },
+                    },
+                  },
+                  yRight: {
+                    type: "linear",
+                    position: "right",
+                    grid: { drawOnChartArea: false },
+                    min: (() => {
+                      const vals = [
+                        ...trend.map((t) => t.egg_prod_pct || 0),
+                        ...trend.map((t) => t.std_egg_prod || 0),
+                      ].filter((v) => v > 0);
+                      if (vals.length === 0) return 0;
+                      const minV = Math.min(...vals);
+                      const maxV = Math.max(...vals);
+                      let dataRange = maxV - minV;
+                      if (dataRange < 5) dataRange = Math.max(5, maxV * 0.1);
+                      let desiredTotalRange = dataRange / 0.3;
+                      let minScale = minV - desiredTotalRange * 0.65;
+                      return minScale < 0 ? 0 : minScale;
+                    })(),
+                    max: (() => {
+                      const vals = [
+                        ...trend.map((t) => t.egg_prod_pct || 0),
+                        ...trend.map((t) => t.std_egg_prod || 0),
+                      ].filter((v) => v > 0);
+                      if (vals.length === 0) return 100;
+                      const minV = Math.min(...vals);
+                      const maxV = Math.max(...vals);
+                      let dataRange = maxV - minV;
+                      if (dataRange < 5) dataRange = Math.max(5, maxV * 0.1);
+                      let desiredTotalRange = dataRange / 0.3;
+                      let minScale = minV - desiredTotalRange * 0.65;
+                      if (minScale < 0) {
+                        return maxV / 0.9; // if clamped to 0, just put maxV at 90%
+                      }
+                      return minScale + desiredTotalRange;
+                    })(),
+                    ticks: {
+                      callback: function (value) {
+                        return Number.isInteger(value) ? value : "";
+                      },
+                    },
+                  },
+                },
+              },
+            });
 
-                    // Chart 2: Cull and Hatching Egg
-                    const ctx2 = document.getElementById('chart2').getContext('2d');
-                    new Chart(ctx2, {
-                        type: 'bar',
-                        plugins: [ChartDataLabels],
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    type: 'line',
-                                    label: 'Actual Hatching %',
-                                    data: trend.map(t => t.hatching_egg_pct),
-                                    borderColor: 'blue',
-                                    backgroundColor: 'blue',
-                                    yAxisID: 'yRight',
-                                    pointRadius: pointRadii,
-                                    pointBorderWidth: pointBorderWidths,
-                                    pointBorderColor: 'black',
-                                    datalabels: { align: 'top', anchor: 'end', color: 'blue', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, formatter: v => v > 0 ? v.toFixed(1) : '' }
-                                },
-                                {
-                                    type: 'line',
-                                    label: 'Std Hatching %',
-                                    data: trend.map(t => t.std_hatching_pct),
-                                    borderColor: 'red',
-                                    backgroundColor: 'red',
-                                    yAxisID: 'yRight',
-                                    pointRadius: 0,
-                                    datalabels: { display: false }
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Jumbo (%)',
-                                    data: trend.map(t => t.cull_jumbo_pct),
-                                    backgroundColor: 'green',
-                                    borderColor: borderColors,
-                                    borderWidth: barBorderWidths,
-                                    yAxisID: 'yLeft',
-                                    stacked: false,
-                                    datalabels: { align: 'top', anchor: 'end', color: 'green', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, font: {size: 10}, formatter: v => v > 0 ? v.toFixed(2) : '' }
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Small (%)',
-                                    data: trend.map(t => t.cull_small_pct),
-                                    backgroundColor: '#1AA37A',
-                                    borderColor: borderColors,
-                                    borderWidth: barBorderWidths,
-                                    yAxisID: 'yLeft',
-                                    stacked: false,
-                                    datalabels: { align: 'top', anchor: 'end', color: '#1AA37A', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, font: {size: 10}, formatter: v => v > 0 ? v.toFixed(2) : '' }
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Abnormal (%)',
-                                    data: trend.map(t => t.cull_abnormal_pct),
-                                    backgroundColor: 'darkblue',
-                                    borderColor: borderColors,
-                                    borderWidth: barBorderWidths,
-                                    yAxisID: 'yLeft',
-                                    stacked: false,
-                                    datalabels: { align: 'top', anchor: 'end', color: 'darkblue', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, font: {size: 10}, formatter: v => v > 0 ? v.toFixed(2) : '' }
-                                },
-                                {
-                                    type: 'bar',
-                                    label: 'Crack (%)',
-                                    data: trend.map(t => t.cull_crack_pct),
-                                    backgroundColor: '#ff8c00',
-                                    borderColor: borderColors,
-                                    borderWidth: barBorderWidths,
-                                    yAxisID: 'yLeft',
-                                    stacked: false,
-                                    datalabels: { align: 'top', anchor: 'end', color: '#ff8c00', backgroundColor: 'rgba(255, 255, 255, 0.7)', borderRadius: 3, padding: 2, font: {size: 10}, formatter: v => v > 0 ? v.toFixed(2) : '' }
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            animation: false,
-                            scales: {
-                                yLeft: {
-                                    type: 'linear',
-                                    position: 'left',
-                                    min: 0,
-                                    max: (() => {
-                                        // Calculate the maximum cull value among all cull types across all dates
-                                        const culls = trend.map(t => Math.max(t.cull_jumbo_pct||0, t.cull_small_pct||0, t.cull_abnormal_pct||0, t.cull_crack_pct||0));
-                                        const maxV = Math.max(...culls, 0);
-                                        return maxV > 0 ? maxV / 0.65 : 10; // Dynamically compress bars to bottom 65%
-                                    })(),
-                                    ticks: { callback: function(value) { return (this.chart.scales.yLeft.max < 1) ? value.toFixed(2) : (Number.isInteger(value) ? value : ''); } }
-                                },
-                                yRight: {
-                                    type: 'linear',
-                                    position: 'right',
-                                    min: 0,
-                                    max: 110,
-                                    grid: { drawOnChartArea: false },
-                                    ticks: { callback: function(value) { return Number.isInteger(value) ? value : ''; } }
-                                }
-                            }
-                        }
-                    });
+            // Chart 2: Cull and Hatching Egg
+            const ctx2 = document.getElementById("chart2").getContext("2d");
+            new Chart(ctx2, {
+              type: "bar",
+              plugins: [ChartDataLabels],
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    type: "line",
+                    label: "Actual Hatching %",
+                    data: trend.map((t) => t.hatching_egg_pct),
+                    borderColor: "blue",
+                    backgroundColor: "blue",
+                    yAxisID: "yRight",
+                    pointRadius: pointRadii,
+                    pointBorderWidth: pointBorderWidths,
+                    pointBorderColor: "black",
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "blue",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      formatter: (v) => (v > 0 ? v.toFixed(1) : ""),
+                    },
+                  },
+                  {
+                    type: "line",
+                    label: "Std Hatching %",
+                    data: trend.map((t) => t.std_hatching_pct),
+                    borderColor: "red",
+                    backgroundColor: "red",
+                    yAxisID: "yRight",
+                    pointRadius: 0,
+                    datalabels: { display: false },
+                  },
+                  {
+                    type: "bar",
+                    label: "Jumbo (%)",
+                    data: trend.map((t) => t.cull_jumbo_pct),
+                    backgroundColor: "green",
+                    borderColor: borderColors,
+                    borderWidth: barBorderWidths,
+                    yAxisID: "yLeft",
+                    stacked: false,
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "green",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      font: { size: 10 },
+                      formatter: (v) => (v > 0 ? v.toFixed(2) : ""),
+                    },
+                  },
+                  {
+                    type: "bar",
+                    label: "Small (%)",
+                    data: trend.map((t) => t.cull_small_pct),
+                    backgroundColor: "#1AA37A",
+                    borderColor: borderColors,
+                    borderWidth: barBorderWidths,
+                    yAxisID: "yLeft",
+                    stacked: false,
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "#1AA37A",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      font: { size: 10 },
+                      formatter: (v) => (v > 0 ? v.toFixed(2) : ""),
+                    },
+                  },
+                  {
+                    type: "bar",
+                    label: "Abnormal (%)",
+                    data: trend.map((t) => t.cull_abnormal_pct),
+                    backgroundColor: "darkblue",
+                    borderColor: borderColors,
+                    borderWidth: barBorderWidths,
+                    yAxisID: "yLeft",
+                    stacked: false,
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "darkblue",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      font: { size: 10 },
+                      formatter: (v) => (v > 0 ? v.toFixed(2) : ""),
+                    },
+                  },
+                  {
+                    type: "bar",
+                    label: "Crack (%)",
+                    data: trend.map((t) => t.cull_crack_pct),
+                    backgroundColor: "#ff8c00",
+                    borderColor: borderColors,
+                    borderWidth: barBorderWidths,
+                    yAxisID: "yLeft",
+                    stacked: false,
+                    datalabels: {
+                      align: "top",
+                      anchor: "end",
+                      color: "#ff8c00",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      borderRadius: 3,
+                      padding: 2,
+                      font: { size: 10 },
+                      formatter: (v) => (v > 0 ? v.toFixed(2) : ""),
+                    },
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                  yLeft: {
+                    type: "linear",
+                    position: "left",
+                    min: 0,
+                    max: (() => {
+                      // Calculate the maximum cull value among all cull types across all dates
+                      const culls = trend.map((t) =>
+                        Math.max(
+                          t.cull_jumbo_pct || 0,
+                          t.cull_small_pct || 0,
+                          t.cull_abnormal_pct || 0,
+                          t.cull_crack_pct || 0,
+                        ),
+                      );
+                      const maxV = Math.max(...culls, 0);
+                      return maxV > 0 ? maxV / 0.65 : 10; // Dynamically compress bars to bottom 65%
+                    })(),
+                    ticks: {
+                      callback: function (value) {
+                        return this.chart.scales.yLeft.max < 1
+                          ? value.toFixed(2)
+                          : Number.isInteger(value)
+                            ? value
+                            : "";
+                      },
+                    },
+                  },
+                  yRight: {
+                    type: "linear",
+                    position: "right",
+                    min: 0,
+                    max: 110,
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                      callback: function (value) {
+                        return Number.isInteger(value) ? value : "";
+                      },
+                    },
+                  },
+                },
+              },
+            });
 
-                    // Wait for rendering
-                    await new Promise(r => setTimeout(r, 500));
+            // Wait for rendering
+            await new Promise((r) => setTimeout(r, 500));
 
-                    const canvas = await html2canvas(container.firstElementChild, { scale: 2 });
-                    const imgData = canvas.toDataURL('image/jpeg', 0.85);
+            const canvas = await html2canvas(container.firstElementChild, {
+              scale: 2,
+            });
+            const imgData = canvas.toDataURL("image/jpeg", 0.85);
 
-                    if (!firstPage) {
-                        pdf.addPage();
-                    }
-                    pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
-                    firstPage = false;
+            if (!firstPage) {
+              pdf.addPage();
+            }
+            pdf.addImage(imgData, "JPEG", 0, 0, 297, 210);
+            firstPage = false;
 
-                    // ====== PAGE 2 ======
-                    container.innerHTML = `
+            // ====== PAGE 2 ======
+            container.innerHTML = `
                         <div style="width: 297mm; height: 210mm; background: white; padding: 15mm; font-family: sans-serif; box-sizing: border-box; position: relative;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                                 <div>
@@ -861,263 +1501,366 @@
                         </div>
                     `;
 
-                    await new Promise(r => setTimeout(r, 50));
+            await new Promise((r) => setTimeout(r, 50));
 
-                    // Chart 3: Water Consumption & Ratio (7 days)
-                    const waterTrend = data.water_trend;
-                    const waterLabels = waterTrend.map(t => t.date.split('-').reverse().slice(0, 2).join('-')); // DD-MM
-                    const flushFlags = waterTrend.map(t => t.flushing);
-                    const waterCtx = document.getElementById('chart3').getContext('2d');
-                    new Chart(waterCtx, {
-                        type: 'line',
-                        plugins: [ChartDataLabels, window['chartjs-plugin-annotation']],
-                        data: {
-                            labels: waterLabels,
-                            datasets: [
-                                {
-                                    label: 'Water (ml/bird)',
-                                    data: waterTrend.map(t => Math.round(t.water_per_bird)),
-                                    borderColor: 'blue',
-                                    backgroundColor: 'blue',
-                                    yAxisID: 'yLeft',
-                                    pointStyle: waterTrend.map((t, i) => flushFlags[i] ? 'triangle' : 'circle'),
-                                    pointRadius: waterTrend.map((t, i) => flushFlags[i] ? 8 : 4),
-                                    pointBackgroundColor: waterTrend.map((t, i) => flushFlags[i] ? 'cyan' : 'blue'),
-                                    datalabels: { align: 'top', color: 'blue', backgroundColor: 'rgba(255, 255, 255, 0.7)', font: {weight: 'bold'}, formatter: (v, ctx) => flushFlags[ctx.dataIndex] ? '💧 ' + v : v }
-                                },
-                                {
-                                    label: 'Water:Feed Ratio',
-                                    data: waterTrend.map(t => t.water_feed_ratio),
-                                    borderColor: 'green',
-                                    backgroundColor: 'green',
-                                    yAxisID: 'yRight',
-                                    datalabels: { align: 'top', color: 'green', backgroundColor: 'rgba(255, 255, 255, 0.7)', font: {weight: 'bold'}, formatter: v => v > 0 ? v.toFixed(2) : '' }
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false, animation: false,
-                            scales: {
-                                // Dynamic axes to ensure Water stays top (60-90%), Ratio stays bottom (10-45%)
-                                yLeft: {
-                                    type: 'linear',
-                                    position: 'left',
-                                    title: {display: true, text: 'ml/bird'},
-                                    min: (() => {
-                                        const vals = waterTrend.map(t => t.water_per_bird || 0).filter(v => v > 0);
-                                        const maxV = vals.length > 0 ? Math.max(...vals) : 100;
-                                        const minV = vals.length > 0 ? Math.min(...vals) : 0;
-                                        let range = (maxV - minV) / 0.30;
-                                        if (range < 10) range = Math.max(10, maxV * 0.2);
-                                        return maxV - 0.90 * range;
-                                    })(),
-                                    max: (() => {
-                                        const vals = waterTrend.map(t => t.water_per_bird || 0).filter(v => v > 0);
-                                        const maxV = vals.length > 0 ? Math.max(...vals) : 100;
-                                        const minV = vals.length > 0 ? Math.min(...vals) : 0;
-                                        let range = (maxV - minV) / 0.30;
-                                        if (range < 10) range = Math.max(10, maxV * 0.2);
-                                        return (maxV - 0.90 * range) + range;
-                                    })(),
-                                    ticks: { callback: v => (v >= 0 && Number.isInteger(v)) ? v : '' }
-                                },
-                                yRight: {
-                                    type: 'linear',
-                                    position: 'right',
-                                    grid: { drawOnChartArea: false },
-                                    title: {display: true, text: 'Ratio'},
-                                    min: (() => {
-                                        const vals = waterTrend.map(t => t.water_feed_ratio || 0).filter(v => v > 0);
-                                        const maxV = vals.length > 0 ? Math.max(...vals) : 1;
-                                        const minV = vals.length > 0 ? Math.min(...vals) : 0;
-                                        let range = (maxV - minV) / 0.35;
-                                        if (range < 0.5) range = Math.max(0.5, maxV * 0.5);
-                                        let m = minV - 0.10 * range;
-                                        return m < 0 ? 0 : m;
-                                    })(),
-                                    max: (() => {
-                                        const vals = waterTrend.map(t => t.water_feed_ratio || 0).filter(v => v > 0);
-                                        const maxV = vals.length > 0 ? Math.max(...vals) : 1;
-                                        const minV = vals.length > 0 ? Math.min(...vals) : 0;
-                                        let range = (maxV - minV) / 0.35;
-                                        if (range < 0.5) range = Math.max(0.5, maxV * 0.5);
-                                        let m = minV - 0.10 * range;
-                                        if (m < 0) m = 0;
-                                        return m + (maxV - m) / 0.45;
-                                    })()
-                                }
-                            }
-                        }
-                    });
+            // Chart 3: Water Consumption & Ratio (7 days)
+            const waterTrend = data.water_trend;
+            const waterLabels = waterTrend.map((t) =>
+              t.date.split("-").reverse().slice(0, 2).join("-"),
+            ); // DD-MM
+            const flushFlags = waterTrend.map((t) => t.flushing);
+            const waterCtx = document.getElementById("chart3").getContext("2d");
+            new Chart(waterCtx, {
+              type: "line",
+              plugins: [ChartDataLabels, window["chartjs-plugin-annotation"]],
+              data: {
+                labels: waterLabels,
+                datasets: [
+                  {
+                    label: "Water (ml/bird)",
+                    data: waterTrend.map((t) => Math.round(t.water_per_bird)),
+                    borderColor: "blue",
+                    backgroundColor: "blue",
+                    yAxisID: "yLeft",
+                    pointStyle: waterTrend.map((t, i) =>
+                      flushFlags[i] ? "triangle" : "circle",
+                    ),
+                    pointRadius: waterTrend.map((t, i) =>
+                      flushFlags[i] ? 8 : 4,
+                    ),
+                    pointBackgroundColor: waterTrend.map((t, i) =>
+                      flushFlags[i] ? "cyan" : "blue",
+                    ),
+                    datalabels: {
+                      align: "top",
+                      color: "blue",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      font: { weight: "bold" },
+                      formatter: (v, ctx) =>
+                        flushFlags[ctx.dataIndex] ? "💧 " + v : v,
+                    },
+                  },
+                  {
+                    label: "Water:Feed Ratio",
+                    data: waterTrend.map((t) => t.water_feed_ratio),
+                    borderColor: "green",
+                    backgroundColor: "green",
+                    yAxisID: "yRight",
+                    datalabels: {
+                      align: "top",
+                      color: "green",
+                      backgroundColor: "rgba(255, 255, 255, 0.7)",
+                      font: { weight: "bold" },
+                      formatter: (v) => (v > 0 ? v.toFixed(2) : ""),
+                    },
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                scales: {
+                  // Dynamic axes to ensure Water stays top (60-90%), Ratio stays bottom (10-45%)
+                  yLeft: {
+                    type: "linear",
+                    position: "left",
+                    title: { display: true, text: "ml/bird" },
+                    min: (() => {
+                      const vals = waterTrend
+                        .map((t) => t.water_per_bird || 0)
+                        .filter((v) => v > 0);
+                      const maxV = vals.length > 0 ? Math.max(...vals) : 100;
+                      const minV = vals.length > 0 ? Math.min(...vals) : 0;
+                      let range = (maxV - minV) / 0.3;
+                      if (range < 10) range = Math.max(10, maxV * 0.2);
+                      return maxV - 0.9 * range;
+                    })(),
+                    max: (() => {
+                      const vals = waterTrend
+                        .map((t) => t.water_per_bird || 0)
+                        .filter((v) => v > 0);
+                      const maxV = vals.length > 0 ? Math.max(...vals) : 100;
+                      const minV = vals.length > 0 ? Math.min(...vals) : 0;
+                      let range = (maxV - minV) / 0.3;
+                      if (range < 10) range = Math.max(10, maxV * 0.2);
+                      return maxV - 0.9 * range + range;
+                    })(),
+                    ticks: {
+                      callback: (v) => (v >= 0 && Number.isInteger(v) ? v : ""),
+                    },
+                  },
+                  yRight: {
+                    type: "linear",
+                    position: "right",
+                    grid: { drawOnChartArea: false },
+                    title: { display: true, text: "Ratio" },
+                    min: (() => {
+                      const vals = waterTrend
+                        .map((t) => t.water_feed_ratio || 0)
+                        .filter((v) => v > 0);
+                      const maxV = vals.length > 0 ? Math.max(...vals) : 1;
+                      const minV = vals.length > 0 ? Math.min(...vals) : 0;
+                      let range = (maxV - minV) / 0.35;
+                      if (range < 0.5) range = Math.max(0.5, maxV * 0.5);
+                      let m = minV - 0.1 * range;
+                      return m < 0 ? 0 : m;
+                    })(),
+                    max: (() => {
+                      const vals = waterTrend
+                        .map((t) => t.water_feed_ratio || 0)
+                        .filter((v) => v > 0);
+                      const maxV = vals.length > 0 ? Math.max(...vals) : 1;
+                      const minV = vals.length > 0 ? Math.min(...vals) : 0;
+                      let range = (maxV - minV) / 0.35;
+                      if (range < 0.5) range = Math.max(0.5, maxV * 0.5);
+                      let m = minV - 0.1 * range;
+                      if (m < 0) m = 0;
+                      return m + (maxV - m) / 0.45;
+                    })(),
+                  },
+                },
+              },
+            });
 
-                    // Charts 4 & 5: Bodyweight and Uniformity
-                    const weekLabels = data.weekly_trend.map(w => 'W' + w.week);
+            // Charts 4 & 5: Bodyweight and Uniformity
+            const weekLabels = data.weekly_trend.map((w) => "W" + w.week);
 
-                    const createBwChart = (ctxId, bwKey, stdBwKey, unifKey) => {
-                        const ctx = document.getElementById(ctxId).getContext('2d');
+            const createBwChart = (ctxId, bwKey, stdBwKey, unifKey) => {
+              const ctx = document.getElementById(ctxId).getContext("2d");
 
-                        // Bodyweight dynamic scaling (constrained to bottom 10% - 45% height)
-                        const maxBw = Math.max(...data.weekly_trend.map(w => Math.max(w[bwKey] || 0, w[stdBwKey] || 0)));
-                        const nonZeroBws = data.weekly_trend.map(w => Math.min(w[bwKey] || Infinity, w[stdBwKey] || Infinity)).filter(v => v !== Infinity);
-                        const minBw = nonZeroBws.length > 0 ? Math.min(...nonZeroBws) : 0;
+              // Bodyweight dynamic scaling (constrained to bottom 10% - 45% height)
+              const maxBw = Math.max(
+                ...data.weekly_trend.map((w) =>
+                  Math.max(w[bwKey] || 0, w[stdBwKey] || 0),
+                ),
+              );
+              const nonZeroBws = data.weekly_trend
+                .map((w) =>
+                  Math.min(w[bwKey] || Infinity, w[stdBwKey] || Infinity),
+                )
+                .filter((v) => v !== Infinity);
+              const minBw = nonZeroBws.length > 0 ? Math.min(...nonZeroBws) : 0;
 
-                        let bwRange = (maxBw - minBw) / 0.35;
-                        if (bwRange === 0) bwRange = maxBw > 0 ? maxBw * 0.5 : 1000;
-                        let yLeftMin = minBw - 0.10 * bwRange;
-                        if (yLeftMin < 0) yLeftMin = 0;
-                        const yLeftMax = (maxBw - yLeftMin) > 0 ? yLeftMin + (maxBw - yLeftMin) / 0.45 : yLeftMin + 1000;
+              let bwRange = (maxBw - minBw) / 0.35;
+              if (bwRange === 0) bwRange = maxBw > 0 ? maxBw * 0.5 : 1000;
+              let yLeftMin = minBw - 0.1 * bwRange;
+              if (yLeftMin < 0) yLeftMin = 0;
+              const yLeftMax =
+                maxBw - yLeftMin > 0
+                  ? yLeftMin + (maxBw - yLeftMin) / 0.45
+                  : yLeftMin + 1000;
 
-                        // Uniformity dynamic scaling (constrained to top 60% - 90% height)
-                        const nonZeroUnifs = data.weekly_trend.map(w => w[unifKey] || 0).filter(v => v > 0);
-                        const rawMinUnif = nonZeroUnifs.length > 0 ? Math.min(...nonZeroUnifs) : 0;
-                        const minUnif = (rawMinUnif > 0 && rawMinUnif <= 1) ? rawMinUnif * 100 : rawMinUnif;
-                        const maxUnifRaw = Math.max(...data.weekly_trend.map(w => w[unifKey] || 0));
-                        const maxUnif = (maxUnifRaw > 0 && maxUnifRaw <= 1) ? maxUnifRaw * 100 : maxUnifRaw;
+              // Uniformity dynamic scaling (constrained to top 60% - 90% height)
+              const nonZeroUnifs = data.weekly_trend
+                .map((w) => w[unifKey] || 0)
+                .filter((v) => v > 0);
+              const rawMinUnif =
+                nonZeroUnifs.length > 0 ? Math.min(...nonZeroUnifs) : 0;
+              const minUnif =
+                rawMinUnif > 0 && rawMinUnif <= 1
+                  ? rawMinUnif * 100
+                  : rawMinUnif;
+              const maxUnifRaw = Math.max(
+                ...data.weekly_trend.map((w) => w[unifKey] || 0),
+              );
+              const maxUnif =
+                maxUnifRaw > 0 && maxUnifRaw <= 1
+                  ? maxUnifRaw * 100
+                  : maxUnifRaw;
 
-                        const yRightMin = 0;
-                        const yRightMax = Math.max(100, maxUnif + 5);
+              const yRightMin = 0;
+              const yRightMax = Math.max(100, maxUnif + 5);
 
-                        // Plugins for Weight Gain and Selections
-                        const customAnnotations = data.weekly_trend.map((w, idx, arr) => {
-                            if (idx === 0) return null;
-                            let prev = arr[idx - 1][bwKey];
-                            if (!prev && idx > 1) prev = arr[idx - 2][bwKey]; // Fallback to last 2 weeks if 0 or null
-                            if (!prev || !w[bwKey]) return null;
-                            const gain = Math.round(w[bwKey] - prev);
-                            const sign = gain > 0 ? '+' : (gain < 0 ? '' : '');
-                            return {
-                                type: 'label',
-                                content: sign + gain + 'g',
-                                position: 'center',
-                                xValue: 'W' + w.week,
-                                xAdjust: -15, // Move slightly to the left to appear "between"
-                                yValue: w[bwKey], // Anchor near current BW
-                                yAdjust: -35, // Offset higher than the bodyweight data label
-                                color: 'rgba(0,0,0,0.8)',
-                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                font: { size: 10, weight: 'bold' }
-                            };
-                        }).filter(Boolean);
+              // Plugins for Weight Gain and Selections
+              const customAnnotations = data.weekly_trend
+                .map((w, idx, arr) => {
+                  if (idx === 0) return null;
+                  let prev = arr[idx - 1][bwKey];
+                  if (!prev && idx > 1) prev = arr[idx - 2][bwKey]; // Fallback to last 2 weeks if 0 or null
+                  if (!prev || !w[bwKey]) return null;
+                  const gain = Math.round(w[bwKey] - prev);
+                  const sign = gain > 0 ? "+" : gain < 0 ? "" : "";
+                  return {
+                    type: "label",
+                    content: sign + gain + "g",
+                    position: "center",
+                    xValue: "W" + w.week,
+                    xAdjust: -15, // Move slightly to the left to appear "between"
+                    yValue: w[bwKey], // Anchor near current BW
+                    yAdjust: -35, // Offset higher than the bodyweight data label
+                    color: "rgba(0,0,0,0.8)",
+                    backgroundColor: "rgba(255, 255, 255, 0.7)",
+                    font: { size: 10, weight: "bold" },
+                  };
+                })
+                .filter(Boolean);
 
-                        const selectionAnnos = data.weekly_trend.map((w) => {
-                            let parts = [];
-                            if (w.selection_done) parts.push('Selection');
-                            if (ctxId === 'chart4' && w.spiking) parts.push('Spiking');
-                            if (parts.length === 0) return null;
-                            return {
-                                type: 'label',
-                                content: parts.join(', '),
-                                position: 'start',
-                                xValue: 'W' + w.week,
-                                yValue: w[bwKey],
-                                yAdjust: -55, // Offset even higher above the weight gain annotation
-                                backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                color: 'purple',
-                                font: { size: 10, weight: 'bold' }
-                            };
-                        }).filter(Boolean);
+              const selectionAnnos = data.weekly_trend
+                .map((w) => {
+                  let parts = [];
+                  if (w.selection_done) parts.push("Selection");
+                  if (ctxId === "chart4" && w.spiking) parts.push("Spiking");
+                  if (parts.length === 0) return null;
+                  return {
+                    type: "label",
+                    content: parts.join(", "),
+                    position: "start",
+                    xValue: "W" + w.week,
+                    yValue: w[bwKey],
+                    yAdjust: -55, // Offset even higher above the weight gain annotation
+                    backgroundColor: "rgba(255, 255, 255, 0.7)",
+                    color: "purple",
+                    font: { size: 10, weight: "bold" },
+                  };
+                })
+                .filter(Boolean);
 
-                        new Chart(ctx, {
-                            type: 'line',
-                            plugins: [ChartDataLabels, window['chartjs-plugin-annotation']],
-                            data: {
-                                labels: weekLabels,
-                                datasets: [
-                                    {
-                                        label: 'Uniformity %',
-                                        data: data.weekly_trend.map(w => w[unifKey] ? (w[unifKey] <= 1 ? w[unifKey] * 100 : w[unifKey]) : null),
-                                        borderColor: '#DAA520',
-                                        borderDash: [5, 5],
-                                        yAxisID: 'yRight',
-                                        spanGaps: true,
-                                        datalabels: {
-                                            align: 'top',
-                                            color: '#DAA520',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                            font: {weight: 'bold'},
-                                            formatter: v => v ? v.toFixed(1) : ''
-                                        }
-                                    },
-                                    {
-                                        label: 'Actual BW',
-                                        data: data.weekly_trend.map(w => w[bwKey]),
-                                        borderColor: 'blue',
-                                        backgroundColor: 'blue',
-                                        yAxisID: 'yLeft',
-                                        spanGaps: true,
-                                        datalabels: {
-                                            align: 'top',
-                                            color: 'blue',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                                            font: {weight: 'bold'},
-                                            formatter: v => v ? v.toFixed(0) : ''
-                                        }
-                                    },
-                                    {
-                                        label: 'Std BW',
-                                        data: data.weekly_trend.map(w => w[stdBwKey]),
-                                        borderColor: 'red',
-                                        backgroundColor: 'red',
-                                        yAxisID: 'yLeft',
-                                        pointRadius: 0,
-                                        spanGaps: true,
-                                        datalabels: { display: false }
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true, maintainAspectRatio: false, animation: false,
-                                scales: {
-                                    yLeft: { type: 'linear', position: 'left', max: yLeftMax, min: yLeftMin, title: {display: true, text: 'Bodyweight (g)'}, ticks: { callback: v => (v >= 0 && Number.isInteger(v)) ? v : '' } },
-                                    yRight: { type: 'linear', position: 'right', min: yRightMin, max: yRightMax, grid: { drawOnChartArea: false }, title: {display: true, text: 'Uniformity (%)'}, ticks: { callback: v => (v >= 0 && v <= 100 && Number.isInteger(v)) ? v : '' } }
-                                },
-                                plugins: {
-                                    annotation: { annotations: [...customAnnotations, ...selectionAnnos] }
-                                }
-                            }
-                        });
-                    };
+              new Chart(ctx, {
+                type: "line",
+                plugins: [ChartDataLabels, window["chartjs-plugin-annotation"]],
+                data: {
+                  labels: weekLabels,
+                  datasets: [
+                    {
+                      label: "Uniformity %",
+                      data: data.weekly_trend.map((w) =>
+                        w[unifKey]
+                          ? w[unifKey] <= 1
+                            ? w[unifKey] * 100
+                            : w[unifKey]
+                          : null,
+                      ),
+                      borderColor: "#DAA520",
+                      borderDash: [5, 5],
+                      yAxisID: "yRight",
+                      spanGaps: true,
+                      datalabels: {
+                        align: "top",
+                        color: "#DAA520",
+                        backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        font: { weight: "bold" },
+                        formatter: (v) => (v ? v.toFixed(1) : ""),
+                      },
+                    },
+                    {
+                      label: "Actual BW",
+                      data: data.weekly_trend.map((w) => w[bwKey]),
+                      borderColor: "blue",
+                      backgroundColor: "blue",
+                      yAxisID: "yLeft",
+                      spanGaps: true,
+                      datalabels: {
+                        align: "top",
+                        color: "blue",
+                        backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        font: { weight: "bold" },
+                        formatter: (v) => (v ? v.toFixed(0) : ""),
+                      },
+                    },
+                    {
+                      label: "Std BW",
+                      data: data.weekly_trend.map((w) => w[stdBwKey]),
+                      borderColor: "red",
+                      backgroundColor: "red",
+                      yAxisID: "yLeft",
+                      pointRadius: 0,
+                      spanGaps: true,
+                      datalabels: { display: false },
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  animation: false,
+                  scales: {
+                    yLeft: {
+                      type: "linear",
+                      position: "left",
+                      max: yLeftMax,
+                      min: yLeftMin,
+                      title: { display: true, text: "Bodyweight (g)" },
+                      ticks: {
+                        callback: (v) =>
+                          v >= 0 && Number.isInteger(v) ? v : "",
+                      },
+                    },
+                    yRight: {
+                      type: "linear",
+                      position: "right",
+                      min: yRightMin,
+                      max: yRightMax,
+                      grid: { drawOnChartArea: false },
+                      title: { display: true, text: "Uniformity (%)" },
+                      ticks: {
+                        callback: (v) =>
+                          v >= 0 && v <= 100 && Number.isInteger(v) ? v : "",
+                      },
+                    },
+                  },
+                  plugins: {
+                    annotation: {
+                      annotations: [...customAnnotations, ...selectionAnnos],
+                    },
+                  },
+                },
+              });
+            };
 
-                    createBwChart('chart4', 'bw_male', 'std_bw_male', 'uniformity_male');
-                    createBwChart('chart5', 'bw_female', 'std_bw_female', 'uniformity_female');
+            createBwChart(
+              "chart4",
+              "bw_male",
+              "std_bw_male",
+              "uniformity_male",
+            );
+            createBwChart(
+              "chart5",
+              "bw_female",
+              "std_bw_female",
+              "uniformity_female",
+            );
 
-                    await new Promise(r => setTimeout(r, 500));
+            await new Promise((r) => setTimeout(r, 500));
 
-                    const canvas2 = await html2canvas(container.firstElementChild, { scale: 2 });
-                    const imgData2 = canvas2.toDataURL('image/jpeg', 0.85);
+            const canvas2 = await html2canvas(container.firstElementChild, {
+              scale: 2,
+            });
+            const imgData2 = canvas2.toDataURL("image/jpeg", 0.85);
 
-                    pdf.addPage();
-                    pdf.addImage(imgData2, 'JPEG', 0, 0, 297, 210);
+            pdf.addPage();
+            pdf.addImage(imgData2, "JPEG", 0, 0, 297, 210);
 
+          } catch (err) {
+            console.error("Error processing " + houseName, err);
+          }
+        }
 
-                    // Send backup to server
-                    statusText.innerText = `Saving backup for ${houseName}...`;
-                    await fetch('{{ url_for("backup_report_image") }}', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            image: imgData,
-                            date: date,
-                            house: data.house_name,
-                            age: data.age_week
-                        })
-                    });
+        if (!firstPage) {
+          statusText.innerText = `Downloading PDF...`;
+          pdf.save(`Daily House Report (${date}).pdf`);
+        } else {
+          alert("No reports were generated.");
+        }
 
-                } catch (err) {
-                    console.error('Error processing ' + houseName, err);
-                }
-            }
+        // Restore original theme
+        if (originalTheme) {
+          document.documentElement.setAttribute("data-bs-theme", originalTheme);
+          window.dispatchEvent(
+            new CustomEvent("themeChanged", {
+              detail: { theme: originalTheme },
+            }),
+          );
+        } else {
+          document.documentElement.removeAttribute("data-bs-theme");
+          window.dispatchEvent(
+            new CustomEvent("themeChanged", { detail: { theme: "light" } }),
+          );
+        }
 
-            if (!firstPage) {
-                statusText.innerText = `Downloading PDF...`;
-                pdf.save(`Daily House Report (${date}).pdf`);
-            } else {
-                alert('No reports were generated.');
-            }
-
-            overlay.style.display = 'none';
-        });
-    });
+        overlay.style.display = "none";
+      });
+  });
 </script>
 
 {% endblock %}

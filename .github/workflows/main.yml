@@ -32,7 +32,7 @@ jobs:
       - name: Verify Database Migrations
         env:
           FLASK_APP: run.py
-          DATABASE_URL: sqlite:///instance/farm_blank.db
+          DATABASE_URL: sqlite:///test.db
         run: |
           mkdir -p instance
           # This runs flask db upgrade to verify migrations don't throw OperationalErrors

@@ -407,20 +407,8 @@ def register_production_routes(app):
 
         weekly_data.reverse()
 
-        # Pre-check available reports for this flock
-        from werkzeug.utils import secure_filename
-        reports_dir = os.path.join(app.root_path, 'static', 'reports')
-        available_reports = set()
-        if os.path.exists(reports_dir):
-            prefix_to_match = f"_{secure_filename(flock.house.name)}_"
-            for f in os.listdir(reports_dir):
-                if prefix_to_match in f and f.endswith(".jpg"):
-                    date_str = f.split("_")[0]
-                    available_reports.add(date_str)
-
         return render_template('flock_detail_readonly.html',
                                flock=flock,
-                               available_reports=available_reports,
                                logs=list(reversed(enriched_logs)),
                                weekly_data=weekly_data,
                                chart_data=chart_data,
@@ -850,7 +838,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/transaction/edit/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_inventory_transaction(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
@@ -919,7 +907,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/transaction/delete/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_inventory_transaction(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
@@ -945,7 +933,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/edit/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_inventory_item(id):
         item = InventoryItem.query.get_or_404(id)
 
@@ -999,7 +987,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/transaction', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def inventory_transaction():
         item_id = int(request.form.get('inventory_item_id'))
         type_ = request.form.get('transaction_type')
@@ -1043,7 +1031,7 @@ def register_production_routes(app):
 
     @app.route('/inventory/add', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def add_inventory_item():
         name = request.form.get('name')
         type_ = request.form.get('type')
@@ -1082,7 +1070,7 @@ def register_production_routes(app):
 
     @app.route('/inventory')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def inventory():
         items = InventoryItem.query.order_by(InventoryItem.name).all()
         transactions = InventoryTransaction.query.order_by(InventoryTransaction.transaction_date.desc(), InventoryTransaction.id.desc()).limit(50).all()
@@ -1116,7 +1104,7 @@ def register_production_routes(app):
 
     @app.route('/daily_log/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_daily_log(id):
         log = DailyLog.query.get_or_404(id)
 
@@ -1278,7 +1266,7 @@ def register_production_routes(app):
 
     @app.route('/daily_log', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def daily_log():
         if request.method == 'POST':
             house_id = request.form.get('house_id')
@@ -1340,8 +1328,7 @@ def register_production_routes(app):
             else:
                 log = DailyLog(
                     flock_id=flock.id,
-                    date=log_date,                body_weight_male=0,
-                    body_weight_female=0
+                    date=log_date
                 )
                 db.session.add(log)
                 flash_msg = 'Daily Log submitted successfully!'
@@ -1563,14 +1550,14 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/charts')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_charts(id):
         flock = Flock.query.options(joinedload(Flock.house)).filter_by(id=id).first_or_404()
         return render_template('flock_charts.html', flock=flock)
 
     @app.route('/flock/<int:id>/spreadsheet')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_spreadsheet(id):
         if not current_user.role == 'Admin':
             flash('Access Denied: Admin only.', 'danger')
@@ -1605,7 +1592,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def view_flock(id):
         active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
@@ -2086,23 +2073,11 @@ def register_production_routes(app):
 
         weekly_data.reverse()
 
-        # Pre-check available reports for this flock
-        from werkzeug.utils import secure_filename
-        reports_dir = os.path.join(app.root_path, 'static', 'reports')
-        available_reports = set()
-        if os.path.exists(reports_dir):
-            # We need a quick way to know which dates have reports
-            prefix_to_match = f"_{secure_filename(flock.house.name)}_"
-            for f in os.listdir(reports_dir):
-                if prefix_to_match in f and f.endswith(".jpg"):
-                    date_str = f.split("_")[0]
-                    available_reports.add(date_str)
-
-        return render_template('flock_detail_modern.html', flock=flock, logs=list(reversed(enriched_logs)), weekly_data=weekly_data, chart_data=chart_data, chart_data_weekly=chart_data_weekly, current_stats=current_stats, global_std=gs, active_flocks=active_flocks, summary_dashboard=summary_dashboard, summary_table=summary_table, health_events=health_events, available_reports=available_reports, hatch_records=hatch_records, std_hatch_map=std_hatch_map)
+        return render_template('flock_detail_modern.html', flock=flock, logs=list(reversed(enriched_logs)), weekly_data=weekly_data, chart_data=chart_data, chart_data_weekly=chart_data_weekly, current_stats=current_stats, global_std=gs, active_flocks=active_flocks, summary_dashboard=summary_dashboard, summary_table=summary_table, health_events=health_events, hatch_records=hatch_records, std_hatch_map=std_hatch_map)
 
     @app.route('/flock/<int:id>/toggle_phase', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def toggle_phase(id):
         flock = Flock.query.get_or_404(id)
         if flock.phase == 'Rearing':
@@ -2154,10 +2129,10 @@ def register_production_routes(app):
 
     @app.route('/daily_log/photo/<int:photo_id>/delete', methods=['DELETE'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_daily_log_photo(photo_id):
         photo = DailyLogPhoto.query.get_or_404(photo_id)
-        # Check ownership/permissions if strict, but @dept_required('Farm') is enough for now.
+        # Check ownership/permissions if strict, but @dept_required('Breeder') is enough for now.
 
         # Delete file from disk
         if photo.file_path and os.path.exists(photo.file_path):
@@ -2172,7 +2147,7 @@ def register_production_routes(app):
 
     @app.route('/daily_log/delete/<int:id>', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_daily_log(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
@@ -2199,7 +2174,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/close', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def close_flock(id):
         flock = Flock.query.get_or_404(id)
         flock.status = 'Inactive'
@@ -2210,11 +2185,26 @@ def register_production_routes(app):
 
     @app.route('/flocks', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def manage_flocks():
         if request.method == 'POST':
-            house_name = request.form.get('house_name').strip()
+            farm_id_str = request.form.get('farm_id')
+            house_id_str = request.form.get('house_id')
             intake_date_str = request.form.get('intake_date')
+
+            if not farm_id_str or not house_id_str:
+                flash('Error: Farm and House are required.', 'danger')
+                return redirect(url_for('manage_flocks'))
+
+            farm_id = int(farm_id_str)
+            house_id = int(house_id_str)
+
+            farm = Farm.query.get(farm_id)
+            house = House.query.get(house_id)
+
+            if not farm or not house:
+                flash('Error: Invalid Farm or House selected.', 'danger')
+                return redirect(url_for('manage_flocks'))
 
             # production_start_date is now dynamic based on egg_prod_pct >= 5.0, so no direct assignment
 
@@ -2222,32 +2212,6 @@ def register_production_routes(app):
             intake_female = int(request.form.get('intake_female') or 0)
             doa_male = int(request.form.get('doa_male') or 0)
             doa_female = int(request.form.get('doa_female') or 0)
-
-            # Find or Create Farm
-            farm_name = request.form.get('farm_name', '').strip()
-            if not farm_name:
-                flash('Error: Farm name is required.', 'danger')
-                return redirect(url_for('manage_flocks'))
-
-            farm_id = None
-            farm = Farm.query.filter_by(name=farm_name).first()
-            if not farm:
-                farm = Farm(name=farm_name)
-                db.session.add(farm)
-                safe_commit()
-                flash(f'Created new Farm: {farm_name}', 'info')
-            farm_id = farm.id
-
-            # Find or Create House
-            house = House.query.filter_by(name=house_name).first()
-            if not house:
-                house = House(name=house_name, farm_id=farm_id)
-                db.session.add(house)
-                safe_commit()
-                flash(f'Created new House: {house_name}', 'info')
-            elif not house.farm_id:
-                house.farm_id = farm_id
-                safe_commit()
 
             # Validation: Check if House has active flock
             existing_active = Flock.query.filter_by(house_id=house.id, status='Active').first()
@@ -2264,7 +2228,7 @@ def register_production_routes(app):
             n = house_flock_count + 1
 
             flock_id = f"{house.name}_{date_str}_Batch{n}"
-            name = request.form.get('name', '').strip() or flock_id
+            name = request.form.get('name', '').strip() or house.name
 
             new_flock = Flock(
                 house_id=house.id,
@@ -2282,7 +2246,7 @@ def register_production_routes(app):
             db.session.flush()
 
             log_user_activity(current_user.id, 'Add', 'Flock', new_flock.name, details={
-                'house': house_name,
+                'house': house.name,
                 'intake_male': intake_male,
                 'intake_female': intake_female
             })
@@ -2332,7 +2296,7 @@ def register_production_routes(app):
 
     @app.route('/flock_select')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def flock_select():
         active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
@@ -2347,7 +2311,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/delete', methods=['POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def delete_flock(id):
         flock = Flock.query.get_or_404(id)
         flock_id_str = flock.flock_id
@@ -2361,7 +2325,7 @@ def register_production_routes(app):
 
     @app.route('/flock/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def edit_flock(id):
         flock = Flock.query.get_or_404(id)
         if request.method == 'POST':
@@ -2394,16 +2358,18 @@ def register_production_routes(app):
             flock.prod_start_female_hosp = int(request.form.get('prod_start_female_hosp') or 0)
 
             # Farm Update
-            farm_name = request.form.get('farm_name', '').strip()
-            if not farm_name:
-                flash('Error: Farm name is required.', 'danger')
-                return render_template('flock_edit.html', flock=flock)
+            farm_id_str = request.form.get('farm_id')
+            if not farm_id_str:
+                flash('Error: Farm is required.', 'danger')
+                farms = Farm.query.all()
+                return render_template('flock_edit.html', flock=flock, farms=farms)
 
-            farm = Farm.query.filter_by(name=farm_name).first()
+            farm_id = int(farm_id_str)
+            farm = Farm.query.get(farm_id)
             if not farm:
-                farm = Farm(name=farm_name)
-                db.session.add(farm)
-                safe_commit()
+                flash('Error: Invalid Farm selected.', 'danger')
+                farms = Farm.query.all()
+                return render_template('flock_edit.html', flock=flock, farms=farms)
             flock.farm_id = farm.id
 
             new_data = {
@@ -2426,7 +2392,7 @@ def register_production_routes(app):
 
     @app.route('/history')
     @login_required
-    @dept_required('Farm')
+    @dept_required('Breeder')
     def history():
         inactive_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Inactive').order_by(Flock.intake_date.desc()).all()
         return render_template('flock_history.html', inactive_flocks=inactive_flocks)

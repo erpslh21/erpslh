@@ -1,512 +1,587 @@
-{% extends "base_tabler.html" %}
-
-{% block content %}
+{% extends "base_tabler.html" %} {% block content %}
 <div class="container mt-4">
-    <h2>Charts: {{ flock.house.name }}</h2>
+  <h2>Charts: {{ flock.house.name }}</h2>
 
-    <div class="filter-controls p-3 mb-4 bg-light rounded">
-        <div class="row align-items-end">
-            <div class="col-md-3">
-                <label class="form-label">View Mode</label>
-                <select id="viewMode" class="form-select">
-                    <option value="monthly">Monthly</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="daily">Daily</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Start Date</label>
-                <input type="date" id="startDate" class="form-control">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">End Date</label>
-                <input type="date" id="endDate" class="form-control">
-            </div>
-            <div class="col-md-3 d-flex flex-column gap-2">
-                <div class="d-flex gap-2">
-                    <button id="applyFilters" class="btn btn-primary flex-grow-1">Apply</button>
-                    <button id="downloadPdf" class="btn btn-outline-danger" title="Download PDF Report"><i class="bi bi-file-pdf"></i> PDF</button>
-                </div>
-                <div class="btn-group btn-group-sm w-100">
-                    <button class="btn btn-outline-secondary" onclick="applyQuickFilter('30d')">Last 30 Days</button>
-                    <button class="btn btn-outline-secondary" onclick="applyQuickFilter('10w')">Last 10 Weeks</button>
-                    <button class="btn btn-outline-secondary" onclick="applyQuickFilter('all')">Show All</button>
-                </div>
-            </div>
+  <div class="filter-controls p-3 mb-4 bg-light-subtle rounded">
+    <div class="row align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">View Mode</label>
+        <select id="viewMode" class="form-select">
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="daily">Daily</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Start Date</label>
+        <input type="date" id="startDate" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">End Date</label>
+        <input type="date" id="endDate" class="form-control" />
+      </div>
+      <div class="col-md-3 d-flex flex-column gap-2">
+        <div class="d-flex gap-2">
+          <button id="applyFilters" class="btn btn-primary flex-grow-1">
+            Apply
+          </button>
+          <button
+            id="downloadPdf"
+            class="btn btn-outline-danger"
+            title="Download PDF Report"
+          >
+            <i class="bi bi-file-pdf"></i> PDF
+          </button>
         </div>
+        <div class="btn-group btn-group-sm w-100">
+          <button
+            class="btn btn-outline-secondary"
+            onclick="applyQuickFilter('30d')"
+          >
+            Last 30 Days
+          </button>
+          <button
+            class="btn btn-outline-secondary"
+            onclick="applyQuickFilter('10w')"
+          >
+            Last 10 Weeks
+          </button>
+          <button
+            class="btn btn-outline-secondary"
+            onclick="applyQuickFilter('all')"
+          >
+            Show All
+          </button>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="row">
-        <div class="col-md-6 mb-4">
-            <div style="overflow-x: auto;">
-                <div id="chart-depletion-f-egg" class="chart-container border rounded p-2" style="height:400px; min-width: 600px;"></div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div style="overflow-x: auto;">
-                <div id="chart-depletion-m" class="chart-container border rounded p-2" style="height:400px; min-width: 600px;"></div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div style="overflow-x: auto;">
-                <div id="chart-cull-hatch" class="chart-container border rounded p-2" style="height:400px; min-width: 600px;"></div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div style="overflow-x: auto;">
-                <div id="chart-water-feed" class="chart-container border rounded p-2" style="height:400px; min-width: 600px;"></div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div style="overflow-x: auto;">
-                <div id="chart-bw-female" class="chart-container border rounded p-2" style="height:400px; min-width: 600px;"></div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div style="overflow-x: auto;">
-                <div id="chart-bw-male" class="chart-container border rounded p-2" style="height:400px; min-width: 600px;"></div>
-            </div>
-        </div>
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div style="overflow-x: auto">
+        <div
+          id="chart-depletion-f-egg"
+          class="chart-container border rounded p-2"
+          style="height: 400px; min-width: 600px"
+        ></div>
+      </div>
     </div>
+    <div class="col-md-6 mb-4">
+      <div style="overflow-x: auto">
+        <div
+          id="chart-depletion-m"
+          class="chart-container border rounded p-2"
+          style="height: 400px; min-width: 600px"
+        ></div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div style="overflow-x: auto">
+        <div
+          id="chart-cull-hatch"
+          class="chart-container border rounded p-2"
+          style="height: 400px; min-width: 600px"
+        ></div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div style="overflow-x: auto">
+        <div
+          id="chart-water-feed"
+          class="chart-container border rounded p-2"
+          style="height: 400px; min-width: 600px"
+        ></div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div style="overflow-x: auto">
+        <div
+          id="chart-bw-female"
+          class="chart-container border rounded p-2"
+          style="height: 400px; min-width: 600px"
+        ></div>
+      </div>
+    </div>
+    <div class="col-md-6 mb-4">
+      <div style="overflow-x: auto">
+        <div
+          id="chart-bw-male"
+          class="chart-container border rounded p-2"
+          style="height: 400px; min-width: 600px"
+        ></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal for Notes/Photos -->
 <div class="modal fade" id="eventModal" tabindex="-1">
-    <div class="modal-dialog">        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Event Details: <span id="modalDate"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p id="modalNote"></p>
-                <img id="modalImg" src="" class="img-fluid d-none" alt="Event Photo">
-            </div>
-        </div>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Event Details: <span id="modalDate"></span></h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <p id="modalNote"></p>
+        <img id="modalImg" src="" class="img-fluid d-none" alt="Event Photo" />
+      </div>
     </div>
+  </div>
 </div>
 
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script>
-    const flockId = {{ flock.id }};
-    let eventModal;
+  const flockId = {{ flock.id }};
+  let eventModal;
 
-    let currentData = null; // Store fetched data
+  let currentData = null; // Store fetched data
 
-    document.getElementById('applyFilters').addEventListener('click', () => loadData());
-    document.getElementById('viewMode').addEventListener('change', () => loadData());
+  document.getElementById('applyFilters').addEventListener('click', () => loadData());
+  document.getElementById('viewMode').addEventListener('change', () => loadData());
 
-    // PDF Download
-    document.getElementById('downloadPdf').addEventListener('click', function() {
-        const overlay = document.getElementById('loading-overlay');
-        if(overlay) overlay.style.display = 'flex';
+  // PDF Download
+  document.getElementById('downloadPdf').addEventListener('click', function() {
+      const overlay = document.getElementById('loading-overlay');
+      if(overlay) overlay.style.display = 'flex';
 
-        const element = document.querySelector('.container'); // Capture main container
-        const opt = {
-            margin:       0.3,
-            filename:     `Report_{{ flock.house.name }}_${new Date().toISOString().split('T')[0]}.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-        };
-        html2pdf().set(opt).from(element).save().then(function(){
-            if(overlay) overlay.style.display = 'none';
-        });
-    });
+      // Temporarily force light mode for PDF generation
+      const originalTheme = document.documentElement.getAttribute('data-bs-theme');
+      document.documentElement.setAttribute('data-bs-theme', 'light');
+      window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: 'light' } }));
 
-    // Initial Load
-    document.addEventListener('DOMContentLoaded', function() {
-        try {
-            if (typeof bootstrap !== 'undefined') {
-                eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
-            }
-        } catch(e) { console.error("Bootstrap Modal init error:", e); }
-        loadData();
-    });
+      setTimeout(() => { // Give charts a moment to re-render in light mode
+          const element = document.querySelector('.container'); // Capture main container
+          const opt = {
+              margin:       0.3,
+              filename:     `Report_{{ flock.house.name }}_${new Date().toISOString().split('T')[0]}.pdf`,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2 },
+              jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+          };
+          html2pdf().set(opt).from(element).save().then(function(){
+              // Restore original theme
+              if (originalTheme) {
+                  document.documentElement.setAttribute('data-bs-theme', originalTheme);
+                  window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: originalTheme } }));
+              } else {
+                  document.documentElement.removeAttribute('data-bs-theme');
+                  window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: 'light' } }));
+              }
+              if(overlay) overlay.style.display = 'none';
+          }).catch(function(err) {
+              console.error("PDF generation failed:", err);
+              if (originalTheme) {
+                  document.documentElement.setAttribute('data-bs-theme', originalTheme);
+                  window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: originalTheme } }));
+              } else {
+                  document.documentElement.removeAttribute('data-bs-theme');
+                  window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: 'light' } }));
+              }
+              if(overlay) overlay.style.display = 'none';
+          });
+      }, 500);
+  });
 
-    function loadData(params = {}) {
-        const mode = document.getElementById('viewMode').value;
-        const start = params.startDate || document.getElementById('startDate').value;
-        const end = params.endDate || document.getElementById('endDate').value;
+  // Initial Load
+  document.addEventListener('DOMContentLoaded', function() {
+      try {
+          if (typeof bootstrap !== 'undefined') {
+              eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+          }
+      } catch(e) { console.error("Bootstrap Modal init error:", e); }
+      loadData();
+  });
 
-        // If params provided, update inputs
-        if (params.startDate) document.getElementById('startDate').value = params.startDate;
-        if (params.endDate) document.getElementById('endDate').value = params.endDate;
+  function loadData(params = {}) {
+      const mode = document.getElementById('viewMode').value;
+      const start = params.startDate || document.getElementById('startDate').value;
+      const end = params.endDate || document.getElementById('endDate').value;
 
-        let url = `/api/chart_data/${flockId}?mode=${mode}`;
-        if (start) url += `&start_date=${start}`;
-        if (end) url += `&end_date=${end}`;
+      // If params provided, update inputs
+      if (params.startDate) document.getElementById('startDate').value = params.startDate;
+      if (params.endDate) document.getElementById('endDate').value = params.endDate;
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                currentData = data;
-                renderCharts(data, mode);
-            })
-            .catch(err => console.error("Error loading chart data:", err));
-    }
+      let url = `/api/chart_data/${flockId}?mode=${mode}`;
+      if (start) url += `&start_date=${start}`;
+      if (end) url += `&end_date=${end}`;
 
-    function applyQuickFilter(type) {
-        // If we want "Latest Data", we need to know the latest date first.
-        // We can fetch ALL data first to find the range, then filter.
-        // Or assume Today? User said "fetch until the latest key in".
-        // This implies we rely on the API returning data up to the last log.
-        // If we clear dates and fetch, we get everything.
-        // Then we find the last date in `currentData` and subtract 30 days/10 weeks.
+      fetch(url)
+          .then(response => response.json())
+          .then(data => {
+              currentData = data;
+              renderCharts(data, mode);
+          })
+          .catch(err => console.error("Error loading chart data:", err));
+  }
 
-        // Clear inputs to fetch all
-        document.getElementById('startDate').value = '';
-        document.getElementById('endDate').value = '';
+  function applyQuickFilter(type) {
+      // If we want "Latest Data", we need to know the latest date first.
+      // We can fetch ALL data first to find the range, then filter.
+      // Or assume Today? User said "fetch until the latest key in".
+      // This implies we rely on the API returning data up to the last log.
+      // If we clear dates and fetch, we get everything.
+      // Then we find the last date in `currentData` and subtract 30 days/10 weeks.
 
-        const mode = document.getElementById('viewMode').value;
-        let url = `/api/chart_data/${flockId}?mode=${mode}`;
+      // Clear inputs to fetch all
+      document.getElementById('startDate').value = '';
+      document.getElementById('endDate').value = '';
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                currentData = data;
-                if (!data.dates || data.dates.length === 0) {
-                    renderCharts(data, mode);
-                    return;
-                }
+      const mode = document.getElementById('viewMode').value;
+      let url = `/api/chart_data/${flockId}?mode=${mode}`;
 
-                // Find Latest Date
-                const dates = data.dates;
-                const lastDateStr = dates[dates.length - 1];
-                const lastDate = new Date(lastDateStr); // Standard ISO YYYY-MM-DD or Week string?
-                // If weekly mode, dates are "Week X".
-                // If monthly, "YYYY-MM".
-                // If daily, "YYYY-MM-DD".
+      fetch(url)
+          .then(response => response.json())
+          .then(data => {
+              currentData = data;
+              if (!data.dates || data.dates.length === 0) {
+                  renderCharts(data, mode);
+                  return;
+              }
 
-                if (type === 'all') {
-                    renderCharts(data, mode);
-                    return;
-                }
+              // Find Latest Date
+              const dates = data.dates;
+              const lastDateStr = dates[dates.length - 1];
+              const lastDate = new Date(lastDateStr); // Standard ISO YYYY-MM-DD or Week string?
+              // If weekly mode, dates are "Week X".
+              // If monthly, "YYYY-MM".
+              // If daily, "YYYY-MM-DD".
 
-                if (mode === 'daily') {
-                    // type '30d' or '10w' (70d)
-                    const days = type === '30d' ? 30 : 70;
-                    const startDate = new Date(lastDate);
-                    startDate.setDate(lastDate.getDate() - days);
+              if (type === 'all') {
+                  renderCharts(data, mode);
+                  return;
+              }
 
-                    const sStr = startDate.toISOString().split('T')[0];
-                    const eStr = lastDate.toISOString().split('T')[0];
+              if (mode === 'daily') {
+                  // type '30d' or '10w' (70d)
+                  const days = type === '30d' ? 30 : 70;
+                  const startDate = new Date(lastDate);
+                  startDate.setDate(lastDate.getDate() - days);
 
-                    document.getElementById('startDate').value = sStr;
-                    document.getElementById('endDate').value = eStr;
+                  const sStr = startDate.toISOString().split('T')[0];
+                  const eStr = lastDate.toISOString().split('T')[0];
 
-                    // Re-load with filter
-                    loadData({startDate: sStr, endDate: eStr});
-                } else if (mode === 'weekly') {
-                    // Logic for weeks?
-                    // Week string parsing is hard ("Week 10").
-                    // But data.metrics arrays align with dates.
-                    // We can just slice the data arrays in JS instead of re-fetching?
-                    // Plotly handles zooming. We can set range in layout?
-                    // User asked to "fetch until".
-                    // Re-fetching with filtered date range is safest if API supports it.
-                    // But API expects YYYY-MM-DD.
-                    // Week X doesn't map easily to Date without knowing intake.
-                    // But we have `data.intake_date`.
+                  document.getElementById('startDate').value = sStr;
+                  document.getElementById('endDate').value = eStr;
 
-                    // Simplified: Just slice the data here and render!
-                    // filterData logic
-                    const count = type === '30d' ? 4 : 10; // Approx 4 weeks for 30d
+                  // Re-load with filter
+                  loadData({startDate: sStr, endDate: eStr});
+              } else if (mode === 'weekly') {
+                  // Logic for weeks?
+                  // Week string parsing is hard ("Week 10").
+                  // But data.metrics arrays align with dates.
+                  // We can just slice the data arrays in JS instead of re-fetching?
+                  // Plotly handles zooming. We can set range in layout?
+                  // User asked to "fetch until".
+                  // Re-fetching with filtered date range is safest if API supports it.
+                  // But API expects YYYY-MM-DD.
+                  // Week X doesn't map easily to Date without knowing intake.
+                  // But we have `data.intake_date`.
 
-                    const filtered = filterDataLocally(data, count);
-                    renderCharts(filtered, mode);
-                } else {
-                    renderCharts(data, mode);
-                }
-            });
-    }
+                  // Simplified: Just slice the data here and render!
+                  // filterData logic
+                  const count = type === '30d' ? 4 : 10; // Approx 4 weeks for 30d
 
-    function filterDataLocally(data, count) {
-        const len = data.dates.length;
-        if (len <= count) return data;
+                  const filtered = filterDataLocally(data, count);
+                  renderCharts(filtered, mode);
+              } else {
+                  renderCharts(data, mode);
+              }
+          });
+  }
 
-        const start = len - count;
-        const newData = { ...data, metrics: {}, dates: data.dates.slice(start) };
+  function filterDataLocally(data, count) {
+      const len = data.dates.length;
+      if (len <= count) return data;
 
-        for (let k in data.metrics) {
-            newData.metrics[k] = data.metrics[k].slice(start);
-        }
-        return newData;
-    }
+      const start = len - count;
+      const newData = { ...data, metrics: {}, dates: data.dates.slice(start) };
 
-    function getMaxRange(arr, isPercentage) {
-        if (!arr || arr.length === 0) return isPercentage ? 100 : 10;
-        const valid = arr.filter(v => v !== null && v !== undefined && !isNaN(v));
-        if (valid.length === 0) return isPercentage ? 100 : 10;
-        const maxVal = Math.max(...valid);
+      for (let k in data.metrics) {
+          newData.metrics[k] = data.metrics[k].slice(start);
+      }
+      return newData;
+  }
 
-        let limit = maxVal * 1.25;
-        // If buffer is 0, default to something sensible (e.g. 1 or 5)
-        if (limit === 0) return isPercentage ? 100 : 1;
+  function getMaxRange(arr, isPercentage) {
+      if (!arr || arr.length === 0) return isPercentage ? 100 : 10;
+      const valid = arr.filter(v => v !== null && v !== undefined && !isNaN(v));
+      if (valid.length === 0) return isPercentage ? 100 : 10;
+      const maxVal = Math.max(...valid);
 
-        if (isPercentage && limit > 100) limit = 100;
-        return limit;
-    }
+      let limit = maxVal * 1.25;
+      // If buffer is 0, default to something sensible (e.g. 1 or 5)
+      if (limit === 0) return isPercentage ? 100 : 1;
 
-    function renderCharts(data, mode) {
-        const xValues = data.dates;
-        const metrics = data.metrics;
+      if (isPercentage && limit > 100) limit = 100;
+      return limit;
+  }
 
-        // Common Layout Options
-        const commonLayout = {
-            legend: {orientation: 'h', y: -0.2},
-            margin: {t: 40, l: 50, r: 50, b: 50},
-            hovermode: 'closest'
-        };
+  function renderCharts(data, mode) {
+      const xValues = data.dates;
+      const metrics = data.metrics;
 
-        // 1. Female Depletion & Egg Production
-        const maxEgg = getMaxRange(metrics.egg_prod_pct, true);
-        const maxDepF = getMaxRange(metrics.mortality_f_pct, true);
+      // Common Layout Options
+      const commonLayout = {
+          legend: {orientation: 'h', y: -0.2},
+          margin: {t: 40, l: 50, r: 50, b: 50},
+          hovermode: 'closest'
+      };
 
-        const traceDepF = {
-            x: xValues,
-            y: metrics.mortality_f_pct,
-            name: 'Fem Depletion %',
-            type: 'bar',
-            yaxis: 'y2',
-            marker: {color: 'red', opacity: 0.6}
-        };
-        const traceEgg = {
-            x: xValues,
-            y: metrics.egg_prod_pct,
-            name: 'Egg Prod %',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: {color: 'blue', width: 2}
-        };
+      // 1. Female Depletion & Egg Production
+      const maxEgg = getMaxRange(metrics.egg_prod_pct, true);
+      const maxDepF = getMaxRange(metrics.mortality_f_pct, true);
 
-        const layout1 = { ...commonLayout,
-            title: 'Female Depletion & Egg Production %',
-            yaxis: {title: 'Egg Production %', range: [0, maxEgg]},
-            yaxis2: {title: 'Depletion %', overlaying: 'y', side: 'right', range: [0, maxDepF], showgrid: false}
-        };
+      const traceDepF = {
+          x: xValues,
+          y: metrics.mortality_f_pct,
+          name: 'Fem Depletion %',
+          type: 'bar',
+          yaxis: 'y2',
+          marker: {color: 'red', opacity: 0.6}
+      };
+      const traceEgg = {
+          x: xValues,
+          y: metrics.egg_prod_pct,
+          name: 'Egg Prod %',
+          type: 'scatter',
+          mode: 'lines+markers',
+          line: {color: 'blue', width: 2}
+      };
 
-        // Event Markers (only in Daily mode)
-        let eventTraces = [];
-        if (mode === 'daily' && data.events && data.events.length > 0) {
-             // Need to filter events if date range applied locally
-             // Basic matching
-             const validDates = new Set(xValues);
-             const filteredEvents = data.events.filter(e => validDates.has(e.date));
+      const layout1 = { ...commonLayout,
+          title: 'Female Depletion & Egg Production %',
+          yaxis: {title: 'Egg Production %', range: [0, maxEgg]},
+          yaxis2: {title: 'Depletion %', overlaying: 'y', side: 'right', range: [0, maxDepF], showgrid: false}
+      };
 
-             const eventX = filteredEvents.map(e => e.date);
-             const eventY = eventX.map(() => maxEgg * 0.95); // Near top based on maxEgg
+      // Event Markers (only in Daily mode)
+      let eventTraces = [];
+      if (mode === 'daily' && data.events && data.events.length > 0) {
+           // Need to filter events if date range applied locally
+           // Basic matching
+           const validDates = new Set(xValues);
+           const filteredEvents = data.events.filter(e => validDates.has(e.date));
 
-             // Differentiate Flushing vs Normal
-             const colors = filteredEvents.map(e => e.type === 'flushing' ? 'cyan' : 'gold');
-             const symbols = filteredEvents.map(e => e.type === 'flushing' ? 'drop' : 'star');
+           const eventX = filteredEvents.map(e => e.date);
+           const eventY = eventX.map(() => maxEgg * 0.95); // Near top based on maxEgg
 
-             const traceEvt = {
-                 x: eventX,
-                 y: eventY,
-                 mode: 'markers',
-                 type: 'scatter',
-                 name: 'Events',
-                 marker: { symbol: symbols, size: 12, color: colors, line: {color: 'black', width: 1} },
-                 text: filteredEvents.map(e => e.type === 'flushing' ? 'Flushing' : 'Note/Photo'),
-                 hoverinfo: 'text'
-             };
-             eventTraces.push(traceEvt);
-        }
+           // Differentiate Flushing vs Normal
+           const colors = filteredEvents.map(e => e.type === 'flushing' ? 'cyan' : 'gold');
+           const symbols = filteredEvents.map(e => e.type === 'flushing' ? 'drop' : 'star');
 
-        Plotly.newPlot('chart-depletion-f-egg', [traceEgg, traceDepF, ...eventTraces], layout1).then(gd => {
-            gd.removeAllListeners('plotly_click');
-            gd.on('plotly_click', d => handleChartClick(d, mode));
-        });
+           const traceEvt = {
+               x: eventX,
+               y: eventY,
+               mode: 'markers',
+               type: 'scatter',
+               name: 'Events',
+               marker: { symbol: symbols, size: 12, color: colors, line: {color: 'black', width: 1} },
+               text: filteredEvents.map(e => e.type === 'flushing' ? 'Flushing' : 'Note/Photo'),
+               hoverinfo: 'text'
+           };
+           eventTraces.push(traceEvt);
+      }
 
-        // 2. Male Depletion
-        const maxDepM = getMaxRange(metrics.mortality_m_pct, true);
-        const traceDepM = {
-            x: xValues,
-            y: metrics.mortality_m_pct,
-            name: 'Male Depletion %',
-            type: 'bar',
-            marker: {color: 'blue', opacity: 0.6}
-        };
-        Plotly.newPlot('chart-depletion-m', [traceDepM], { ...commonLayout, title: 'Male Depletion %', yaxis: {title: 'Depletion %', range: [0, maxDepM]} }).then(gd => {
-             gd.removeAllListeners('plotly_click');
-             gd.on('plotly_click', d => handleChartClick(d, mode));
-        });
+      Plotly.newPlot('chart-depletion-f-egg', [traceEgg, traceDepF, ...eventTraces], layout1).then(gd => {
+          gd.removeAllListeners('plotly_click');
+          gd.on('plotly_click', d => handleChartClick(d, mode));
+      });
 
-        // 3. Cull & Hatching Egg
-        const cullPct = metrics.hatch_egg_pct ? metrics.hatch_egg_pct.map(v => v > 0 ? (100 - v) : 0) : [];
-        const maxCull = getMaxRange(cullPct, true);
-        const maxHatch = getMaxRange(metrics.hatch_egg_pct, true);
+      // 2. Male Depletion
+      const maxDepM = getMaxRange(metrics.mortality_m_pct, true);
+      const traceDepM = {
+          x: xValues,
+          y: metrics.mortality_m_pct,
+          name: 'Male Depletion %',
+          type: 'bar',
+          marker: {color: 'blue', opacity: 0.6}
+      };
+      Plotly.newPlot('chart-depletion-m', [traceDepM], { ...commonLayout, title: 'Male Depletion %', yaxis: {title: 'Depletion %', range: [0, maxDepM]} }).then(gd => {
+           gd.removeAllListeners('plotly_click');
+           gd.on('plotly_click', d => handleChartClick(d, mode));
+      });
 
-        const traceHatch = {
-            x: xValues,
-            y: metrics.hatch_egg_pct,
-            name: 'Hatch Egg %',
-            type: 'scatter',
-            mode: 'lines',
-            line: {color: 'green'},
-            yaxis: 'y2'
-        };
+      // 3. Cull & Hatching Egg
+      const cullPct = metrics.hatch_egg_pct ? metrics.hatch_egg_pct.map(v => v > 0 ? (100 - v) : 0) : [];
+      const maxCull = getMaxRange(cullPct, true);
+      const maxHatch = getMaxRange(metrics.hatch_egg_pct, true);
 
-        const traceCull = {
-            x: xValues,
-            y: cullPct,
-            name: 'Cull Eggs %',
-            type: 'bar',
-            marker: {color: 'orange', opacity: 0.6}
-        };
-        Plotly.newPlot('chart-cull-hatch', [traceCull, traceHatch], {
-            ...commonLayout,
-            title: 'Cull & Hatching Egg %',
-            yaxis: {title: 'Cull %', range: [0, maxCull]},
-            yaxis2: {title: 'Hatching %', overlaying: 'y', side: 'right', range: [0, maxHatch], showgrid: false}
-        }).then(gd => {
-             gd.removeAllListeners('plotly_click');
-             gd.on('plotly_click', d => handleChartClick(d, mode));
-        });
+      const traceHatch = {
+          x: xValues,
+          y: metrics.hatch_egg_pct,
+          name: 'Hatch Egg %',
+          type: 'scatter',
+          mode: 'lines',
+          line: {color: 'green'},
+          yaxis: 'y2'
+      };
 
-        // 4. Water & Feed
-        const maxWater = getMaxRange(metrics.water_per_bird, false);
-        const maxFeed = getMaxRange([...(metrics.feed_f||[]), ...(metrics.feed_m||[])], false);
+      const traceCull = {
+          x: xValues,
+          y: cullPct,
+          name: 'Cull Eggs %',
+          type: 'bar',
+          marker: {color: 'orange', opacity: 0.6}
+      };
+      Plotly.newPlot('chart-cull-hatch', [traceCull, traceHatch], {
+          ...commonLayout,
+          title: 'Cull & Hatching Egg %',
+          yaxis: {title: 'Cull %', range: [0, maxCull]},
+          yaxis2: {title: 'Hatching %', overlaying: 'y', side: 'right', range: [0, maxHatch], showgrid: false}
+      }).then(gd => {
+           gd.removeAllListeners('plotly_click');
+           gd.on('plotly_click', d => handleChartClick(d, mode));
+      });
 
-        const traceWater = {
-            x: xValues,
-            y: metrics.water_per_bird,
-            name: 'Water (mL)',
-            type: 'bar',
-            marker: {color: 'cyan', opacity: 0.5}
-        };
-        const traceFeedF = {
-            x: xValues,
-            y: metrics.feed_f,
-            name: 'Feed F (g)',
-            type: 'scatter',
-            mode: 'lines',
-            yaxis: 'y2',
-            line: {color: 'pink'}
-        };
-        const traceFeedM = {
-            x: xValues,
-            y: metrics.feed_m,
-            name: 'Feed M (g)',
-            type: 'scatter',
-            mode: 'lines',
-            yaxis: 'y2',
-            line: {color: 'blue'}
-        };
-        Plotly.newPlot('chart-water-feed', [traceWater, traceFeedF, traceFeedM], {
-            ...commonLayout,
-            title: 'Water & Feed Consumption',
-            yaxis: {title: 'Water (mL/bird)', range: [0, maxWater]},
-            yaxis2: {title: 'Feed (g/bird)', overlaying: 'y', side: 'right', showgrid: false, range: [0, maxFeed]}
-        }).then(gd => {
-             gd.removeAllListeners('plotly_click');
-             gd.on('plotly_click', d => handleChartClick(d, mode));
-        });
+      // 4. Water & Feed
+      const maxWater = getMaxRange(metrics.water_per_bird, false);
+      const maxFeed = getMaxRange([...(metrics.feed_f||[]), ...(metrics.feed_m||[])], false);
 
-        // 5. BW Female
-        const maxBwF = getMaxRange(metrics.bw_f, false);
-        const maxUniF = getMaxRange(metrics.uni_f, true);
+      const traceWater = {
+          x: xValues,
+          y: metrics.water_per_bird,
+          name: 'Water (mL)',
+          type: 'bar',
+          marker: {color: 'cyan', opacity: 0.5}
+      };
+      const traceFeedF = {
+          x: xValues,
+          y: metrics.feed_f,
+          name: 'Feed F (g)',
+          type: 'scatter',
+          mode: 'lines',
+          yaxis: 'y2',
+          line: {color: 'pink'}
+      };
+      const traceFeedM = {
+          x: xValues,
+          y: metrics.feed_m,
+          name: 'Feed M (g)',
+          type: 'scatter',
+          mode: 'lines',
+          yaxis: 'y2',
+          line: {color: 'blue'}
+      };
+      Plotly.newPlot('chart-water-feed', [traceWater, traceFeedF, traceFeedM], {
+          ...commonLayout,
+          title: 'Water & Feed Consumption',
+          yaxis: {title: 'Water (mL/bird)', range: [0, maxWater]},
+          yaxis2: {title: 'Feed (g/bird)', overlaying: 'y', side: 'right', showgrid: false, range: [0, maxFeed]}
+      }).then(gd => {
+           gd.removeAllListeners('plotly_click');
+           gd.on('plotly_click', d => handleChartClick(d, mode));
+      });
 
-        const traceBwF = {
-            x: xValues,
-            y: metrics.bw_f,
-            name: 'BW Female',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: {color: 'pink'}
-        };
-        const traceUniF = {
-            x: xValues,
-            y: metrics.uni_f,
-            name: 'Uniformity %',
-            type: 'bar',
-            yaxis: 'y2',
-            marker: {color: 'purple', opacity: 0.3}
-        };
-        Plotly.newPlot('chart-bw-female', [traceUniF, traceBwF], {
-            ...commonLayout,
-            title: 'Female Body Weight & Uniformity',
-            yaxis: {title: 'Body Weight (g)', range: [0, maxBwF]},
-            yaxis2: {title: 'Uniformity %', overlaying: 'y', side: 'right', range: [0, maxUniF], showgrid: false}
-        }).then(gd => {
-             gd.removeAllListeners('plotly_click');
-             gd.on('plotly_click', d => handleChartClick(d, mode));
-        });
+      // 5. BW Female
+      const maxBwF = getMaxRange(metrics.bw_f, false);
+      const maxUniF = getMaxRange(metrics.uni_f, true);
 
-        // 6. BW Male
-        const maxBwM = getMaxRange(metrics.bw_m, false);
-        const maxUniM = getMaxRange(metrics.uni_m, true);
+      const traceBwF = {
+          x: xValues,
+          y: metrics.bw_f,
+          name: 'BW Female',
+          type: 'scatter',
+          mode: 'lines+markers',
+          line: {color: 'pink'}
+      };
+      const traceUniF = {
+          x: xValues,
+          y: metrics.uni_f,
+          name: 'Uniformity %',
+          type: 'bar',
+          yaxis: 'y2',
+          marker: {color: 'purple', opacity: 0.3}
+      };
+      Plotly.newPlot('chart-bw-female', [traceUniF, traceBwF], {
+          ...commonLayout,
+          title: 'Female Body Weight & Uniformity',
+          yaxis: {title: 'Body Weight (g)', range: [0, maxBwF]},
+          yaxis2: {title: 'Uniformity %', overlaying: 'y', side: 'right', range: [0, maxUniF], showgrid: false}
+      }).then(gd => {
+           gd.removeAllListeners('plotly_click');
+           gd.on('plotly_click', d => handleChartClick(d, mode));
+      });
 
-        const traceBwM = {
-            x: xValues,
-            y: metrics.bw_m,
-            name: 'BW Male',
-            type: 'scatter',
-            mode: 'lines+markers',
-            line: {color: 'blue'}
-        };
-        const traceUniM = {
-            x: xValues,
-            y: metrics.uni_m,
-            name: 'Uniformity %',
-            type: 'bar',
-            yaxis: 'y2',
-            marker: {color: 'purple', opacity: 0.3}
-        };
-        Plotly.newPlot('chart-bw-male', [traceUniM, traceBwM], {
-            ...commonLayout,
-            title: 'Male Body Weight & Uniformity',
-            yaxis: {title: 'Body Weight (g)', range: [0, maxBwM]},
-            yaxis2: {title: 'Uniformity %', overlaying: 'y', side: 'right', range: [0, maxUniM], showgrid: false}
-        }).then(gd => {
-             gd.removeAllListeners('plotly_click');
-             gd.on('plotly_click', d => handleChartClick(d, mode));
-        });
-    }
+      // 6. BW Male
+      const maxBwM = getMaxRange(metrics.bw_m, false);
+      const maxUniM = getMaxRange(metrics.uni_m, true);
 
-    function handleChartClick(data, mode) {
-        if (!data || !data.points) return;
-        const point = data.points[0];
-        const pointIndex = point.pointIndex; // Index in the data array
+      const traceBwM = {
+          x: xValues,
+          y: metrics.bw_m,
+          name: 'BW Male',
+          type: 'scatter',
+          mode: 'lines+markers',
+          line: {color: 'blue'}
+      };
+      const traceUniM = {
+          x: xValues,
+          y: metrics.uni_m,
+          name: 'Uniformity %',
+          type: 'bar',
+          yaxis: 'y2',
+          marker: {color: 'purple', opacity: 0.3}
+      };
+      Plotly.newPlot('chart-bw-male', [traceUniM, traceBwM], {
+          ...commonLayout,
+          title: 'Male Body Weight & Uniformity',
+          yaxis: {title: 'Body Weight (g)', range: [0, maxBwM]},
+          yaxis2: {title: 'Uniformity %', overlaying: 'y', side: 'right', range: [0, maxUniM], showgrid: false}
+      }).then(gd => {
+           gd.removeAllListeners('plotly_click');
+           gd.on('plotly_click', d => handleChartClick(d, mode));
+      });
+  }
 
-        // 1. Check Event Marker Click (Daily Mode)
-        if (mode === 'daily' && point.data.name === 'Events') {
-            const dateClicked = point.x;
-            const evt = currentData.events.find(e => e.date === dateClicked);
-            if (evt) {
-                document.getElementById('modalDate').innerText = evt.date;
-                document.getElementById('modalNote').innerText = evt.note || 'No notes.';
-                const img = document.getElementById('modalImg');
-                if (evt.photo) {
-                    img.src = evt.photo;
-                    img.classList.remove('d-none');
-                } else {
-                    img.classList.add('d-none');
-                }
-                eventModal.show();
-            }
-            return;
-        }
+  function handleChartClick(data, mode) {
+      if (!data || !data.points) return;
+      const point = data.points[0];
+      const pointIndex = point.pointIndex; // Index in the data array
 
-        // 2. Drill Through Logic
-        // Use currentData.ranges[pointIndex] to find start/end dates
-        if ((mode === 'monthly' || mode === 'weekly') && currentData.ranges && currentData.ranges[pointIndex]) {
-            const range = currentData.ranges[pointIndex];
+      // 1. Check Event Marker Click (Daily Mode)
+      if (mode === 'daily' && point.data.name === 'Events') {
+          const dateClicked = point.x;
+          const evt = currentData.events.find(e => e.date === dateClicked);
+          if (evt) {
+              document.getElementById('modalDate').innerText = evt.date;
+              document.getElementById('modalNote').innerText = evt.note || 'No notes.';
+              const img = document.getElementById('modalImg');
+              if (evt.photo) {
+                  img.src = evt.photo;
+                  img.classList.remove('d-none');
+              } else {
+                  img.classList.add('d-none');
+              }
+              eventModal.show();
+          }
+          return;
+      }
 
-            // Set Date Filter
-            document.getElementById('startDate').value = range.start;
-            document.getElementById('endDate').value = range.end;
+      // 2. Drill Through Logic
+      // Use currentData.ranges[pointIndex] to find start/end dates
+      if ((mode === 'monthly' || mode === 'weekly') && currentData.ranges && currentData.ranges[pointIndex]) {
+          const range = currentData.ranges[pointIndex];
 
-            // Switch Mode
-            if (mode === 'monthly') {
-                document.getElementById('viewMode').value = 'weekly';
-            } else if (mode === 'weekly') {
-                document.getElementById('viewMode').value = 'daily';
-            }
+          // Set Date Filter
+          document.getElementById('startDate').value = range.start;
+          document.getElementById('endDate').value = range.end;
 
-            loadData();
-        }
-    }
+          // Switch Mode
+          if (mode === 'monthly') {
+              document.getElementById('viewMode').value = 'weekly';
+          } else if (mode === 'weekly') {
+              document.getElementById('viewMode').value = 'daily';
+          }
+
+          loadData();
+      }
+  }
 </script>
 {% endblock %}
