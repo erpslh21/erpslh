@@ -1,8 +1,8 @@
 """Remove bodyweight and uniformity from DailyLog
 
-Revision ID: b0a84feb9579
+Revision ID: b882563e44cc
 Revises: 3463bd0c4ada
-Create Date: 2026-05-18 07:11:19.043033
+Create Date: 2026-05-18 08:47:13.345282
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b0a84feb9579'
+revision = 'b882563e44cc'
 down_revision = '3463bd0c4ada'
 branch_labels = None
 depends_on = None
