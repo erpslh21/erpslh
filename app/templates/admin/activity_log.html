@@ -32,7 +32,7 @@
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light text-dark">
+                    <thead class="table-light text-body">
                         <tr>
                             <th>Timestamp</th>
                             <th>User</th>
@@ -51,7 +51,7 @@
                                 {% if log.action == 'Add' %}
                                     <span class="badge bg-success text-white">Add</span>
                                 {% elif log.action == 'Edit' %}
-                                    <span class="badge bg-warning text-dark">Edit</span>
+                                    <span class="badge bg-warning text-body">Edit</span>
                                 {% elif log.action == 'Delete' %}
                                     <span class="badge bg-danger text-white">Delete</span>
                                 {% else %}
