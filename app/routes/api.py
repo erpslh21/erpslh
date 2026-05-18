@@ -806,8 +806,7 @@ def register_api_routes(app):
                     if not log:
                         log = DailyLog(
                             flock_id=flock_id,
-                            date=log_date,                        body_weight_male=0,
-                            body_weight_female=0
+                            date=log_date
                         )
                         db.session.add(log)
                         existing_logs_by_date[log_date] = log
@@ -1113,10 +1112,10 @@ def register_api_routes(app):
                 data['metrics']['egg_prod_pct'].append(round(d['egg_prod_pct'], 2))
                 data['metrics'].setdefault('std_egg_prod', []).append(round(d.get('std_egg_prod', 0.0), 2))
                 data['metrics']['hatch_egg_pct'].append(round(d['hatch_egg_pct'], 2))
-                data['metrics']['bw_f'].append(d['body_weight_female'])
-                data['metrics']['bw_m'].append(d['body_weight_male'])
-                data['metrics']['uni_f'].append(d['uniformity_female'])
-                data['metrics']['uni_m'].append(d['uniformity_male'])
+                data['metrics']['bw_f'].append(d.get('body_weight_female'))
+                data['metrics']['bw_m'].append(d.get('body_weight_male'))
+                data['metrics']['uni_f'].append(d.get('uniformity_female'))
+                data['metrics']['uni_m'].append(d.get('uniformity_male'))
                 data['metrics']['feed_f'].append(d['feed_female_gp_bird'])
                 data['metrics']['feed_m'].append(d['feed_male_gp_bird'])
                 data['metrics']['water_per_bird'].append(round(d['water_per_bird'], 1) if d['water_per_bird'] >= 0 else None)
@@ -1202,10 +1201,10 @@ def register_api_routes(app):
                 data['metrics']['egg_prod_pct'].append(round(a['egg_prod_pct'], 2))
                 data['metrics'].setdefault('std_egg_prod', []).append(round(a.get('std_egg_prod', 0.0), 2))
                 data['metrics']['hatch_egg_pct'].append(round(a['hatch_egg_pct'], 2))
-                data['metrics']['bw_f'].append(round(a['body_weight_female'], 0))
-                data['metrics']['bw_m'].append(round(a['body_weight_male'], 0))
-                data['metrics']['uni_f'].append(round(a['uniformity_female'], 2))
-                data['metrics']['uni_m'].append(round(a['uniformity_male'], 2))
+                data['metrics']['bw_f'].append(round(a['body_weight_female'], 0) if a.get('body_weight_female') else None)
+                data['metrics']['bw_m'].append(round(a['body_weight_male'], 0) if a.get('body_weight_male') else None)
+                data['metrics']['uni_f'].append(round(a['uniformity_female'], 2) if a.get('uniformity_female') else None)
+                data['metrics']['uni_m'].append(round(a['uniformity_male'], 2) if a.get('uniformity_male') else None)
                 # Feed in agg is total kg? Or average g/bird?
                 # aggregate_weekly_metrics does NOT return avg g/bird. It returns total_kg.
                 # But the chart expects g/bird.

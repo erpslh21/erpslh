@@ -1422,8 +1422,7 @@ def register_health_routes(app):
             if not log:
                 log = DailyLog(
                     flock_id=flock_id,
-                    date=log_date,                body_weight_male=0,
-                    body_weight_female=0
+                    date=log_date
                 )
                 db.session.add(log)
                 db.session.flush() # get ID
