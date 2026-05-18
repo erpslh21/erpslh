@@ -21,12 +21,12 @@
         <div class="card-body p-0">
             <div class="table-responsive table-responsive-sticky">
                 <table class="table table-bordered table-sm text-center align-middle" style="font-size: 0.8rem; margin-bottom: 0;">
-                    <thead class="sticky-table-header table-light text-dark">
+                    <thead class="sticky-table-header table-light text-body">
                         <tr>
                             <th rowspan="2" class="align-middle">Date</th>
                             <th rowspan="2" class="align-middle">House</th>
                             <th rowspan="2" class="align-middle">Age</th>
-                            <th colspan="2" class="bg-light">Stock</th>
+                            <th colspan="2" class="bg-light-subtle">Stock</th>
                             <th colspan="2" class="bg-danger bg-opacity-10">Mortality</th>
                             <th colspan="2" class="bg-warning bg-opacity-10">Culls</th>
                             <th rowspan="2" class="align-middle">Feed<br>(Kg)</th>
@@ -44,8 +44,8 @@
                             <th rowspan="2" class="align-middle">Actions</th>
                         </tr>
                         <tr>
-                            <th class="bg-light">M</th>
-                            <th class="bg-light">F</th>
+                            <th class="bg-light-subtle">M</th>
+                            <th class="bg-light-subtle">F</th>
                             <th class="bg-danger bg-opacity-10">M</th>
                             <th class="bg-danger bg-opacity-10">F</th>
                             <th class="bg-warning bg-opacity-10">M</th>
@@ -129,7 +129,7 @@
 
                             <!-- Hatching / Cull Eggs -->
                             <td class="bg-primary bg-opacity-10 fw-bold">
-                                <span class="text-dark">{{ item.hatch_eggs }}</span><br>
+                                <span class="text-body">{{ item.hatch_eggs }}</span><br>
                                 <span class="small {{ 'text-success' if item.hatch_egg_pct is not none and item.hatch_egg_pct >= 95 else 'text-danger' }}">
                                     ({{ "%.2f"|format(((item.hatch_egg_pct or 0) | float)) }}%)
                                 </span>
