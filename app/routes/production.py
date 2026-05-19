@@ -214,10 +214,8 @@ def register_production_routes(app):
             p_map = {pw.partition_name: pw.body_weight for pw in log.partition_weights}
             for i in range(1, 9):
                 val_m = p_map.get(f'M{i}', 0)
-                if val_m == 0 and i <= 2: val_m = getattr(log, f'bw_male_p{i}', 0)
                 chart_data[f'bw_M{i}'].append(val_m if val_m is not None and val_m > 0 else None)
                 val_f = p_map.get(f'F{i}', 0)
-                if val_f == 0 and i <= 4: val_f = getattr(log, f'bw_female_p{i}', 0)
                 chart_data[f'bw_F{i}'].append(val_f if val_f is not None and val_f > 0 else None)
 
             note_obj = None
@@ -1773,13 +1771,7 @@ def register_production_routes(app):
             'feed_female_gp_bird': [round(d['feed_female_gp_bird'], 1) for d in daily_stats],
             'flushing': [d['log'].flushing for d in daily_stats],
 
-            # Legacy Partitions from Log
-            'bw_male_p1': [d['log'].bw_male_p1 if d['log'].bw_male_p1 is not None and d['log'].bw_male_p1 > 0 else None for d in daily_stats],
-            'bw_male_p2': [d['log'].bw_male_p2 if d['log'].bw_male_p2 is not None and d['log'].bw_male_p2 > 0 else None for d in daily_stats],
-            'bw_female_p1': [d['log'].bw_female_p1 if d['log'].bw_female_p1 is not None and d['log'].bw_female_p1 > 0 else None for d in daily_stats],
-            'bw_female_p2': [d['log'].bw_female_p2 if d['log'].bw_female_p2 is not None and d['log'].bw_female_p2 > 0 else None for d in daily_stats],
-            'bw_female_p3': [d['log'].bw_female_p3 if d['log'].bw_female_p3 is not None and d['log'].bw_female_p3 > 0 else None for d in daily_stats],
-            'bw_female_p4': [d['log'].bw_female_p4 if d['log'].bw_female_p4 is not None and d['log'].bw_female_p4 > 0 else None for d in daily_stats],
+
 
             'notes': [],
             'medication_active': [],
@@ -1797,11 +1789,9 @@ def register_production_routes(app):
 
             for i in range(1, 9):
                 val_m = p_map.get(f'M{i}', 0)
-                if val_m == 0 and i <= 2: val_m = getattr(log, f'bw_male_p{i}', 0)
                 chart_data[f'bw_M{i}'].append(val_m if val_m is not None and val_m > 0 else None)
 
                 val_f = p_map.get(f'F{i}', 0)
-                if val_f == 0 and i <= 4: val_f = getattr(log, f'bw_female_p{i}', 0)
                 chart_data[f'bw_F{i}'].append(val_f if val_f is not None and val_f > 0 else None)
 
             note_obj = None
@@ -1973,12 +1963,7 @@ def register_production_routes(app):
             # Aggregate Partitions for Weekly View
             def get_p_val(log, p_name, is_male, index):
                  p_map = {pw.partition_name: pw.body_weight for pw in log.partition_weights}
-                 val = p_map.get(p_name, 0)
-                 if val == 0:
-                     attr = f'bw_male_p{index}' if is_male else f'bw_female_p{index}'
-                     if hasattr(log, attr):
-                         val = getattr(log, attr, 0)
-                 return val
+                 return p_map.get(p_name, 0)
 
             for i in range(1, 9):
                 m_key = f'M{i}'
@@ -2043,13 +2028,7 @@ def register_production_routes(app):
             else:
                 chart_data_weekly['notes'].append(None)
 
-        # Legacy keys for weekly
-        chart_data_weekly['bw_male_p1'] = chart_data_weekly['bw_M1']
-        chart_data_weekly['bw_male_p2'] = chart_data_weekly['bw_M2']
-        chart_data_weekly['bw_female_p1'] = chart_data_weekly['bw_F1']
-        chart_data_weekly['bw_female_p2'] = chart_data_weekly['bw_F2']
-        chart_data_weekly['bw_female_p3'] = chart_data_weekly['bw_F3']
-        chart_data_weekly['bw_female_p4'] = chart_data_weekly['bw_F4']
+
 
         # 5. Current Stats (Stock at end of last processed log)
         if daily_stats:
