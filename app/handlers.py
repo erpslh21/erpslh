@@ -27,8 +27,12 @@ def register_error_handlers(app):
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):
-        if request.accept_mimetypes.accept_json or request.is_json or request.path.startswith('/api/'):
+        # We check specifically for XMLHttpRequest and fetch API calls
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', '') or request.is_json
+
+        if is_ajax or request.path.startswith('/api/'):
             return jsonify({'error': 'CSRF token missing or invalid', 'message': e.description}), 400
+
         return render_template('errors/400.html', error=e.description), 400
 
     @app.errorhandler(404)
