@@ -395,6 +395,8 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
             'body_weight_female': bw_map[log.date].body_weight_female if log.date in bw_map else None,
             'uniformity_male': bw_map[log.date].uniformity_male if log.date in bw_map else None,
             'uniformity_female': bw_map[log.date].uniformity_female if log.date in bw_map else None,
+            'standard_bw_male': bw_map[log.date].standard_bw_male if log.date in bw_map else None,
+            'standard_bw_female': bw_map[log.date].standard_bw_female if log.date in bw_map else None,
 
             # Derived %
             'mortality_male_pct': safe_div(mort_m, stock_m_start),
