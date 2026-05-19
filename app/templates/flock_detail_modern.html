@@ -96,7 +96,7 @@
           <span class="text-body font-weight-bold">{{ flock.intake_date | date_fmt }}</span>
       </div>
     </div>
-    <div class="row text-center bg-gray-100 p-2 border-radius-md">
+    <div class="row text-center bg-light-subtle p-2 border-radius-md">
       <div class="col-md-3 border-end">
           <span class="text-xs text-muted font-weight-bold text-uppercase">Intake</span><br>
           <span class="text-body font-weight-bold">{{ flock.intake_male }} M / {{ flock.intake_female }} F</span>
@@ -753,7 +753,7 @@
         </div>
         <!-- Liveability & Feed -->
         <div class="col">
-            <div class="card h-100 shadow-sm border-0 bg-gray-100">
+            <div class="card h-100 shadow-sm border-0 bg-light-subtle">
                 <div class="card-body pb-3">
                     <h6 class="text-uppercase text-muted fw-bold" style="font-size: 0.7rem;">Efficiency Metrics</h6>
                     <ul class="list-unstyled mb-0 small">
@@ -934,7 +934,7 @@
         </table>
     </div>
     {% else %}
-    <div class="text-center p-5 text-muted bg-gray-100 rounded border shadow-sm">
+    <div class="text-center p-5 text-muted bg-light-subtle rounded border shadow-sm">
         <h4 class="text-secondary">No Significant Health Events Detected</h4>
         <p>No clinical keywords or major metric deviations found in the logs.</p>
     </div>
@@ -952,19 +952,13 @@
   // Register plugin
   Chart.register(ChartDataLabels);
   Chart.register(window['chartjs-plugin-annotation']);
+  // Determine initial theme text color for datalabels
+  const currentTheme = document.documentElement.getAttribute("data-bs-theme") || "light";
+  const initialTextColor = currentTheme === "dark" ? "#f8f9fa" : "#666";
+
   Chart.defaults.set('plugins.datalabels', {
     display: true,
-    font: { size: 10 },
-    formatter: Math.round
-  });
-  if (Chart.defaults && Chart.defaults.datasets && Chart.defaults.datasets.line) {
-      Chart.defaults.datasets.line.datalabels = { align: 'top', anchor: 'end' };
-  }
-  if (Chart.defaults && Chart.defaults.datasets && Chart.defaults.datasets.bar) {
-      Chart.defaults.datasets.bar.datalabels = { align: 'top', anchor: 'end' };
-  }
-  Chart.defaults.set('plugins.datalabels', {
-    display: true,
+    color: initialTextColor,
     font: { size: 10 },
     formatter: Math.round
   });
@@ -1296,7 +1290,7 @@
                   return value;
               },
               font: { weight: 'bold', size: 10 },
-              color: '#333'
+
           },
           tooltip: { enabled: true, events: ['click'] }
       }
@@ -1975,7 +1969,7 @@
                   },
                   align: 'bottom',
                   anchor: 'end', // Place text at the top of the highlight bar (which is at y=1)
-                  color: 'rgba(100, 100, 100, 0.9)',
+                  color: initialTextColor,
                   font: {
                       weight: 'bold',
                       size: 11
