@@ -1,14 +1,24 @@
 import sys
 import os
 
+from sqlalchemy import text
 from app import create_app, db
-from app.models.models import DailyLog, FlockBodyweight, FlockBodyweightPartition, PartitionWeight
+from app.models.models import FlockBodyweight, FlockBodyweightPartition
 
 app = create_app()
 
 with app.app_context():
-    logs_with_bw = DailyLog.query.filter_by(is_weighing_day=True).all()
+    # Use raw SQL to fetch legacy fields from daily_log to avoid ORM errors
+    # since these columns might have been removed from the DailyLog model.
+    query = text('''
+        SELECT id, flock_id, date, body_weight_male, body_weight_female,
+               uniformity_male, uniformity_female, standard_bw_male, standard_bw_female
+        FROM daily_log
+        WHERE is_weighing_day = 1 OR is_weighing_day = true
+    ''')
+    logs_with_bw = db.session.execute(query).fetchall()
     count = 0
+
     for log in logs_with_bw:
         # Check if already migrated
         existing = FlockBodyweight.query.filter_by(flock_id=log.flock_id, date=log.date).first()
@@ -26,8 +36,15 @@ with app.app_context():
             db.session.add(new_bw)
             db.session.flush()
 
-            # Migrate partitions
-            for pw in log.partition_weights:
+            # Migrate partitions using raw SQL
+            pw_query = text('''
+                SELECT partition_name, body_weight, uniformity
+                FROM partition_weight
+                WHERE log_id = :log_id
+            ''')
+            partitions = db.session.execute(pw_query, {'log_id': log.id}).fetchall()
+
+            for pw in partitions:
                 new_pw = FlockBodyweightPartition(
                     bodyweight_id=new_bw.id,
                     partition_name=pw.partition_name,
