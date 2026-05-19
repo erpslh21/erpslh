@@ -8,6 +8,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev_key')
+    WTF_CSRF_TIME_LIMIT = None
 
     database_url = os.getenv('DATABASE_URL')
     if database_url and database_url.startswith("postgres://"):
