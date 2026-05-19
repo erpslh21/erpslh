@@ -35,6 +35,10 @@ def register_error_handlers(app):
 
         return render_template('errors/400.html', error=e.description), 400
 
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        return render_template('errors/403.html'), 403
+
     @app.errorhandler(404)
     def not_found_error(error):
         return render_template('errors/404.html'), 404
