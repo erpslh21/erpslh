@@ -1,13 +1,21 @@
 import sys
 import os
 
+from sqlalchemy import text
 from app import create_app, db
-from app.models.models import DailyLog, FlockBodyweight, FlockBodyweightPartition, PartitionWeight
+from app.models.models import FlockBodyweight, FlockBodyweightPartition
 
 app = create_app()
 
 with app.app_context():
-    logs_with_bw = DailyLog.query.filter_by(is_weighing_day=True).all()
+    query_logs = text("""
+        SELECT id, flock_id, date, body_weight_male, body_weight_female,
+               uniformity_male, uniformity_female, standard_bw_male, standard_bw_female
+        FROM daily_log
+        WHERE is_weighing_day = 1 OR is_weighing_day = true
+    """)
+    logs_with_bw = db.session.execute(query_logs).fetchall()
+
     count = 0
     for log in logs_with_bw:
         # Check if already migrated
@@ -27,7 +35,14 @@ with app.app_context():
             db.session.flush()
 
             # Migrate partitions
-            for pw in log.partition_weights:
+            query_partitions = text("""
+                SELECT partition_name, body_weight, uniformity
+                FROM partition_weight
+                WHERE log_id = :log_id
+            """)
+            partitions = db.session.execute(query_partitions, {'log_id': log.id}).fetchall()
+
+            for pw in partitions:
                 new_pw = FlockBodyweightPartition(
                     bodyweight_id=new_bw.id,
                     partition_name=pw.partition_name,
