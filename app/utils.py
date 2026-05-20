@@ -3,7 +3,7 @@ import os
 import json
 import requests
 from functools import wraps
-from flask import request, session, flash, redirect, url_for, current_app as app
+from flask import request, session, flash, redirect, url_for, abort, current_app as app
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 from pywebpush import webpush, WebPushException
