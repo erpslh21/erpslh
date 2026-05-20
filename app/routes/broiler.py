@@ -59,8 +59,12 @@ def flock_detail(flock_id):
         'actual_fcr': [m['cumulative_fcr'] for m in metrics],
         'standard_fcr': [m.get('standard_fcr') or 0.0 for m in metrics],
         'body_weights': [m['body_weight_g'] for m in metrics],
+        'bodyweight_standard': [m.get('standard_body_weight_g') or 0.0 for m in metrics],
         'mortality': [m['death_count'] for m in metrics],
+        'cull_actual': [m.get('cull_count') or 0 for m in metrics],
+        'mortality_standard': [m.get('standard_mortality') or 0.0 for m in metrics],
         'weight_gains': [m['weight_gain'] for m in metrics],
+        'weight_gain_standard': [m.get('standard_weight_gain') or 0.0 for m in metrics],
         'mortality_pct': [(m['death_count'] / intake_birds * 100) if intake_birds > 0 else 0 for m in metrics]
     }
 

@@ -434,11 +434,11 @@ def generate_spreadsheet_data(flock, logs, standards_by_week, standards_by_prod_
 
         # Add partitions
         for i in range(1, 9):
-            row_data.append(p_map.get(f'M{i}', getattr(log, f'bw_male_p{i}', None) if i <= 2 else None))
-            row_data.append(p_uni_map.get(f'M{i}', getattr(log, f'unif_male_p{i}', None) if i <= 2 else None))
+            row_data.append(p_map.get(f'M{i}', None))
+            row_data.append(p_uni_map.get(f'M{i}', None))
         for i in range(1, 9):
-            row_data.append(p_map.get(f'F{i}', getattr(log, f'bw_female_p{i}', None) if i <= 4 else None))
-            row_data.append(p_uni_map.get(f'F{i}', getattr(log, f'unif_female_p{i}', None) if i <= 4 else None))
+            row_data.append(p_map.get(f'F{i}', None))
+            row_data.append(p_uni_map.get(f'F{i}', None))
 
         row_data.extend([
             log.light_on_time,

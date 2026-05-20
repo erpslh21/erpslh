@@ -81,11 +81,11 @@ self.addEventListener('push', function(event) {
     }
   }
 
-  const title = "SLH-OP";
+  const title = "{{ config['APP_NAME'] }}";
   const options = {
     body: pushData.body || "Alert: Check the dashboard for details.",
-    icon: '/static/img/icon-192.png',
-    badge: '/static/img/icon-192.png',
+    icon: '/static/icon-192.png',
+    badge: '/static/icon-192.png',
     tag: 'farm-alert',
     renotify: true,
     data: {

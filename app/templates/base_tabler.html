@@ -7,7 +7,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>SLH-OP Dashboard</title>
+    <title>{{ config['APP_NAME'] }} Dashboard</title>
     <!-- Tabler Core CSS -->
     <link
       rel="stylesheet"
@@ -28,19 +28,19 @@
     {% if config['ENV'] == 'development' %}
     <link
       rel="manifest"
-      href="{{ url_for('static', filename='manifest_dev.json') }}"
+      href="{{ url_for('static', filename='manifest_dev.json', v=version) }}"
     />
     {% else %}
     <link
       rel="manifest"
-      href="{{ url_for('static', filename='manifest.json') }}"
+      href="{{ url_for('static', filename='manifest.json', v=version) }}"
     />
     {% endif %}
-    <meta name="theme-color" content="#005eb8" />
+    <meta name="theme-color" content="{{ config['PRIMARY_COLOR'] }}" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
-    <meta name="apple-mobile-web-app-title" content="SLH-OP" />
+    <meta name="apple-mobile-web-app-title" content="{{ config['APP_NAME'] }}" />
     <link
       rel="apple-touch-icon"
       href="{{ url_for('static', filename='icon-192.png', v=version) }}"
@@ -78,7 +78,7 @@
     </script>
     <style>
       :root {
-        --tblr-primary: #005eb8; /* Arbor Acres Blue */
+        --tblr-primary: {{ config['PRIMARY_COLOR'] }};
       }
 
       /* iOS Safe Area Adjustments */
@@ -142,7 +142,7 @@
       }
 
       .breeder-head-svg {
-        color: #005eb8; /* SLH Blue */
+        color: {{ config['PRIMARY_COLOR'] }};
       }
 
       .drawBreeder {
@@ -463,7 +463,7 @@
                   <circle cx="50" cy="50" r="64" fill="#ffffff" />
                   <g
                     fill="none"
-                    stroke="#005eb8"
+                    stroke="{{ config['PRIMARY_COLOR'] }}"
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     transform="translate(0, -6)"
@@ -487,7 +487,7 @@
                     />
                   </g>
                 </svg>
-                SLH-OP
+                {{ config['APP_NAME'] }}
                 <small class="text-muted ms-2 fs-5"
                   >({{ user_dept or 'Guest' }})</small
                 >
@@ -943,7 +943,7 @@
               <path d="M11 4h2"></path>
               <path d="M12 17v.01"></path>
             </svg>
-            <h3>Install SLH-OP</h3>
+            <h3>Install {{ config['APP_NAME'] }}</h3>
             <div class="text-muted mb-3">
               Install this app on your device for quick and easy offline access.
             </div>
