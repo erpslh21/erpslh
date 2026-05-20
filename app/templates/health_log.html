@@ -84,7 +84,7 @@
                             </td>
                             <td>
                                 {% if v.inventory_item_id %}
-                                    <span class="badge bg-light-subtle text-body border d-block">{{ v.doses_per_unit }}</span>
+                                    <span class="badge bg-light-subtle border d-block">{{ v.doses_per_unit }}</span>
                                 {% else %}
                                     <input type="number" name="v_dpu_{{ v.id }}" value="{{ v.doses_per_unit }}" class="form-control form-control-sm" style="width: 80px;">
                                 {% endif %}
@@ -137,7 +137,7 @@
                                 <input type="text" name="s_test_{{ s.id }}" value="{{ s.test_type }}" class="form-control form-control-sm">
                             </td>
                             <td>
-                                <span class="badge {% if s.actual_date or s.result_file or s.status == 'Completed' %}bg-success text-white{% else %}bg-warning text-body{% endif %}">
+                                <span class="badge {% if s.actual_date or s.result_file or s.status == 'Completed' %}bg-success text-white{% else %}bg-warning{% endif %}">
                                     {% if s.actual_date or s.result_file %}Completed{% else %}Pending{% endif %}
                                 </span>
                             </td>
