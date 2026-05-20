@@ -205,7 +205,7 @@
             <th rowspan="2" class="align-middle">Age</th>
             <th colspan="2" class="bg-light-subtle">Stock</th>
             <th colspan="2" class="bg-danger text-white">Mortality</th>
-            <th colspan="2" class="bg-warning text-white">Culls</th>
+            <th colspan="2" class="bg-warning">Culls</th>
             <th rowspan="2" class="align-middle">Feed<br>(Kg)</th>
             <th colspan="2" class="bg-success text-white">Feed/Bird<br>(g)</th>
             <th rowspan="2" class="align-middle">Water<br>(ml/bird)</th>
@@ -225,8 +225,8 @@
             <th class="bg-light-subtle">F</th>
             <th class="bg-danger text-white">M</th>
             <th class="bg-danger text-white">F</th>
-            <th class="bg-warning text-white">M</th>
-            <th class="bg-warning text-white">F</th>
+            <th class="bg-warning">M</th>
+            <th class="bg-warning">F</th>
             <th class="bg-success text-white">M</th>
             <th class="bg-success text-white">F</th>
             <th class="bg-info text-white">Qty</th>
@@ -335,8 +335,8 @@
             <th>Week</th>
             <th class="bg-danger text-white">Male Mort</th>
             <th class="bg-danger text-white">Female Mort</th>
-            <th class="bg-warning text-white">Male Cull</th>
-            <th class="bg-warning text-white">Female Cull</th>
+            <th class="bg-warning">Male Cull</th>
+            <th class="bg-warning">Female Cull</th>
             <th class="bg-info text-white">Egg Production</th>
             <th>Avg Egg Wt (g)</th>
             <th>Jumbo</th>
@@ -889,7 +889,7 @@
 
                         {% if event.predicted_diseases %}
                             {% for disease in event.predicted_diseases %}
-                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning text-body' }} mb-1">
+                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning' }} mb-1">
                                     {{ disease.name }}
                                 </span>
                             {% endfor %}

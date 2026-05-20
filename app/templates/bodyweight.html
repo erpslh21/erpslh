@@ -106,7 +106,7 @@
                                     {% for i in range(1, 9) %}
                                     {% set show_style = 'display:flex;' if i <= 2 else 'display:none;' %}
                                     <div class="row mb-2 partition-row-M" id="row_M{{i}}" style="{{ show_style }}">
-                                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light-subtle text-body">M{{i}}</span></div>
+                                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light-subtle">M{{i}}</span></div>
                                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="bw_M{{i}}" placeholder="BW" onchange="calcAvg()"></div>
                                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="uni_M{{i}}" placeholder="Unif" onchange="calcAvg()"></div>
                                         <div class="col-2"><button type="button" class="btn btn-sm text-danger" onclick="removePartition('M', {{i}})">&times;</button></div>
@@ -123,7 +123,7 @@
                                     {% for i in range(1, 9) %}
                                     {% set show_style = 'display:flex;' if i <= 4 else 'display:none;' %}
                                     <div class="row mb-2 partition-row-F" id="row_F{{i}}" style="{{ show_style }}">
-                                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light-subtle text-body">F{{i}}</span></div>
+                                        <div class="col-1 d-flex align-items-center"><span class="badge bg-light-subtle">F{{i}}</span></div>
                                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="bw_F{{i}}" placeholder="BW" onchange="calcAvg()"></div>
                                         <div class="col-12 col-md-4"><input type="number" step="0.01" class="form-control form-control-sm" name="uni_F{{i}}" placeholder="Unif" onchange="calcAvg()"></div>
                                         <div class="col-2"><button type="button" class="btn btn-sm text-danger" onclick="removePartition('F', {{i}})">&times;</button></div>
@@ -307,14 +307,14 @@
                                                 <div class="mt-2">
                                                     {% if log.m_parts %}
                                                         {% for p in log.m_parts %}
-                                                            <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                            <span class="badge bg-light-subtle mb-1 d-inline-block px-2 py-1 me-2 border">
                                                                 {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
                                                         {% endfor %}
                                                     {% else %}
-                                                        <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                        <span class="badge bg-light-subtle mb-1 d-inline-block px-2 py-1 me-2 border">
                                                             Avg: {{ log.avg_m }}g <span class="text-muted">({{ log.avg_m_diff }})</span>
                                                             {{ "%.1f"|format(((log.uni_m or 0) | float)) }}%
                                                         </span>
@@ -328,14 +328,14 @@
                                                 <div class="mt-2">
                                                     {% if log.f_parts %}
                                                         {% for p in log.f_parts %}
-                                                            <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                            <span class="badge bg-light-subtle mb-1 d-inline-block px-2 py-1 me-2 border">
                                                                 {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
                                                         {% endfor %}
                                                     {% else %}
-                                                        <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                        <span class="badge bg-light-subtle mb-1 d-inline-block px-2 py-1 me-2 border">
                                                             Avg: {{ log.avg_f }}g <span class="text-muted">({{ log.avg_f_diff }})</span>
                                                             {{ "%.1f"|format(((log.uni_f or 0) | float)) }}%
                                                         </span>
@@ -357,7 +357,7 @@
                                                 {% set ns = namespace(p_data=None) %}
                                                 {% for p in log.m_parts %}{% if p.name == 'M' ~ i %}{% set ns.p_data = p %}{% endif %}{% endfor %}
                                                 <div class="row mb-2 align-items-center">
-                                                    <div class="col-2"><span class="badge bg-light-subtle text-body">M{{i}}</span></div>
+                                                    <div class="col-2"><span class="badge bg-light-subtle">M{{i}}</span></div>
                                                     <div class="col-5"><input type="number" step="0.01" class="form-control form-control-sm bw-m-{{log.log_id}}" name="bw_M{{i}}" placeholder="BW" value="{{ ns.p_data.bw if ns.p_data else '' }}" oninput="recalcEdit({{log.log_id}})"></div>
                                                     <div class="col-5"><input type="number" step="0.01" class="form-control form-control-sm uni-m-{{log.log_id}}" name="uni_M{{i}}" placeholder="Unif" value="{{ ns.p_data.unif if ns.p_data else '' }}" oninput="recalcEdit({{log.log_id}})"></div>
                                                 </div>
@@ -375,7 +375,7 @@
                                                 {% set ns = namespace(p_data=None) %}
                                                 {% for p in log.f_parts %}{% if p.name == 'F' ~ i %}{% set ns.p_data = p %}{% endif %}{% endfor %}
                                                 <div class="row mb-2 align-items-center">
-                                                    <div class="col-2"><span class="badge bg-light-subtle text-body">F{{i}}</span></div>
+                                                    <div class="col-2"><span class="badge bg-light-subtle">F{{i}}</span></div>
                                                     <div class="col-5"><input type="number" step="0.01" class="form-control form-control-sm bw-f-{{log.log_id}}" name="bw_F{{i}}" placeholder="BW" value="{{ ns.p_data.bw if ns.p_data else '' }}" oninput="recalcEdit({{log.log_id}})"></div>
                                                     <div class="col-5"><input type="number" step="0.01" class="form-control form-control-sm uni-f-{{log.log_id}}" name="uni_F{{i}}" placeholder="Unif" value="{{ ns.p_data.unif if ns.p_data else '' }}" oninput="recalcEdit({{log.log_id}})"></div>
                                                 </div>

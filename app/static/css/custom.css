@@ -155,12 +155,12 @@ body {
     color: #495057 !important;
 }
 
-/* Ensure warning badges have high contrast text (dark gray/black instead of white) */
+/* Ensure warning badges have high contrast text (white) */
 .badge.bg-warning, .bg-warning {
-    color: #212529 !important;
+    color: #ffffff !important;
 }
 .badge-warning {
-    color: #212529 !important;
+    color: #ffffff !important;
     background-color: #ffc107;
 }
 
@@ -204,4 +204,9 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+}
+
+/* Globally ensure all badges have white text for maximum readability */
+.badge:not(.bg-light-subtle) {
+    color: #ffffff !important;
 }

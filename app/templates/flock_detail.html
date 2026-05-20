@@ -289,8 +289,8 @@
             <th>Week</th>
             <th class="bg-danger text-white">Male Mort</th>
             <th class="bg-danger text-white">Female Mort</th>
-            <th class="bg-warning text-white">Male Cull</th>
-            <th class="bg-warning text-white">Female Cull</th>
+            <th class="bg-warning">Male Cull</th>
+            <th class="bg-warning">Female Cull</th>
             <th class="bg-info text-white">Egg Production</th>
             <th>Avg Egg Wt (g)</th>
             <th>Jumbo</th>
@@ -845,7 +845,7 @@
 
                         {% if event.predicted_diseases %}
                             {% for disease in event.predicted_diseases %}
-                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning text-body' }} mb-1">
+                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning' }} mb-1">
                                     {{ disease.name }}
                                 </span>
                             {% endfor %}
