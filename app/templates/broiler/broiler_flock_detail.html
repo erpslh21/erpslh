@@ -386,7 +386,7 @@
       const chartData = {{ chart_data | tojson }};
       const labels = chartData.days;
 
-      let chartFCR, chartCombined;
+      let chartFCR, chartMortality, chartBodyweight;
 
       // FCR Chart
       const ctxFCR = document.getElementById('fcrChart');
@@ -465,129 +465,160 @@
       // Combined Body Weight & Mortality Chart
       const ctxCombined = document.getElementById('combinedChart');
       if (ctxCombined) {
-          chartCombined = new Chart(ctxCombined, {
-              type: 'bar',
-              data: {
-                  labels: labels,
-                  datasets: [
-                      {
-                          label: 'Body weight (g)',
-                          data: chartData.body_weights,
-                          backgroundColor: 'rgba(237, 125, 49, 1)',
-                          yAxisID: 'y1',
-                          order: 2,
-                          datalabels: {
-                              display: true,
-                              color: 'rgba(237, 125, 49, 1)',
-                              align: 'top',
-                              anchor: 'end',
-                              formatter: function(value) {
-                                  return Math.round(value);
-                              }
-                          }
-                      },
-                      {
-                          label: 'Weight Gain (g)',
-                          data: chartData.weight_gains,
-                          backgroundColor: 'rgba(56, 118, 29, 1)',
-                          yAxisID: 'y1',
-                          order: 3,
-                          datalabels: {
-                              display: false
-                          }
-                      },
-                      {
-                          label: 'Mortality %',
-                          data: chartData.mortality_pct,
-                          type: 'line',
-                          borderColor: 'rgba(21, 96, 130, 1)',
-                          backgroundColor: 'rgba(21, 96, 130, 1)',
-                          borderWidth: 2,
-                          fill: false,
-                          tension: 0.1,
-                          yAxisID: 'y2',
-                          order: 1,
-                          datalabels: {
-                              display: true,
-                              color: 'rgba(21, 96, 130, 1)',
-                              align: 'top',
-                              anchor: 'end',
-                              formatter: function(value) {
-                                  return value.toFixed(2) + '%';
-                              }
-                          }
-                      },
-                      {
-                          label: 'Standard Mortality %',
-                          data: labels.map(day => day <= 7 ? 0.5 : 0.05),
-                          type: 'line',
-                          borderColor: 'red',
-                          borderDash: [5, 5],
-                          borderWidth: 2,
-                          fill: false,
-                          tension: 0,
-                          yAxisID: 'y2',
-                          order: 0,
-                          datalabels: {
-                              display: false
-                          }
-                      }
-                  ]
+
+          const ctxMortality = document.getElementById("mortalityChart").getContext("2d");
+          chartMortality = new Chart(ctxMortality, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Standard Mortality %",
+                  data: chartData.mortality_standard,
+                  borderColor: "red",
+                  borderDash: [5, 5],
+                  backgroundColor: "rgba(255,0,0,0.5)",
+                  fill: false,
+                  yAxisID: "yMortality",
+                  datalabels: {
+                    display: true,
+                    align: "top",
+                    anchor: "end",
+                    formatter: (value) => value !== null ? value.toFixed(2) + "%" : "",
+                  },
+                },
+                {
+                  label: "Mortality %",
+                  data: chartData.mortality_pct,
+                  borderColor: "#18496A",
+                  backgroundColor: "rgba(24,73,106,0.5)",
+                  fill: false,
+                  yAxisID: "yMortality",
+                  datalabels: {
+                    display: true,
+                    align: "top",
+                    anchor: "end",
+                    color: "#18496A",
+                    formatter: (value) => value !== null ? value.toFixed(2) + "%" : "",
+                  },
+                },
+                {
+                  type: "bar",
+                  label: "Body weight (g)",
+                  data: chartData.body_weights,
+                  backgroundColor: "#ED8535",
+                  yAxisID: "yBW",
+                  datalabels: {
+                    display: true,
+                    align: "top",
+                    anchor: "end",
+                    color: "#ED8535",
+                    formatter: (value) => value !== null ? value.toFixed(0) : "",
+                  },
+                },
+                {
+                  type: "bar",
+                  label: "Weight Gain (g)",
+                  data: chartData.weight_gains,
+                  backgroundColor: "#3A7338",
+                  yAxisID: "yBW",
+                  datalabels: {
+                    display: false,
+                  },
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: { mode: "index", intersect: false },
+              plugins: { tooltip: { shared: true }, datalabels: { font: { size: 10 } } },
+              scales: {
+                yMortality: {
+                  type: "linear",
+                  display: true,
+                  position: "left",
+                  title: { display: true, text: "Mortality (%)" },
+                  ticks: {
+                    callback: function (value) { return value + "%"; }
+                  },
+                  min: 0,
+                  max: Math.max(...chartData.mortality_pct, ...chartData.mortality_standard) * 1.1 || 0.5,
+                },
+                yBW: {
+                  type: "linear",
+                  display: true,
+                  position: "right",
+                  title: { display: true, text: "Weight (g)" },
+                  grid: { drawOnChartArea: false },
+                  min: 0,
+                },
               },
-              options: {
-                  responsive: true,
-                  plugins: {
-                      tooltip: {
-                          enabled: false
-                      },
-                      datalabels: {
-                          font: {
-                              size: 10
-                          }
-                      }
-                  },
-                  interaction: {
-                      mode: 'index',
-                      intersect: false,
-                  },
-                  scales: {
-                      x: {
-                          title: {
-                              display: true,
-                              text: 'Day of Life'
-                          }
-                      },
-                      y1: {
-                          type: 'linear',
-                          display: true,
-                          position: 'right',
-                          title: {
-                              display: true,
-                              text: 'Weight (g)'
-                          },
-                          beginAtZero: true,
-                          grid: {
-                              drawOnChartArea: false, // only want the grid lines for one axis to show up
-                          }
-                      },
-                      y2: {
-                          type: 'linear',
-                          display: true,
-                          position: 'left',
-                          title: {
-                              display: true,
-                              text: 'Mortality (%)'
-                          },
-                          beginAtZero: true,
-                          ticks: {
-                              callback: function(value) {
-                                  return value + '%';
-                              }
-                          }
-                      }
-                  }
-              }
+            },
           });
+
+          const ctxBodyweight = document.getElementById("bodyweightChart").getContext("2d");
+          chartBodyweight = new Chart(ctxBodyweight, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Standard BW",
+                  data: chartData.bodyweight_standard,
+                  borderColor: "orange",
+                  fill: false,
+                  datalabels: { display: false },
+                },
+                {
+                  label: "Actual BW",
+                  data: chartData.body_weights,
+                  borderColor: "blue",
+                  fill: false,
+                  datalabels: {
+                    display: true,
+                    align: "top",
+                    anchor: "end",
+                    formatter: (value) => value !== null ? value.toFixed(1) : "",
+                  },
+                },
+                {
+                  type: "bar",
+                  label: "Standard Gain",
+                  data: chartData.weight_gain_standard,
+                  backgroundColor: "rgba(255, 159, 64, 0.3)",
+                  datalabels: {
+                    display: true,
+                    align: "top",
+                    anchor: "end",
+                    formatter: (value) => value !== null ? value.toFixed(1) : "",
+                  },
+                },
+                {
+                  type: "bar",
+                  label: "Actual Gain",
+                  data: chartData.weight_gains,
+                  backgroundColor: "rgba(75, 192, 192, 0.6)",
+                  datalabels: {
+                    display: true,
+                    align: "top",
+                    anchor: "end",
+                    formatter: (value) => value !== null ? value.toFixed(1) : "",
+                  },
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              interaction: { mode: "index", intersect: false },
+              plugins: { tooltip: { shared: true }, datalabels: { font: { size: 10 } } },
+              scales: {
+                y: { min: 0 },
+              },
+            },
+          });
+
       }
 
       // Fix blank chart issue by resizing when tab is shown
@@ -595,7 +626,8 @@
       if (chartTabButton) {
           chartTabButton.addEventListener('shown.bs.tab', function (e) {
               if (chartFCR) chartFCR.resize();
-              if (chartCombined) chartCombined.resize();
+              if (chartMortality) chartMortality.resize();
+              if (chartBodyweight) chartBodyweight.resize();
           });
       }
 
@@ -627,13 +659,21 @@
           }
 
           // Filter Combined Chart
-          if (chartCombined) {
-              chartCombined.data.labels = filteredLabels;
-              chartCombined.data.datasets[0].data = chartData.body_weights.slice(startIndex, endIndex);
-              chartCombined.data.datasets[1].data = chartData.weight_gains.slice(startIndex, endIndex);
-              chartCombined.data.datasets[2].data = chartData.mortality_pct.slice(startIndex, endIndex);
-              chartCombined.data.datasets[3].data = filteredLabels.map(day => day <= 7 ? 0.5 : 0.05);
-              chartCombined.update();
+          if (chartMortality) {
+              chartMortality.data.labels = filteredLabels;
+              chartMortality.data.datasets[0].data = chartData.mortality_standard.slice(startIndex, endIndex);
+              chartMortality.data.datasets[1].data = chartData.mortality_pct.slice(startIndex, endIndex);
+              chartMortality.data.datasets[2].data = chartData.body_weights.slice(startIndex, endIndex);
+              chartMortality.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
+              chartMortality.update();
+          }
+          if (chartBodyweight) {
+              chartBodyweight.data.labels = filteredLabels;
+              chartBodyweight.data.datasets[0].data = chartData.bodyweight_standard.slice(startIndex, endIndex);
+              chartBodyweight.data.datasets[1].data = chartData.body_weights.slice(startIndex, endIndex);
+              chartBodyweight.data.datasets[2].data = chartData.weight_gain_standard.slice(startIndex, endIndex);
+              chartBodyweight.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
+              chartBodyweight.update();
           }
       };
 
@@ -648,13 +688,21 @@
               chartFCR.update();
           }
 
-          if (chartCombined) {
-              chartCombined.data.labels = labels;
-              chartCombined.data.datasets[0].data = chartData.body_weights;
-              chartCombined.data.datasets[1].data = chartData.weight_gains;
-              chartCombined.data.datasets[2].data = chartData.mortality_pct;
-              chartCombined.data.datasets[3].data = labels.map(day => day <= 7 ? 0.5 : 0.05);
-              chartCombined.update();
+          if (chartMortality) {
+              chartMortality.data.labels = filteredLabels;
+              chartMortality.data.datasets[0].data = chartData.mortality_standard.slice(startIndex, endIndex);
+              chartMortality.data.datasets[1].data = chartData.mortality_pct.slice(startIndex, endIndex);
+              chartMortality.data.datasets[2].data = chartData.body_weights.slice(startIndex, endIndex);
+              chartMortality.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
+              chartMortality.update();
+          }
+          if (chartBodyweight) {
+              chartBodyweight.data.labels = filteredLabels;
+              chartBodyweight.data.datasets[0].data = chartData.bodyweight_standard.slice(startIndex, endIndex);
+              chartBodyweight.data.datasets[1].data = chartData.body_weights.slice(startIndex, endIndex);
+              chartBodyweight.data.datasets[2].data = chartData.weight_gain_standard.slice(startIndex, endIndex);
+              chartBodyweight.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
+              chartBodyweight.update();
           }
       };
   });
