@@ -3,7 +3,7 @@ import os
 import json
 import requests
 from functools import wraps
-from flask import request, session, flash, redirect, url_for, current_app as app
+from flask import request, session, flash, redirect, url_for, abort, current_app as app
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 from pywebpush import webpush, WebPushException
@@ -25,27 +25,31 @@ def role_required(*allowed_roles):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            from flask import abort
             if not current_user.is_authenticated:
                 if request.path == url_for('login'):
                     return f(*args, **kwargs)
                 flash("Please log in to continue.", "info")
                 return redirect(url_for('login'))
 
-            user_role = current_user.role
-            user_dept = current_user.dept
+            user_role = str(current_user.role).strip().lower()
+            user_dept = str(current_user.dept).strip().lower()
 
             # Admin rule: Admin always has access to all routes
-            if user_role == 'Admin' or user_dept == 'Admin':
+            if user_role == 'admin' or user_dept == 'admin':
                 return f(*args, **kwargs)
 
             # Check if user role is in the allowed roles
-            if user_role in allowed_roles:
+            normalized_allowed = [str(r).strip().lower() for r in allowed_roles]
+            if user_role in normalized_allowed:
                 return f(*args, **kwargs)
 
             # Access denied
             allowed_str = ', '.join(allowed_roles)
             flash(f"Access Denied: You must be one of {allowed_str} to view this page.", "danger")
-            return redirect(get_dashboard_url(current_user))
+
+            # Avoid redirect loops by returning 403
+            abort(403)
 
         return decorated_function
     return decorator
@@ -64,28 +68,28 @@ def dept_required(required_dept):
                     flash("Please log in to continue.", "info")
                 return redirect(url_for('login'))
 
-            user_dept = current_user.dept
+            user_dept = str(current_user.dept).strip().lower()
 
             # Super Admin can access everything
-            if user_dept == 'Admin':
+            if user_dept == 'admin':
                 return f(*args, **kwargs)
 
             # Check if required_dept is a list/tuple
             if isinstance(required_dept, (list, tuple)):
-                if user_dept in required_dept:
+                normalized_required = [str(rd).strip().lower() for rd in required_dept]
+                if user_dept in normalized_required:
                     return f(*args, **kwargs)
             else:
                 # If user matches required dept
-                if user_dept == required_dept:
+                if user_dept == str(required_dept).strip().lower():
                     return f(*args, **kwargs)
-
 
             # If user is logged in but wrong department
             dept_str = ', '.join(required_dept) if isinstance(required_dept, (list, tuple)) else required_dept
             flash(f"Access Denied: You do not have permission to view the {dept_str} Department", "danger")
 
-            # Redirect to their own dashboard
-            return redirect(get_dashboard_url(current_user))
+            # Avoid redirect loops by returning 403 instead of a dashboard redirect
+            abort(403)
 
         return decorated_function
     return decorator
