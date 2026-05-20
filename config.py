@@ -10,6 +10,15 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev_key')
     WTF_CSRF_TIME_LIMIT = None
 
+    # Environment differentiation
+    ENV = os.getenv('FLASK_ENV', 'production')
+    if ENV == 'development':
+        APP_NAME = "SLH-OP (DEV)"
+        PRIMARY_COLOR = "#d63939"
+    else:
+        APP_NAME = "SLH-OP"
+        PRIMARY_COLOR = "#005eb8"
+
     database_url = os.getenv('DATABASE_URL')
     if database_url and database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
