@@ -1,386 +1,718 @@
 {% extends "base_tabler.html" %}
 
 {% block content %}
-<h2>Inventory Management</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Hatchery Inventory</h2>
+    <div>
+        <button type="button" class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#addItemModal">
+            Add New Item (Masterlist)
+        </button>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#recordMovementModal">
+            Record Movement
+        </button>
+    </div>
+</div>
 
-<div class="row">
-    <div class="col-md-12">
-        <ul class="nav nav-tabs mb-3" id="inventoryTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="list-tab" data-bs-toggle="tab" data-bs-target="#list" type="button" role="tab">Current Stock</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions" type="button" role="tab">Transaction History</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab">Monthly Summary</button>
-            </li>
-        </ul>
+<!-- Tabs -->
+<ul class="nav nav-tabs" id="inventoryTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="movements-tab" data-bs-toggle="tab" data-bs-target="#movements" type="button" role="tab" aria-controls="movements" aria-selected="true">Movement Logs</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary" type="button" role="tab" aria-controls="summary" aria-selected="false">Usage Summary</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="balance-tab" data-bs-toggle="tab" data-bs-target="#balance" type="button" role="tab" aria-controls="balance" aria-selected="false">Current Balance</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="masterlist-tab" data-bs-toggle="tab" data-bs-target="#masterlist" type="button" role="tab" aria-controls="masterlist" aria-selected="false">Master List</button>
+    </li>
+</ul>
 
-        <div class="tab-content" id="inventoryTabContent">
-            <!-- Current Stock Tab -->
-            <div class="tab-pane fade show active" id="list" role="tabpanel">
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Inventory Items</h5>
-                        {% if is_admin %}
-                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addItemModal">+ Add New Item</button>
-                        {% endif %}
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover align-middle">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Type</th>
-                                        <th>Batch / Exp</th>
-                                        <th>Unit</th>
-                                        <th>Stock</th>
-                                        <th>Min Level</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in items %}
-                                    <tr class="{{ 'table-warning' if item.current_stock < item.min_stock_level else '' }}">
-                                        <td>{{ item.name }}</td>
-                                        <td>{{ item.type }}</td>
-                                        <td>
-                                            {% if item.batch_number %}<small class="d-block text-muted">Batch: {{ item.batch_number }}</small>{% endif %}
-                                            {% if item.expiry_date %}<small class="d-block text-muted">Exp: {{ item.expiry_date | date_fmt }}</small>{% endif %}
-                                        </td>
-                                        <td>{{ item.unit }}</td>
-                                        <td class="fw-bold">{{ item.current_stock }}</td>
-                                        <td>{{ item.min_stock_level }}</td>
-                                        <td>
-                                            {% if item.current_stock < item.min_stock_level %}
-                                                <span class="badge bg-danger text-white">Low Stock</span>
-                                            {% else %}
-                                                <span class="badge bg-success text-white">OK</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if is_admin %}
-                                            <button class="btn btn-sm btn-outline-primary"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#editItemModal{{ item.id }}">Edit</button>
-                                            <button class="btn btn-sm btn-outline-success"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#adjustStockModal{{ item.id }}">Adjust</button>
-                                            {% else %}
-                                            <span class="text-muted small">Read Only</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
+<div class="tab-content pt-4" id="inventoryTabsContent">
 
-                                    <!-- Edit Modal -->
-                                    <div class="modal fade" id="editItemModal{{ item.id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog">                                            <form action="{{ url_for('edit_inventory_item', id=item.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Edit Item: {{ item.name }}</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Name</label>
-                                                            <input type="text" name="name" class="form-control" value="{{ item.name }}" required>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Type</label>
-                                                            <select name="type" class="form-select">
-                                                                <option value="Vaccine" {% if item.type == 'Vaccine' %}selected{% endif %}>Vaccine</option>
-                                                                <option value="Medication" {% if item.type == 'Medication' %}selected{% endif %}>Medication</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Unit</label>
-                                                            <select name="unit" class="form-select">
-                                                                <option value="Bottle" {% if item.unit == 'Bottle' %}selected{% endif %}>Bottle</option>
-                                                                <option value="Kg" {% if item.unit == 'Kg' %}selected{% endif %}>Kg</option>
-                                                                <option value="Packet" {% if item.unit == 'Packet' %}selected{% endif %}>Packet</option>
-                                                                <option value="Liter" {% if item.unit == 'Liter' %}selected{% endif %}>Liter</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Min Stock Level (Warning Threshold)</label>
-                                                            <input type="number" step="0.01" name="min_stock_level" class="form-control" value="{{ item.min_stock_level }}">
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Doses Per Unit (Vaccines)</label>
-                                                            <input type="number" name="doses_per_unit" class="form-control" value="{{ item.doses_per_unit or '' }}">
-                                                        </div>
-                                                        <div class="row">
-                                                            <div class="col-md-6 mb-3">
-                                                                <label class="form-label">Batch Number</label>
-                                                                <input type="text" name="batch_number" class="form-control" value="{{ item.batch_number or '' }}">
-                                                            </div>
-                                                            <div class="col-md-6 mb-3">
-                                                                <label class="form-label">Expiry Date</label>
-                                                                <input type="date" name="expiry_date" class="form-control" value="{{ item.expiry_date or '' }}">
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="submit" name="delete" value="1" class="btn btn-danger me-auto" onclick="return confirm('Are you sure you want to delete this item? History will be lost.')">Delete</button>
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                        <button type="submit" class="btn btn-primary">Save Changes</button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-
-                                    <!-- Adjust Stock Modal -->
-                                    <div class="modal fade" id="adjustStockModal{{ item.id }}" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog">                                            <form action="{{ url_for('inventory_transaction') }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                <input type="hidden" name="inventory_item_id" value="{{ item.id }}">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Adjust Stock: {{ item.name }}</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Transaction Type</label>
-                                                            <select name="transaction_type" class="form-select" required>
-                                                                <option value="Purchase">Purchase (Add Stock)</option>
-                                                                <option value="Usage">Usage (Remove Stock)</option>
-                                                                <option value="Adjustment">Adjustment (Correction)</option>
-                                                                <option value="Waste">Waste (Remove Stock)</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Quantity</label>
-                                                            <input type="number" step="0.01" name="quantity" class="form-control" required>
-                                                            <small class="text-muted">Enter positive number. 'Usage' and 'Waste' will subtract automatically.</small>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Date</label>
-                                                            <input type="date" name="transaction_date" class="form-control" value="{{ today }}" required>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Notes</label>
-                                                            <input type="text" name="notes" class="form-control">
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                        <button type="submit" class="btn btn-primary">Submit Transaction</button>
-                                                    </div>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Transaction History Tab -->
-            <div class="tab-pane fade" id="transactions" role="tabpanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Recent Transactions</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Item</th>
-                                        <th>Type</th>
-                                        <th>Quantity</th>
-                                        <th>Notes</th>
-                                        {% if is_admin %}<th>Actions</th>{% endif %}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for t in transactions %}
-                                    <tr>
-                                        <td>{{ t.transaction_date | date_fmt }}</td>
-                                        <td>{{ t.item.name }}</td>
-                                        <td>
-                                            <span class="badge
-                                                {% if t.transaction_type == 'Purchase' %}bg-success
-                                                {% elif t.transaction_type == 'Waste' %}bg-danger
-                                                {% elif t.transaction_type == 'Usage' %}bg-warning
-                                               {% else %}bg-secondary{% endif %}">
-                                                {{ t.transaction_type }}
-                                            </span>
-                                        </td>
-                                        <td>{{ t.quantity }}</td>
-                                        <td>{{ t.notes or '' }}</td>
-                                        {% if is_admin %}
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="modal" data-bs-target="#editTransModal{{ t.id }}">Edit</button>
-                                            <form action="{{ url_for('delete_inventory_transaction', id=t.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete transaction? Stock will be reverted.');">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                                <button class="btn btn-sm btn-outline-danger py-0">Del</button>
-                                            </form>
-                                        </td>
-                                        {% endif %}
-                                    </tr>
+    <!-- Movements Tab -->
+    <div class="tab-pane fade show active" id="movements" role="tabpanel" aria-labelledby="movements-tab">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive table-responsive-sticky">
+                    <table class="table table-striped table-hover">
+                        <thead class="sticky-table-header">
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th>Type</th>
+                                <th>Classification</th>
+                                <th>Batch/Expiry</th>
+                                <th>Quantity</th>
+                                <th>Remarks</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in transactions %}
+                            <tr>
+                                <td>{{ tx.transaction_date | date_fmt }}</td>
+                                <td>{{ tx.item.name }}</td>
+                                <td>
+                                    {% if tx.transaction_type == 'In' %}
+                                        <span class="badge bg-success text-white">In</span>
                                     {% else %}
-                                    <tr><td colspan="{{ '6' if is_admin else '5' }}" class="text-center text-muted">No transactions found.</td></tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                        <span class="badge bg-danger text-white">Out</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ tx.classification or '' }}</td>
+                                <td>
+                                    {% if tx.batch_number %}{{ tx.batch_number }}{% endif %}
+                                    {% if tx.expiry_date %}<br><small class="text-muted">{{ tx.expiry_date | date_fmt }}</small>{% endif %}
+                                </td>
+                                <td>{{ tx.quantity }} {{ tx.item.unit_of_measurement or tx.item.unit }}</td>
+                                <td>{{ tx.notes or '' }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTxModal{{ tx.id }}">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteTxModal{{ tx.id }}">Delete</button>
+                                </td>
+                            </tr>
 
-            <!-- Monthly Summary Tab -->
-            <div class="tab-pane fade" id="summary" role="tabpanel">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Monthly Usage Summary ({{ current_month }})</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Total Purchased</th>
-                                        <th>Total Used</th>
-                                        <th>Total Wasted</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for s in summary %}
-                                    <tr>
-                                        <td>{{ s.name }}</td>
-                                        <td class="text-success">+{{ s.purchase }}</td>
-                                        <td class="text-warning">-{{ s.usage }}</td>
-                                        <td class="text-danger">-{{ s.waste }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                            <!-- Edit Tx Modal -->
+                            <div class="modal modal-blur fade" id="editTxModal{{ tx.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                              <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">Edit Movement</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  </div>
+                                  <form action="{{ url_for('edit_inventory_transaction', id=tx.id) }}" method="POST">
+                                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                  <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label required">Date</label>
+                                            <input type="date" class="form-control" name="transaction_date" value="{{ tx.transaction_date }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label required">Classification</label>
+                                            <select class="form-select" name="classification" required>
+                                                {% if tx.transaction_type == 'In' %}
+                                                    <option value="Purchase" {% if tx.classification == 'Purchase' %}selected{% endif %}>Purchase</option>
+                                                    <option value="Transfer" {% if tx.classification == 'Transfer' %}selected{% endif %}>Transfer</option>
+                                                    <option value="Stock Count" {% if tx.classification == 'Stock Count' %}selected{% endif %}>Stock Count</option>
+                                                {% else %}
+                                                    <option value="Usage" {% if tx.classification == 'Usage' %}selected{% endif %}>Usage</option>
+                                                    <option value="Transfer" {% if tx.classification == 'Transfer' %}selected{% endif %}>Transfer</option>
+                                                    <option value="Dispose" {% if tx.classification == 'Dispose' %}selected{% endif %}>Dispose</option>
+                                                    <option value="Stock Count" {% if tx.classification == 'Stock Count' %}selected{% endif %}>Stock Count</option>
+                                                {% endif %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Batch Number</label>
+                                            <input type="text" class="form-control" name="batch_number" value="{{ tx.batch_number or '' }}">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Expiry Date</label>
+                                            <input type="date" class="form-control" name="expiry_date" value="{{ tx.expiry_date or '' }}">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label required">Quantity</label>
+                                            <input type="number" step="any" class="form-control" name="quantity" value="{{ tx.quantity }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Remarks</label>
+                                            <input type="text" class="form-control" name="remarks" value="{{ tx.notes or '' }}">
+                                        </div>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                  </div>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Delete Tx Modal -->
+                            <div class="modal modal-blur fade" id="deleteTxModal{{ tx.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                              <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  <div class="modal-status bg-danger"></div>
+                                  <div class="modal-body text-center py-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-danger icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v2m0 4v.01" /><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" /></svg>
+                                    <h3>Are you sure?</h3>
+                                    <div class="text-muted">Do you really want to delete this movement log? This action cannot be undone.</div>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <div class="w-100">
+                                      <div class="row">
+                                        <div class="col"><button class="btn w-100" data-bs-dismiss="modal">Cancel</button></div>
+                                        <div class="col">
+                                          <form action="{{ url_for('delete_inventory_transaction', id=tx.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-danger w-100">Delete</button>
+                                          </form>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center">No movement logs found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="tab-pane fade" id="balance" role="tabpanel" aria-labelledby="balance-tab">
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive table-responsive-sticky">
+                        <table class="table table-striped table-hover">
+                            <thead class="sticky-table-header">
+                                <tr>
+                                    <th>Item Name</th>
+                                    <th>Category</th>
+                                    <th>Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>{{ item.name }}</td>
+                                    <td>{{ item.category or '' }}</td>
+                                    <td>
+                                        <span class="item-balance-display" data-item-id="{{ item.id }}">Loading...</span>
+                                        {% if item.unit_of_measurement or item.unit %}
+                                            {{ item.unit_of_measurement or item.unit }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="transactions" role="tabpanel">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Item</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Notes</th>
+                                    {% if is_admin %}<th>Actions</th>{% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for t in transactions %}
+                                <tr>
+                                    <td>{{ t.transaction_date | date_fmt }}</td>
+                                    <td>{{ t.item.name }}</td>
+                                    <td>
+                                        <span class="badge
+                                            {% if t.transaction_type == 'Purchase' %}bg-success
+                                            {% elif t.transaction_type == 'Waste' %}bg-danger
+                                            {% elif t.transaction_type == 'Usage' %}bg-warning
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ t.transaction_type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ t.quantity }}</td>
+                                    <td>{{ t.notes or '' }}</td>
+                                    {% if is_admin %}
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary py-0" data-bs-toggle="modal" data-bs-target="#editTransModal{{ t.id }}">Edit</button>
+                                        <form action="{{ url_for('delete_inventory_transaction', id=t.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete transaction? Stock will be reverted.');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button class="btn btn-sm btn-outline-danger py-0">Del</button>
+                                        </form>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+                                    {% else %}
+                                        units
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center">No inventory items found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Tab -->
+    <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
+        <div class="card mb-4">
+            <div class="card-header bg-light-subtle">
+                <form class="row gx-2 align-items-center" method="GET" action="{{ url_for('hatchery_inventory') }}#summary">
+                    <div class="col-auto">
+                        <select name="month" class="form-select form-select-sm">
+                            {% for m_num, m_name in months %}
+                                <option value="{{ m_num }}" {% if m_num == filter_month %}selected{% endif %}>{{ m_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <select name="year" class="form-select form-select-sm">
+                            {% for y in years %}
+                                <option value="{{ y }}" {% if y == filter_year %}selected{% endif %}>{{ y }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">Summary for {{ current_month }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Total In</th>
+                                <th>Total Out</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in summary %}
+                            <tr>
+                                <td>{{ s.item.name }}</td>
+                                <td>{{ s.purchase }} {{ s.item.unit_of_measurement or s.item.unit }}</td>
+                                <td>{{ s.usage + s.waste }} {{ s.item.unit_of_measurement or s.item.unit }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center">No transactions in this period.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Master List Tab -->
+    <div class="tab-pane fade" id="masterlist" role="tabpanel" aria-labelledby="masterlist-tab">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive table-responsive-sticky">
+                    <table class="table table-striped table-hover">
+                        <thead class="sticky-table-header">
+                            <tr>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Unit of Measurement</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.category or '' }}</td>
+                                <td>{{ item.unit_of_measurement or item.unit or '' }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editItemModal{{ item.id }}">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteItemModal{{ item.id }}">Delete</button>
+                                </td>
+                            </tr>
+
+                            <!-- Edit Modal -->
+                            <div class="modal modal-blur fade" id="editItemModal{{ item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                              <div class="modal-dialog modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">Edit {{ item.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  </div>
+                                  <form action="{{ url_for('hatchery_inventory_item_edit', item_id=item.id) }}" method="POST">
+                                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                  <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label required">Item Name</label>
+                                            <input type="text" class="form-control" name="name" value="{{ item.name }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Category</label>
+                                            <input type="text" list="categoriesList" class="form-control" name="category" value="{{ item.category or '' }}">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Unit of Measurement</label>
+                                            <input type="text" class="form-control" name="unit" value="{{ item.unit_of_measurement or item.unit or '' }}">
+                                        </div>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn me-auto" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                                  </div>
+                                  </form>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Delete Modal -->
+                            <div class="modal modal-blur fade" id="deleteItemModal{{ item.id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                              <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                  <div class="modal-status bg-danger"></div>
+                                  <div class="modal-body text-center py-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-danger icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 9v2m0 4v.01" /><path d="M5 19h14a2 2 0 0 0 1.84 -2.75l-7.1 -12.25a2 2 0 0 0 -3.5 0l-7.1 12.25a2 2 0 0 0 1.75 2.75" /></svg>
+
+                                    {% if item.transactions|length > 0 %}
+                                        <h3>Cannot Delete</h3>
+                                        <div class="text-muted">You cannot delete <strong>{{ item.name }}</strong> because it has existing movement logs. Please reverse or delete the transactions first.</div>
+                                    {% else %}
+                                        <h3>Are you sure?</h3>
+                                        <div class="text-muted">Do you really want to delete <strong>{{ item.name }}</strong>? This action cannot be undone.</div>
+                                    {% endif %}
+                                  </div>
+                                  <div class="modal-footer">
+                                    <div class="w-100">
+                                      <div class="row">
+                                        <div class="col"><button class="btn w-100" data-bs-dismiss="modal">{% if item.transactions|length > 0 %}Close{% else %}Cancel{% endif %}</button></div>
+                                        {% if item.transactions|length == 0 %}
+                                        <div class="col">
+                                          <form action="{{ url_for('hatchery_inventory_item_delete', item_id=item.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="btn btn-danger w-100">Delete</button>
+                                          </form>
+                                        </div>
+                                        {% endif %}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center">No inventory items found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<datalist id="categoriesList">
+    {% set categories = [] %}
+    {% for i in items %}
+        {% if i.category and i.category not in categories %}
+            <option value="{{ i.category }}">
+            {% set _ = categories.append(i.category) %}
+        {% endif %}
+    {% endfor %}
+</datalist>
+
 
 <!-- Add Item Modal -->
-<div class="modal fade" id="addItemModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">        <form action="{{ url_for('add_inventory_item') }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Add New Inventory Item</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" name="name" class="form-control" required placeholder="e.g. Vaxxitek">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Type</label>
-                        <select name="type" class="form-select">
-                            <option value="Vaccine">Vaccine</option>
-                            <option value="Medication">Medication</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Unit</label>
-                        <select name="unit" class="form-select">
-                            <option value="Bottle">Bottle</option>
-                            <option value="Kg">Kg</option>
-                            <option value="Packet">Packet</option>
-                            <option value="Liter">Liter</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Initial Stock</label>
-                        <input type="number" step="0.01" name="current_stock" class="form-control" value="0">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Min Stock Level</label>
-                        <input type="number" step="0.01" name="min_stock_level" class="form-control" value="0">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Doses Per Unit (If Vaccine)</label>
-                        <input type="number" name="doses_per_unit" class="form-control" placeholder="1000">
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Batch Number</label>
-                            <input type="text" name="batch_number" class="form-control">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Expiry Date</label>
-                            <input type="date" name="expiry_date" class="form-control">
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Add Item</button>
-                </div>
+<div class="modal modal-blur fade" id="addItemModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Item</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('hatchery_inventory_item_add') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label required">Item Name</label>
+                <input type="text" class="form-control" name="name" required>
             </div>
-        </form>
+            <div class="mb-3">
+                <label class="form-label">Category</label>
+                <input type="text" list="categoriesList" class="form-control" name="category">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Unit of Measurement</label>
+                <input type="text" class="form-control" name="unit">
+            </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn me-auto" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Item</button>
+      </div>
+      </form>
     </div>
+  </div>
 </div>
 
-<!-- Edit Transaction Modals -->
-{% if is_admin %}
-{% for t in transactions %}
-<div class="modal fade" id="editTransModal{{ t.id }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">        <form action="{{ url_for('edit_inventory_transaction', id=t.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Transaction #{{ t.id }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-muted">Item: {{ t.item.name }}</p>
-                    <div class="mb-3">
-                        <label class="form-label">Transaction Type</label>
-                        <select name="transaction_type" class="form-select">
-                            <option value="Purchase" {% if t.transaction_type == 'Purchase' %}selected{% endif %}>Purchase (Add Stock)</option>
-                            <option value="Usage" {% if t.transaction_type == 'Usage' %}selected{% endif %}>Usage (Remove Stock)</option>
-                            <option value="Adjustment" {% if t.transaction_type == 'Adjustment' %}selected{% endif %}>Adjustment (Correction)</option>
-                            <option value="Waste" {% if t.transaction_type == 'Waste' %}selected{% endif %}>Waste (Remove Stock)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Quantity (Positive Value)</label>
-                        <input type="number" step="0.01" name="quantity" class="form-control" value="{{ t.quantity }}" required>
-                        <small class="text-muted">Current Stock will be adjusted by difference.</small>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Date</label>
-                        <input type="date" name="transaction_date" class="form-control" value="{{ t.transaction_date }}">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <input type="text" name="notes" class="form-control" value="{{ t.notes or '' }}">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
+<!-- Record Movement Modal -->
+<div class="modal modal-blur fade" id="recordMovementModal" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Record Movement</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form action="{{ url_for('hatchery_inventory_transaction_add') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="modal-body">
+            <div class="mb-3">
+                <label class="form-label required">Item Name</label>
+                <select class="form-select" name="inventory_item_id" id="movementItemSelect" required>
+                    <option value="" disabled selected>Select an item...</option>
+                    {% for item in items %}
+                        <option value="{{ item.id }}" data-unit="{{ item.unit_of_measurement or item.unit or '' }}">{{ item.name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-hint text-primary fw-bold" id="balanceDisplay"></small>
             </div>
-        </form>
+            <div class="mb-3">
+                <label class="form-label required">Date</label>
+                <input type="date" class="form-control" name="transaction_date" value="{{ today.strftime('%Y-%m-%d') }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label required">Movement Type</label>
+                <select class="form-select" name="movement_type" id="movementTypeSelect" required>
+                    <option value="In">In</option>
+                    <option value="Out">Out</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label required">Classification</label>
+                <select class="form-select" name="classification" id="classificationSelect" required>
+                    <!-- Options populated by JS -->
+                </select>
+            </div>
+            <div id="batchInputContainer" class="mb-3">
+                <label class="form-label">Batch Number</label>
+                <input type="text" class="form-control" name="batch_number" id="batchInput">
+            </div>
+            <div id="expiryInputContainer" class="mb-3">
+                <label class="form-label">Expiry Date</label>
+                <input type="date" class="form-control" name="expiry_date" id="expiryInput">
+            </div>
+            <div id="batchSelectContainer" class="mb-3 d-none">
+                <label class="form-label">Select Batch</label>
+                <select class="form-select" id="batchSelect" onchange="syncBatchSelect()">
+                    <option value="">Select a batch...</option>
+                </select>
+                <!-- This helps keep form submission unified without needing backend changes -->
+            </div>
+            <div class="mb-3">
+                <label class="form-label required">Quantity</label>
+                <input type="number" step="any" class="form-control" name="quantity" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Remarks</label>
+                <input type="text" class="form-control" name="remarks">
+            </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn me-auto" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Movement</button>
+      </div>
+      </form>
     </div>
+  </div>
 </div>
-{% endfor %}
-{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Hash navigation for tabs
+    let url = location.href.replace(/\/$/, "");
+    if (location.hash) {
+      const hash = url.split("#");
+      const tabButton = document.querySelector('#inventoryTabs button[data-bs-target="#' + hash[1] + '"]');
+      if (tabButton) {
+          let tab = new bootstrap.Tab(tabButton);
+          tab.show();
+      }
+    }
+
+    // Fetch all item balances for the Balance Tab
+    const balanceDisplays = document.querySelectorAll('.item-balance-display');
+    balanceDisplays.forEach(function(el) {
+        const itemId = el.getAttribute('data-item-id');
+        if (itemId) {
+            fetch(`/api/inventory/${itemId}/balance`)
+                .then(response => {
+                    if (response.ok) return response.json();
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    el.textContent = data.balance;
+                })
+                .catch(error => {
+                    console.error('Error fetching balance:', error);
+                    el.textContent = 'Error';
+                });
+        }
+    });
+
+    // Form logic for Movement Modal
+    const movementTypeSelect = document.getElementById('movementTypeSelect');
+    const classificationSelect = document.getElementById('classificationSelect');
+    const balanceDisplay = document.getElementById('balanceDisplay');
+
+    const updateOverallBalance = () => {
+        const itemId = movementItemSelect.value;
+        if (itemId) {
+            fetch(`/api/inventory/${itemId}/balance`)
+                .then(res => res.json())
+                .then(data => {
+                    const opt = movementItemSelect.options[movementItemSelect.selectedIndex];
+                    const unit = opt.getAttribute('data-unit') || '';
+                    balanceDisplay.textContent = `Current Balance: ${data.balance} ${unit}`;
+                })
+                .catch(() => balanceDisplay.textContent = '');
+        } else {
+            balanceDisplay.textContent = '';
+        }
+    };
+    movementItemSelect.addEventListener('change', updateOverallBalance);
+
+    const updateClassificationOptions = () => {
+        classificationSelect.innerHTML = '';
+        const type = movementTypeSelect.value;
+        let options = [];
+        if (type === 'In') {
+            options = ['Purchase', 'Transfer', 'Stock Count'];
+            classificationSelect.innerHTML = '<option value="Purchase" selected>Purchase</option><option value="Transfer">Transfer</option><option value="Stock Count">Stock Count</option>';
+        } else if (type === 'Out') {
+            options = ['Usage', 'Transfer', 'Dispose', 'Stock Count'];
+            classificationSelect.innerHTML = '<option value="Usage" selected>Usage</option><option value="Transfer">Transfer</option><option value="Dispose">Dispose</option><option value="Stock Count">Stock Count</option>';
+        }
+    };
+
+    movementTypeSelect.addEventListener('change', updateClassificationOptions);
+    updateClassificationOptions(); // Initial call
+
+    const batchInputContainer = document.getElementById('batchInputContainer');
+    const expiryInputContainer = document.getElementById('expiryInputContainer');
+    const batchSelectContainer = document.getElementById('batchSelectContainer');
+
+    const batchInput = document.getElementById('batchInput');
+    const expiryInput = document.getElementById('expiryInput');
+    const batchSelect = document.getElementById('batchSelect');
+    const hiddenBatchInput = document.getElementById('hiddenBatchInput');
+    const hiddenExpiryInput = document.getElementById('hiddenExpiryInput');
+
+    window.syncBatchSelect = function() {
+        const sel = batchSelect.options[batchSelect.selectedIndex];
+        if (sel && sel.value) {
+            batchInput.value = sel.value;
+            expiryInput.value = sel.getAttribute('data-expiry') || '';
+        } else {
+            batchInput.value = '';
+            expiryInput.value = '';
+        }
+    };
+
+    const updateBatchesUI = () => {
+        const itemId = movementItemSelect.value;
+        const type = movementTypeSelect.value;
+
+        batchInput.value = '';
+        expiryInput.value = '';
+        batchSelect.innerHTML = '<option value="">Select a batch...</option>';
+
+        if (type === 'Out') {
+            batchInputContainer.classList.add('d-none');
+            expiryInputContainer.classList.add('d-none');
+            batchSelectContainer.classList.remove('d-none');
+
+            if (itemId) {
+                fetch(`/api/inventory/${itemId}/batches`)
+                    .then(res => res.ok ? res.json() : Promise.reject())
+                    .then(data => {
+                        const optElement = movementItemSelect.options[movementItemSelect.selectedIndex];
+                        const unit = optElement.getAttribute('data-unit') || '';
+
+                        data.batches.forEach(b => {
+                            if (b.balance > 0) {
+                                let opt = document.createElement('option');
+                                opt.value = b.batch_number;
+                                let expText = b.expiry_date ? `${b.expiry_date}` : 'No expiry';
+                                opt.innerText = `${b.batch_number} (${expText}) - Balance: ${b.balance} ${unit}`;
+                                opt.setAttribute('data-expiry', b.expiry_date || '');
+                                batchSelect.appendChild(opt);
+                            }
+                        });
+                    })
+                    .catch(err => console.error('Error fetching batches', err));
+            }
+        } else {
+            batchInputContainer.classList.remove('d-none');
+            expiryInputContainer.classList.remove('d-none');
+            batchSelectContainer.classList.add('d-none');
+        }
+
+        updateOverallBalance(); // also refresh the balance when movement type or item changes
+    };
+
+    movementTypeSelect.addEventListener('change', updateBatchesUI);
+    movementItemSelect.addEventListener('change', updateBatchesUI);
+
+    // Form logic for balance fetching on select
+    // movementItemSelect.addEventListener already has updateBatchesUI and updateOverallBalance bounded.
+    // So we don't need another event listener here.
+
+    movementItemSelect.addEventListener('change', function() {
+        const itemId = this.value;
+        if (!itemId) {
+            balanceDisplay.textContent = '';
+            return;
+        }
+
+        balanceDisplay.textContent = 'Fetching balance...';
+
+        fetch(`/api/inventory/${itemId}/balance`)
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error('Network response was not ok.');
+            })
+            .then(data => {
+                balanceDisplay.innerHTML = `<strong>Remaining Stock:</strong> ${data.balance} ${data.unit}`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                balanceDisplay.textContent = 'Failed to load balance.';
+            });
+    });
+});
+</script>
 {% endblock %}
