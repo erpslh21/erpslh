@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Inventory Management</h2>
+    <h2>Hatchery Inventory</h2>
     <div>
         <button type="button" class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#addItemModal">
             Add New Item (Masterlist)
@@ -212,7 +212,7 @@
     <div class="tab-pane fade" id="summary" role="tabpanel" aria-labelledby="summary-tab">
         <div class="card mb-4">
             <div class="card-header bg-light-subtle">
-                <form class="row gx-2 align-items-center" method="GET" action="{{ url_for('inventory') }}#summary">
+                <form class="row gx-2 align-items-center" method="GET" action="{{ url_for('hatchery_inventory') }}#summary">
                     <div class="col-auto">
                         <select name="month" class="form-select form-select-sm">
                             {% for m_num, m_name in months %}
@@ -296,7 +296,7 @@
                                     <h5 class="modal-title">Edit {{ item.name }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                   </div>
-                                  <form action="{{ url_for('edit_inventory_item', id=item.id) }}" method="POST">
+                                  <form action="{{ url_for('hatchery_inventory_item_edit', item_id=item.id) }}" method="POST">
                                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                   <div class="modal-body">
                                         <div class="mb-3">
@@ -344,9 +344,8 @@
                                         <div class="col"><button class="btn w-100" data-bs-dismiss="modal">{% if item.transactions|length > 0 %}Close{% else %}Cancel{% endif %}</button></div>
                                         {% if item.transactions|length == 0 %}
                                         <div class="col">
-                                          <form action="{{ url_for('edit_inventory_item', id=item.id) }}" method="POST">
+                                          <form action="{{ url_for('hatchery_inventory_item_delete', item_id=item.id) }}" method="POST">
                                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                            <input type="hidden" name="delete" value="1"/>
                                             <button type="submit" class="btn btn-danger w-100">Delete</button>
                                           </form>
                                         </div>
@@ -391,7 +390,7 @@
         <h5 class="modal-title">Add New Item</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form action="{{ url_for('add_inventory_item') }}" method="POST">
+      <form action="{{ url_for('hatchery_inventory_item_add') }}" method="POST">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="modal-body">
             <div class="mb-3">
@@ -399,12 +398,8 @@
                 <input type="text" class="form-control" name="name" required>
             </div>
             <div class="mb-3">
-                <label class="form-label required">Type</label>
-                <select name="type" class="form-select" required>
-                    <option value="Vaccine">Vaccine</option>
-                    <option value="Medication">Medication</option>
-                    <option value="Other">Other</option>
-                </select>
+                <label class="form-label">Category</label>
+                <input type="text" list="categoriesList" class="form-control" name="category">
             </div>
             <div class="mb-3">
                 <label class="form-label">Unit of Measurement</label>
@@ -428,7 +423,7 @@
         <h5 class="modal-title">Record Movement</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form action="{{ url_for('inventory_transaction_add') }}" method="POST">
+      <form action="{{ url_for('hatchery_inventory_transaction_add') }}" method="POST">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <div class="modal-body">
             <div class="mb-3">

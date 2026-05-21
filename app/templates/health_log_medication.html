@@ -51,35 +51,17 @@
                             <div class="medication-row border p-3 mb-3 rounded position-relative bg-light-subtle">
                                 <div class="row mb-3">
                                     <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <label class="form-label required">Drug Name / Inventory Item</label>
-                                        <select name="inventory_item_id[]" class="form-select inventory-select" required onchange="
-                                            const row = this.closest('.medication-row');
-                                            const manualInput = row.querySelector('.manual-drug-name');
-                                            const drugNameInput = row.querySelector('.drug-name-input');
-                                            if (this.value === 'other') {
-                                                manualInput.style.display = 'block';
-                                                drugNameInput.value = '';
-                                                drugNameInput.required = true;
-                                            } else {
-                                                manualInput.style.display = 'none';
-                                                drugNameInput.required = false;
-                                                if(this.value) {
-                                                    drugNameInput.value = this.options[this.selectedIndex].text;
-                                                } else {
-                                                    drugNameInput.value = '';
-                                                }
-                                            }
-                                        ">
+                                        <label class="form-label required">Drug Name</label>
+                                        <input type="text" name="drug_name[]" class="form-control drug-name-input" placeholder="Or Type Drug Name" required pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Inventory Item</label>
+                                        <select name="inventory_item_id[]" class="form-select inventory-select" onchange="if(this.value){this.closest('.medication-row').querySelector('.drug-name-input').value=this.options[this.selectedIndex].text.split(' (')[0];}">
                                             <option value="">-- Select Inventory Item --</option>
                                             {% for item in medication_inventory %}
-                                                <option value="{{ item.id }}">{{ item.name }}</option>
+                                                <option value="{{ item.id }}">{{ item.name }} (Stock: {{ item.current_stock }})</option>
                                             {% endfor %}
-                                            <option value="other">Other (Type manually)</option>
                                         </select>
-                                    </div>
-                                    <div class="col-12 col-md-6 manual-drug-name" style="display: none;">
-                                        <label class="form-label required">Type Drug Name</label>
-                                        <input type="text" name="drug_name[]" class="form-control drug-name-input" placeholder="Enter Drug Name" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed">
                                     </div>
                                 </div>
 
