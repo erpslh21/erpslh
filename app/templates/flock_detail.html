@@ -845,7 +845,7 @@
 
                         {% if event.predicted_diseases %}
                             {% for disease in event.predicted_diseases %}
-                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning text-body' }} mb-1">
+                                <span class="badge {{ 'bg-danger text-white' if disease.severity == 'High' else 'bg-warning' }} mb-1">
                                     {{ disease.name }}
                                 </span>
                             {% endfor %}

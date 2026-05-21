@@ -36,7 +36,7 @@
                             {% if day in events_by_date %}
                                 {% for v in events_by_date[day] %}
                                     <a href="{{ url_for('flock_vaccines', id=v.flock.id) }}" class="text-decoration-none">
-                                        <div class="mb-1 p-1 rounded {% if v.actual_date %}bg-success text-white{% else %}bg-warning text-body{% endif %}" style="font-size: 0.75rem;">
+                                        <div class="mb-1 p-1 rounded {% if v.actual_date %}bg-success text-white{% else %}bg-warning{% endif %}" style="font-size: 0.75rem;">
                                             <strong>{{ v.flock.house.name }}</strong> ({{ v.age_code }})<br>
                                             {{ v.vaccine_name }}
                                         </div>

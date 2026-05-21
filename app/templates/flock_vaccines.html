@@ -63,7 +63,7 @@
                             </td>
                             <td>
                                 {% if v.inventory_item_id %}
-                                    <span class="badge bg-light-subtle text-body border">{{ v.inventory_item.doses_per_unit }}</span>
+                                    <span class="badge bg-light-subtle border">{{ v.inventory_item.doses_per_unit }}</span>
                                     <input type="hidden" name="doses_per_unit_{{ v.id }}" value="{{ v.inventory_item.doses_per_unit }}">
                                 {% else %}
                                     <input type="number" name="doses_per_unit_{{ v.id }}" class="form-control form-control-sm" value="{{ v.doses_per_unit }}">
