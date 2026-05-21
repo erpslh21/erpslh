@@ -155,13 +155,9 @@ body {
     color: #495057 !important;
 }
 
-/* Ensure warning badges have high contrast text (white) */
-.badge.bg-warning, .bg-warning {
-    color: #ffffff !important;
-}
-.badge-warning {
-    color: #ffffff !important;
-    background-color: #ffc107;
+/* Ensure warning elements have high contrast text (dark gray/black instead of white) */
+.bg-warning {
+    color: #212529 !important;
 }
 
 /* Ensure disabled buttons have legible contrast */
@@ -207,6 +203,8 @@ body {
 }
 
 /* Globally ensure all badges have white text for maximum readability */
-.badge:not(.bg-light-subtle) {
+span.badge,
+.table .badge,
+.badge[class*="bg-"] {
     color: #ffffff !important;
 }
