@@ -221,14 +221,26 @@
               </div>
             </div>
 
-            <!-- Combined Body Weight and Mortality Chart -->
+            <!-- Mortality Chart -->
             <div class="col-12 mb-3">
               <div class="card">
                 <div class="card-header">
-                  <h3 class="card-title">Mortality (%) and Bodyweight (g)</h3>
+                  <h3 class="card-title">Mortality (%)</h3>
                 </div>
                 <div class="card-body">
-                  <canvas id="combinedChart"></canvas>
+                  <canvas id="mortalityChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bodyweight Chart -->
+            <div class="col-12 mb-3">
+              <div class="card">
+                <div class="card-header">
+                  <h3 class="card-title">Bodyweight (g)</h3>
+                </div>
+                <div class="card-body">
+                  <canvas id="bodyweightChart"></canvas>
                 </div>
               </div>
             </div>
@@ -462,11 +474,10 @@
           });
       }
 
-      // Combined Body Weight & Mortality Chart
-      const ctxCombined = document.getElementById('combinedChart');
-      if (ctxCombined) {
-
-          const ctxMortality = document.getElementById("mortalityChart").getContext("2d");
+      // Mortality Chart
+      const domMortality = document.getElementById("mortalityChart");
+      if (domMortality) {
+          const ctxMortality = domMortality.getContext("2d");
           chartMortality = new Chart(ctxMortality, {
             type: "line",
             data: {
@@ -502,30 +513,6 @@
                     formatter: (value) => value !== null ? value.toFixed(2) + "%" : "",
                   },
                 },
-                {
-                  type: "bar",
-                  label: "Body weight (g)",
-                  data: chartData.body_weights,
-                  backgroundColor: "#ED8535",
-                  yAxisID: "yBW",
-                  datalabels: {
-                    display: true,
-                    align: "top",
-                    anchor: "end",
-                    color: "#ED8535",
-                    formatter: (value) => value !== null ? value.toFixed(0) : "",
-                  },
-                },
-                {
-                  type: "bar",
-                  label: "Weight Gain (g)",
-                  data: chartData.weight_gains,
-                  backgroundColor: "#3A7338",
-                  yAxisID: "yBW",
-                  datalabels: {
-                    display: false,
-                  },
-                },
               ],
             },
             options: {
@@ -545,19 +532,15 @@
                   min: 0,
                   max: Math.max(...chartData.mortality_pct, ...chartData.mortality_standard) * 1.1 || 0.5,
                 },
-                yBW: {
-                  type: "linear",
-                  display: true,
-                  position: "right",
-                  title: { display: true, text: "Weight (g)" },
-                  grid: { drawOnChartArea: false },
-                  min: 0,
-                },
               },
             },
           });
+      }
 
-          const ctxBodyweight = document.getElementById("bodyweightChart").getContext("2d");
+      // Bodyweight Chart
+      const domBodyweight = document.getElementById("bodyweightChart");
+      if (domBodyweight) {
+          const ctxBodyweight = domBodyweight.getContext("2d");
           chartBodyweight = new Chart(ctxBodyweight, {
             type: "line",
             data: {
@@ -622,6 +605,9 @@
       }
 
       // Fix blank chart issue by resizing when tab is shown
+      } // Ends bodyweight chart if
+
+      // Fix blank chart issue by resizing when tab is shown
       const chartTabButton = document.querySelector('a[href="#tabs-performance-charts"]');
       if (chartTabButton) {
           chartTabButton.addEventListener('shown.bs.tab', function (e) {
@@ -658,13 +644,11 @@
               chartFCR.update();
           }
 
-          // Filter Combined Chart
+          // Filter Mortality and Bodyweight Charts
           if (chartMortality) {
               chartMortality.data.labels = filteredLabels;
               chartMortality.data.datasets[0].data = chartData.mortality_standard.slice(startIndex, endIndex);
               chartMortality.data.datasets[1].data = chartData.mortality_pct.slice(startIndex, endIndex);
-              chartMortality.data.datasets[2].data = chartData.body_weights.slice(startIndex, endIndex);
-              chartMortality.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
               chartMortality.update();
           }
           if (chartBodyweight) {
@@ -689,19 +673,17 @@
           }
 
           if (chartMortality) {
-              chartMortality.data.labels = filteredLabels;
-              chartMortality.data.datasets[0].data = chartData.mortality_standard.slice(startIndex, endIndex);
-              chartMortality.data.datasets[1].data = chartData.mortality_pct.slice(startIndex, endIndex);
-              chartMortality.data.datasets[2].data = chartData.body_weights.slice(startIndex, endIndex);
-              chartMortality.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
+              chartMortality.data.labels = labels;
+              chartMortality.data.datasets[0].data = chartData.mortality_standard;
+              chartMortality.data.datasets[1].data = chartData.mortality_pct;
               chartMortality.update();
           }
           if (chartBodyweight) {
-              chartBodyweight.data.labels = filteredLabels;
-              chartBodyweight.data.datasets[0].data = chartData.bodyweight_standard.slice(startIndex, endIndex);
-              chartBodyweight.data.datasets[1].data = chartData.body_weights.slice(startIndex, endIndex);
-              chartBodyweight.data.datasets[2].data = chartData.weight_gain_standard.slice(startIndex, endIndex);
-              chartBodyweight.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
+              chartBodyweight.data.labels = labels;
+              chartBodyweight.data.datasets[0].data = chartData.bodyweight_standard;
+              chartBodyweight.data.datasets[1].data = chartData.body_weights;
+              chartBodyweight.data.datasets[2].data = chartData.weight_gain_standard;
+              chartBodyweight.data.datasets[3].data = chartData.weight_gains;
               chartBodyweight.update();
           }
       };
