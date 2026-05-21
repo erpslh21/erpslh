@@ -840,68 +840,40 @@ def register_production_routes(app):
     def edit_inventory_transaction(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
-        t = InventoryTransaction.query.get_or_404(id)
-        item = InventoryItem.query.get(t.inventory_item_id)
+        tx = InventoryTransaction.query.get_or_404(id)
+        item = InventoryItem.query.get(tx.inventory_item_id)
 
-        old_data = {
-            'quantity': t.quantity,
-            'transaction_type': t.transaction_type,
-            'transaction_date': t.transaction_date.strftime('%Y-%m-%d') if t.transaction_date else None,
-            'notes': t.notes
-        }
+        date_str = request.form.get('transaction_date')
+        if date_str:
+            tx.transaction_date = datetime.strptime(date_str, '%Y-%m-%d').date()
 
-        new_qty = float(request.form.get('quantity') or 0)
-        new_date_str = request.form.get('transaction_date')
-        new_notes = request.form.get('notes')
-        new_type = request.form.get('transaction_type')
+        tx.classification = request.form.get('classification')
 
-        if new_qty <= 0:
-            flash("Quantity must be positive.", "danger")
-            return redirect(url_for('inventory'))
+        # Revert stock first
+        if tx.transaction_type == 'Out':
+            item.current_stock += tx.quantity
+        else:
+            item.current_stock -= tx.quantity
 
-        if new_type and new_type not in INV_TX_TYPES_ALL:
-            flash("Invalid transaction type.", "danger")
-            return redirect(url_for('inventory'))
+        tx.quantity = float(request.form.get('quantity') or tx.quantity)
+        tx.notes = request.form.get('remarks')
+        tx.batch_number = request.form.get('batch_number') or None
 
-        # Revert Old Effect
-        if item:
-            if t.transaction_type in INV_TX_TYPES_USAGE_WASTE:
-                item.current_stock += t.quantity
-            else:
-                item.current_stock -= t.quantity
+        expiry_date_str = request.form.get('expiry_date')
+        if expiry_date_str:
+            tx.expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date()
+        else:
+            tx.expiry_date = None
 
-        # Update Transaction
-        t.quantity = new_qty
-        t.notes = new_notes
-        if new_type:
-            t.transaction_type = new_type
-
-        if new_date_str:
-            try:
-                t.transaction_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
-            except: pass
-
-        new_data = {
-            'quantity': t.quantity,
-            'transaction_type': t.transaction_type,
-            'transaction_date': t.transaction_date.strftime('%Y-%m-%d') if t.transaction_date else None,
-            'notes': t.notes
-        }
-
-        changes = {k: {'old': old_data[k], 'new': new_data[k]} for k in old_data if old_data[k] != new_data[k]}
-        if changes:
-            log_user_activity(current_user.id, 'Edit', 'InventoryTransaction', t.id, details=changes)
-
-        # Apply New Effect
-        if item:
-            if t.transaction_type in INV_TX_TYPES_USAGE_WASTE:
-                item.current_stock -= new_qty
-            else:
-                item.current_stock += new_qty
+        # Apply new stock
+        if tx.transaction_type == 'Out':
+            item.current_stock -= tx.quantity
+        else:
+            item.current_stock += tx.quantity
 
         safe_commit()
-        flash("Transaction updated.", "success")
-        return redirect(url_for('inventory'))
+        flash(f'Updated transaction.', 'success')
+        return redirect(url_for('inventory') + '#movements')
 
     @app.route('/inventory/transaction/delete/<int:id>', methods=['POST'])
     @login_required
@@ -909,25 +881,25 @@ def register_production_routes(app):
     def delete_inventory_transaction(id):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
-        t = InventoryTransaction.query.get_or_404(id)
-        item = InventoryItem.query.get(t.inventory_item_id)
-        t_type = t.transaction_type
-        t_qty = t.quantity
+        tx = InventoryTransaction.query.get_or_404(id)
+        item = InventoryItem.query.get(tx.inventory_item_id)
+        t_type = tx.transaction_type
+        t_qty = tx.quantity
         item_name = item.name if item else "Unknown"
 
         log_user_activity(current_user.id, 'Delete', 'InventoryTransaction', id, details={'item_name': item_name, 'type': t_type, 'quantity': t_qty})
 
         # Revert Stock
         if item:
-            if t.transaction_type in INV_TX_TYPES_USAGE_WASTE:
-                item.current_stock += t.quantity
-            else: # Purchase, Adjustment
-                item.current_stock -= t.quantity
+            if tx.transaction_type == 'Out':
+                item.current_stock += tx.quantity
+            else: # In
+                item.current_stock -= tx.quantity
 
-        db.session.delete(t)
+        db.session.delete(tx)
         safe_commit()
         flash(f"Transaction deleted. Stock reverted.", "info")
-        return redirect(url_for('inventory'))
+        return redirect(url_for('inventory') + '#movements')
 
     @app.route('/inventory/edit/<int:id>', methods=['POST'])
     @login_required
@@ -941,38 +913,25 @@ def register_production_routes(app):
             db.session.delete(item)
             safe_commit()
             flash('Item deleted.', 'info')
-            return redirect(url_for('inventory'))
+            return redirect(url_for('inventory') + '#masterlist')
 
         old_data = {
             'name': item.name,
             'type': item.type,
             'unit': item.unit,
-            'min_stock_level': item.min_stock_level,
-            'doses_per_unit': item.doses_per_unit,
-            'batch_number': '',
-            'expiry_date': ''
         }
 
         item.name = request.form.get('name')
         item.type = request.form.get('type')
-        item.unit = request.form.get('unit')
-        item.min_stock_level = float(request.form.get('min_stock_level') or 0)
 
-        doses = request.form.get('doses_per_unit')
-        item.doses_per_unit = int(doses) if doses else None
-
-
-
-
+        unit = request.form.get('unit') or None
+        item.unit_of_measurement = unit
+        item.unit = unit
 
         new_data = {
             'name': item.name,
             'type': item.type,
             'unit': item.unit,
-            'min_stock_level': item.min_stock_level,
-            'doses_per_unit': item.doses_per_unit,
-            'batch_number': '',
-            'expiry_date': ''
         }
 
         changes = {k: {'old': old_data[k], 'new': new_data[k]} for k in old_data if old_data[k] != new_data[k]}
@@ -981,7 +940,7 @@ def register_production_routes(app):
 
         safe_commit()
         flash('Item updated.', 'success')
-        return redirect(url_for('inventory'))
+        return redirect(url_for('inventory') + '#masterlist')
 
     @app.route('/inventory/transaction', methods=['POST'])
     @login_required
@@ -1033,72 +992,139 @@ def register_production_routes(app):
     def add_inventory_item():
         name = request.form.get('name')
         type_ = request.form.get('type')
-        unit = request.form.get('unit')
-        stock = float(request.form.get('current_stock') or 0)
-        min_stock = float(request.form.get('min_stock_level') or 0)
-        doses = int(request.form.get('doses_per_unit') or 0) if type_ == 'Vaccine' else None
+        unit = request.form.get('unit') or None
 
-        exp_str = request.form.get('expiry_date')
-        exp_date = datetime.strptime(exp_str, '%Y-%m-%d').date() if exp_str else None
+        if not name:
+            flash('Name is required.', 'danger')
+            return redirect(url_for('inventory') + '#masterlist')
 
         item = InventoryItem(
-            name=name, type=type_, unit=unit, current_stock=stock,
-            min_stock_level=min_stock, doses_per_unit=doses
+            name=name, type=type_, unit=unit, unit_of_measurement=unit, location='Breeder'
         )
         db.session.add(item)
         db.session.flush()
 
-        log_user_activity(current_user.id, 'Add', 'InventoryItem', item.id, details={'name': name, 'type': type_, 'initial_stock': stock})
+        log_user_activity(current_user.id, 'Add', 'InventoryItem', item.id, details={'name': name, 'type': type_})
 
         safe_commit()
 
-        if stock > 0:
-            t = InventoryTransaction(
-                inventory_item_id=item.id,
-                transaction_type='Purchase',
-                quantity=stock,
-                transaction_date=date.today(),
-                notes='Initial Stock'
-            )
-            db.session.add(t)
-            safe_commit()
-
         flash(f'Added {name} to inventory.', 'success')
-        return redirect(url_for('inventory'))
+        return redirect(url_for('inventory') + '#masterlist')
+
+    @app.route('/api/inventory/<int:item_id>/balance', methods=['GET'])
+    @login_required
+    def api_inventory_balance(item_id):
+        item = InventoryItem.query.filter_by(id=item_id).first_or_404()
+
+        transactions = InventoryTransaction.query.filter_by(inventory_item_id=item_id).all()
+
+        balance = 0.0
+        for t in transactions:
+            if t.transaction_type == 'In' or t.transaction_type == 'Purchase' or t.transaction_type == 'Adjustment':
+                balance += t.quantity
+            elif t.transaction_type == 'Out' or t.transaction_type == 'Usage' or t.transaction_type == 'Waste':
+                balance -= t.quantity
+
+        return jsonify({'balance': balance, 'unit': item.unit_of_measurement or item.unit})
+
+    @app.route('/api/inventory/<int:item_id>/batches', methods=['GET'])
+    @login_required
+    def api_inventory_batches(item_id):
+        # Find all 'In' transactions for this item that have a batch number
+        txs = InventoryTransaction.query.filter_by(inventory_item_id=item_id).filter(
+            db.or_(InventoryTransaction.transaction_type == 'In', InventoryTransaction.transaction_type == 'Purchase')
+        ).filter(InventoryTransaction.batch_number.isnot(None)).all()
+        batches = []
+        seen = set()
+        for t in txs:
+            if t.batch_number not in seen:
+                seen.add(t.batch_number)
+                batches.append({
+                    'batch_number': t.batch_number,
+                    'expiry_date': t.expiry_date.strftime('%Y-%m-%d') if t.expiry_date else None,
+                    'balance': t.quantity # Simplified calculation, you might want to calculate exact batch balance
+                })
+        return jsonify({'batches': batches})
+
 
     @app.route('/inventory')
     @login_required
     @dept_required('Breeder')
     def inventory():
-        items = InventoryItem.query.order_by(InventoryItem.name).all()
-        transactions = InventoryTransaction.query.order_by(InventoryTransaction.transaction_date.desc(), InventoryTransaction.id.desc()).limit(50).all()
+        items = InventoryItem.query.filter(
+            db.or_(InventoryItem.location == 'Breeder', InventoryItem.location == None)
+        ).order_by(InventoryItem.name).all()
+        transactions = InventoryTransaction.query.join(InventoryItem).filter(
+            db.or_(InventoryItem.location == 'Breeder', InventoryItem.location == None)
+        ).order_by(InventoryTransaction.transaction_date.desc(), InventoryTransaction.id.desc()).limit(100).all()
 
         # Monthly Summary
+        import calendar
         today = date.today()
         start_of_month = date(today.year, today.month, 1)
 
-        month_txs = InventoryTransaction.query.filter(InventoryTransaction.transaction_date >= start_of_month).all()
+        month_str = request.args.get('month', str(today.month))
+        year_str = request.args.get('year', str(today.year))
+
+        try:
+            filter_month = int(month_str)
+            filter_year = int(year_str)
+            start_date = date(filter_year, filter_month, 1)
+            if filter_month == 12:
+                end_date = date(filter_year + 1, 1, 1)
+            else:
+                end_date = date(filter_year, filter_month + 1, 1)
+        except ValueError:
+            filter_month = today.month
+            filter_year = today.year
+            start_date = date(today.year, today.month, 1)
+            if today.month == 12:
+                end_date = date(today.year + 1, 1, 1)
+            else:
+                end_date = date(today.year, today.month + 1, 1)
+
+        month_txs = InventoryTransaction.query.join(InventoryItem).filter(
+            db.or_(InventoryItem.location == 'Breeder', InventoryItem.location == None),
+            InventoryTransaction.transaction_date >= start_date,
+            InventoryTransaction.transaction_date < end_date
+        ).all()
 
         summary_map = {}
         for t in month_txs:
             if t.inventory_item_id not in summary_map:
                 summary_map[t.inventory_item_id] = {'purchase': 0, 'usage': 0, 'waste': 0}
 
-            type_key = t.transaction_type.lower()
+            type_key = t.classification.lower() if hasattr(t, 'classification') and t.classification else t.transaction_type.lower()
+            if type_key == 'in' or type_key == 'purchase': type_key = 'purchase'
+            elif type_key == 'out' or type_key == 'usage': type_key = 'usage'
+
             if type_key in summary_map[t.inventory_item_id]:
                 summary_map[t.inventory_item_id][type_key] += t.quantity
 
         summary_list = []
         for item in items:
-            s = summary_map.get(item.id, {'purchase': 0, 'usage': 0, 'waste': 0})
-            summary_list.append({
-                'name': item.name,
-                'purchase': round(s['purchase'], 2),
-                'usage': round(s['usage'], 2),
-                'waste': round(s['waste'], 2)
-            })
+            if item.id in summary_map:
+                s = summary_map.get(item.id, {'purchase': 0, 'usage': 0, 'waste': 0})
+                summary_list.append({
+                    'item': item,
+                    'purchase': round(s['purchase'], 2),
+                    'usage': round(s['usage'], 2),
+                    'waste': round(s['waste'], 2)
+                })
 
-        return render_template('inventory.html', items=items, transactions=transactions, summary=summary_list, current_month=today.strftime('%B %Y'), today=today)
+        months = [(i, calendar.month_name[i]) for i in range(1, 13)]
+        years = range(today.year - 5, today.year + 1)
+
+        return render_template('inventory.html',
+                               items=items,
+                               transactions=transactions,
+                               summary=summary_list,
+                               months=months,
+                               years=years,
+                               filter_month=filter_month,
+                               filter_year=filter_year,
+                               current_month=f"{calendar.month_name[filter_month]} {filter_year}",
+                               today=today)
 
     @app.route('/daily_log/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
@@ -1142,7 +1168,7 @@ def register_production_routes(app):
             med_remarks = request.form.getlist('med_remarks[]')
 
             # Batch fetch inventory items
-            unique_inv_ids = {int(iid) for iid in med_inventory_ids if iid and iid.isdigit()}
+            unique_inv_ids = {int(iid) for iid in med_inventory_ids if iid and iid != 'other' and iid.isdigit()}
             inventory_items_dict = {}
             if unique_inv_ids:
                 items = InventoryItem.query.filter(InventoryItem.id.in_(unique_inv_ids)).all()
@@ -1153,7 +1179,7 @@ def register_production_routes(app):
 
                 item_name = name_val
                 inv_id = None
-                if inv_id_val and inv_id_val.isdigit():
+                if inv_id_val and inv_id_val != 'other' and inv_id_val.isdigit():
                     inv_id = int(inv_id_val)
                     item = inventory_items_dict.get(inv_id)
                     if item: item_name = item.name
@@ -1378,7 +1404,7 @@ def register_production_routes(app):
             med_remarks = request.form.getlist('med_remarks[]')
 
             # Batch fetch inventory items
-            unique_inv_ids = {int(iid) for iid in med_inventory_ids if iid and iid.isdigit()}
+            unique_inv_ids = {int(iid) for iid in med_inventory_ids if iid and iid != 'other' and iid.isdigit()}
             inventory_items_dict = {}
             if unique_inv_ids:
                 items = InventoryItem.query.filter(InventoryItem.id.in_(unique_inv_ids)).all()
@@ -1391,7 +1417,7 @@ def register_production_routes(app):
                 item_name = name_val
                 inv_id = None
 
-                if inv_id_val and inv_id_val.isdigit():
+                if inv_id_val and inv_id_val != 'other' and inv_id_val.isdigit():
                     inv_id = int(inv_id_val)
                     item = inventory_items_dict.get(inv_id)
                     if item: item_name = item.name

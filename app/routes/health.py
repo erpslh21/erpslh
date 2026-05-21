@@ -643,7 +643,7 @@ def register_health_routes(app):
                              remark = remarks[i] if i < len(remarks) else ''
 
                              item = None
-                             if i_id and i_id.isdigit():
+                             if i_id and i_id != 'other' and i_id.isdigit():
                                  i_id = int(i_id)
                                  item = db.session.get(InventoryItem, i_id)
                                  if item: d_name = item.name
