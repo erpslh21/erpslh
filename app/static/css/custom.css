@@ -207,4 +207,5 @@ span.badge,
 .table .badge,
 .badge[class*="bg-"] {
     color: #ffffff !important;
+    --tblr-badge-color: #ffffff !important;
 }
