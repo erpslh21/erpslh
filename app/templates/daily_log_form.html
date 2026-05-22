@@ -278,7 +278,7 @@
     </div>
 
     <div class="card mb-3">
-      <div class="card-header sticky-header bg-warning">Production <span class="house-name-display"></span></div>
+      <div class="card-header sticky-header bg-warning text-body">Production <span class="house-name-display"></span></div>
       <div class="card-body">
         <div class="mb-3">
           <label class="form-label">Eggs Collected</label>
@@ -339,7 +339,7 @@
                                 {% if v.actual_date %}
                                     <span class="badge bg-success text-white">Done</span>
                                 {% else %}
-                                    <span class="badge bg-warning">Pending</span>
+                                    <span class="badge bg-warning text-body">Pending</span>
                                 {% endif %}
                             </td>
                             <td>{{ v.age_code }}</td>
@@ -799,7 +799,7 @@
         if (mortPctF > 1.0) {
             mortFWarning = '<span class="badge bg-danger text-white ms-2">CRITICAL: Abnormal data (possible wrong input)</span>';
         } else if (mortPctF > 0.05) {
-            mortFWarning = '<span class="badge bg-warning ms-2">Warning: High mortality</span>';
+            mortFWarning = '<span class="badge bg-warning text-body ms-2">Warning: High mortality</span>';
         }
 
         let mortMWarning = '';
@@ -812,24 +812,24 @@
         let eggWarning = '';
         let eggDiff = eggPct - yesterdayEggPct;
         if (eggDiff < -2.0) {
-             eggWarning = '<span class="badge bg-warning ms-2">Warning: Drop > 2%</span>';
+             eggWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 2%</span>';
         } else if (eggDiff > 2.0) {
              // Exception: Week 25-33
              if (flockAgeWeeks >= 25 && flockAgeWeeks <= 33) {
                  // Do not warn
              } else {
-                 eggWarning = '<span class="badge bg-warning ms-2">Warning: Increase > 2%</span>';
+                 eggWarning = '<span class="badge bg-warning text-body ms-2">Warning: Increase > 2%</span>';
              }
         }
 
         let feedFWarning = '';
         if (inFeedF > 0 && (yesterdayFeedF - inFeedF) > 3) {
-             feedFWarning = '<span class="badge bg-warning ms-2">Warning: Drop > 3g</span>';
+             feedFWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 3g</span>';
         }
 
         let feedMWarning = '';
         if (inFeedM > 0 && (yesterdayFeedM - inFeedM) > 3) {
-             feedMWarning = '<span class="badge bg-warning ms-2">Warning: Drop > 3g</span>';
+             feedMWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 3g</span>';
         }
 
         let waterWarning = '';

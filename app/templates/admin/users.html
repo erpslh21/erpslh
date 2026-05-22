@@ -29,7 +29,7 @@
                             <td>{{ user.name or '' }}</td>
                             <td>
                                 <span class="badge
-                                   {% if user.dept == 'Admin' %}bg-danger{% elif user.dept == 'Breeder' %}bg-success{% else %}bg-warning{% endif %}">
+                                   {% if user.dept == 'Admin' %}bg-danger{% elif user.dept == 'Breeder' %}bg-success{% else %}bg-warning text-body{% endif %}">
                                     {{ user.dept }}
                                 </span>
                             </td>
