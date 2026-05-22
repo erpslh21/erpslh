@@ -205,3 +205,11 @@ body {
     height: 40px;
     border-radius: 50%;
 }
+
+/* Globally ensure all badges have white text for maximum readability */
+span.badge,
+.table .badge,
+.badge[class*="bg-"] {
+    color: #ffffff !important;
+    --tblr-badge-color: #ffffff !important;
+}
