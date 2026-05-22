@@ -209,3 +209,25 @@ span.badge,
     color: #ffffff !important;
     --tblr-badge-color: #ffffff !important;
 }
+
+/* ---------------------------------------------------
+   Global Brand Override for Dark Mode
+--------------------------------------------------- */
+
+/* 1. Force the blue chicken graphic to pure white for contrast */
+[data-bs-theme="dark"] .slh-logo-graphic {
+    fill: #ffffff !important;
+    stroke: #ffffff !important; /* Just in case the graphic uses strokes instead of fills */
+}
+
+/* 2. Remove the glaring white background circle so it blends seamlessly */
+[data-bs-theme="dark"] .slh-logo-circle {
+    fill: transparent !important;
+}
+
+/* 3. Ensure the 'Processing...' text in the loader is also white */
+[data-bs-theme="dark"] .loader-overlay text,
+[data-bs-theme="dark"] .loader-overlay .text-body {
+    fill: #ffffff !important;
+    color: #ffffff !important;
+}
