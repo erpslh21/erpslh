@@ -16,5 +16,18 @@ trash_bin/
 !/tests/
 /*patch_*.py
 /*temp_*.py
-/*fix_*.py
 logs/
+# SQLite Database Files
+*.db
+
+# Diff and Patch Files
+*.diff
+*.patch
+
+# Scratch and Temporary Files
+/test.py
+/test_chart.html
+/sql_commands.txt
+/backup_patch.js
+/image.png
+
