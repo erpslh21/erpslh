@@ -1,7 +1,7 @@
 /* --- Global Typography Scaling --- */
-/* Scale base rem up to 112.5% (approx 18px base) to natively increase size of all Bootstrap/Tabler elements globally */
+/* Reset scaling to match standard production sizing */
 html {
-    font-size: 112.5%;
+    font-size: 100%;
 }
 
 body {
@@ -10,27 +10,19 @@ body {
 
 /* Explicitly scale highly interactive components to ensure they feel "fuller" */
 .form-control, .form-select, .btn {
-    font-size: 1.1rem;
-    padding: 0.6rem 1rem;
+    /* Keep standard sizing to match production layout */
 }
 
 /* Table scaling */
 .table th, .table td {
-    font-size: 1.05rem;
-    padding: 0.75rem;
+    /* Keep standard sizing to match production layout */
 }
 
 /* Increase card title hierarchy */
 .card-title {
-    font-size: 1.3rem;
-    font-weight: 600;
+    /* Keep standard sizing to match production layout */
 }
-.navbar {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 1030;
-}
+
 
 /* --- Sticky Headers Implementation --- */
 
@@ -204,4 +196,34 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
+}
+
+/* Globally ensure all badges have white text for maximum readability */
+span.badge,
+.table .badge,
+.badge[class*="bg-"] {
+    color: #ffffff !important;
+    --tblr-badge-color: #ffffff !important;
+}
+
+/* ---------------------------------------------------
+   Global Brand Override for Dark Mode
+--------------------------------------------------- */
+
+/* 1. Force the blue chicken graphic to pure white for contrast */
+[data-bs-theme="dark"] .slh-logo-graphic {
+    fill: #ffffff !important;
+    stroke: #ffffff !important; /* Just in case the graphic uses strokes instead of fills */
+}
+
+/* 2. Remove the glaring white background circle so it blends seamlessly */
+[data-bs-theme="dark"] .slh-logo-circle {
+    fill: transparent !important;
+}
+
+/* 3. Ensure the 'Processing...' text in the loader is also white */
+[data-bs-theme="dark"] .loader-overlay text,
+[data-bs-theme="dark"] .loader-overlay .text-body {
+    fill: #ffffff !important;
+    color: #ffffff !important;
 }

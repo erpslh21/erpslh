@@ -716,6 +716,18 @@
             return;
         }
 
+        let progElem = document.querySelector('[name="feed_program"]');
+        let program = progElem ? progElem.value : '';
+        let maleGpBird = parseFloat(document.getElementById('feed_male_gp_bird') ? document.getElementById('feed_male_gp_bird').value : 0) || 0;
+        let femaleGpBird = parseFloat(document.getElementById('feed_female_gp_bird') ? document.getElementById('feed_female_gp_bird').value : 0) || 0;
+
+        if (program === 'Full Feed') {
+            if (maleGpBird <= 0 || femaleGpBird <= 0) {
+                alert("Invalid Entry: Grams per bird for male and female cannot be 0 for Full Feed program.");
+                return;
+            }
+        }
+
         // Populate house name and date
         let houseSelect = document.getElementById('house_id'); if (!houseSelect) return;
         let selectedHouseName = houseSelect.options[houseSelect.selectedIndex].text.trim();

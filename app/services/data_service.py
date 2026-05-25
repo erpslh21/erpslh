@@ -1349,6 +1349,10 @@ def update_log_from_request(log, req):
     override = req.form.get('override_validation') == 'true'
     is_feeding_attempt = log.feed_male_gp_bird > 0 or log.feed_female_gp_bird > 0
 
+    if log.feed_program == 'Full Feed':
+        if log.feed_male_gp_bird <= 0 or log.feed_female_gp_bird <= 0:
+            raise ValueError("Invalid Entry: Grams per bird for male and female cannot be 0 for Full Feed program.")
+
     if is_feeding_attempt and not override:
         from datetime import timedelta
         if log.feed_program == 'Skip-a-day':

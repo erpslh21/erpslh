@@ -59,7 +59,7 @@
                                         <select name="inventory_item_id[]" class="form-select inventory-select" onchange="if(this.value){this.closest('.medication-row').querySelector('.drug-name-input').value=this.options[this.selectedIndex].text.split(' (')[0];}">
                                             <option value="">-- Select Inventory Item --</option>
                                             {% for item in medication_inventory %}
-                                                <option value="{{ item.id }}">{{ item.name }} (Stock: {{ item.current_stock }})</option>
+                                                <option value="{{ item.id }}">{{ item.name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>

@@ -4,6 +4,7 @@ const ASSETS_TO_CACHE = [
   '/',
   '/offline',
   '/offline_mirror',
+  '/static/css/custom.css?v={{ version }}',
   '/static/js/offline_sync.js?v={{ version }}',
   '/static/manifest.json?v={{ version }}',
   '/static/icon-192.png?v={{ version }}',
