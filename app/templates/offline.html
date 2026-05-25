@@ -7,6 +7,7 @@
     <title>Offline - {{ config['APP_NAME'] }}</title>
     <!-- Tabler Core CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}?v=1.1" />
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <meta name="theme-color" content="{{ config['PRIMARY_COLOR'] }}">
     <style>
