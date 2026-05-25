@@ -261,52 +261,62 @@ def downgrade():
                nullable=True,
                existing_server_default=sa.text("'1'"))
 
-    op.create_table('floating_note',
-    sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('flock_id', sa.INTEGER(), nullable=False),
-    sa.Column('chart_id', sa.VARCHAR(length=50), nullable=False),
-    sa.Column('x_value', sa.VARCHAR(length=50), nullable=False),
-    sa.Column('y_value', sa.FLOAT(), nullable=False),
-    sa.Column('content', sa.TEXT(), nullable=False),
-    sa.Column('created_at', sa.DATETIME(), nullable=True),
-    sa.Column('version', sa.INTEGER(), server_default=sa.text("'1'"), nullable=False),
-    sa.ForeignKeyConstraint(['flock_id'], ['flock.id'], name=op.f('fk_floating_note_flock_id_flock')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_floating_note'))
-    )
-    op.create_table('chart_note',
-    sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('flock_id', sa.INTEGER(), nullable=False),
-    sa.Column('chart_identifier', sa.VARCHAR(length=50), nullable=False),
-    sa.Column('content', sa.TEXT(), nullable=False),
-    sa.Column('pos_x', sa.FLOAT(), nullable=False),
-    sa.Column('pos_y', sa.FLOAT(), nullable=False),
-    sa.Column('width', sa.FLOAT(), nullable=False),
-    sa.Column('height', sa.FLOAT(), nullable=False),
-    sa.Column('created_at', sa.DATETIME(), nullable=True),
-    sa.Column('version', sa.INTEGER(), server_default=sa.text("'1'"), nullable=False),
-    sa.ForeignKeyConstraint(['flock_id'], ['flock.id'], name=op.f('fk_chart_note_flock_id_flock')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_chart_note'))
-    )
-    with op.batch_alter_table('chart_note', schema=None) as batch_op:
-        batch_op.create_index(batch_op.f('ix_chart_note_flock_id'), ['flock_id'], unique=False)
-        batch_op.create_index(batch_op.f('ix_chart_note_chart_identifier'), ['chart_identifier'], unique=False)
+    bind = op.get_bind()
+    from sqlalchemy.engine.reflection import Inspector
+    inspector = Inspector.from_engine(bind)
 
-    op.create_table('overview_configuration',
-    sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('house_id', sa.INTEGER(), nullable=False),
-    sa.Column('visible_metrics_json', sa.TEXT(), nullable=False),
-    sa.ForeignKeyConstraint(['house_id'], ['house.id'], name=op.f('fk_overview_configuration_house_id_house')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_overview_configuration')),
-    sa.UniqueConstraint('house_id', name=op.f('uq_overview_configuration_house_id'))
-    )
-    op.create_table('chart_configuration',
-    sa.Column('id', sa.INTEGER(), nullable=False),
-    sa.Column('house_id', sa.INTEGER(), nullable=False),
-    sa.Column('title', sa.VARCHAR(length=100), nullable=False),
-    sa.Column('chart_type', sa.VARCHAR(length=20), nullable=True),
-    sa.Column('config_json', sa.TEXT(), nullable=False),
-    sa.Column('is_template', sa.BOOLEAN(), nullable=True),
-    sa.ForeignKeyConstraint(['house_id'], ['house.id'], name=op.f('fk_chart_configuration_house_id_house')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_chart_configuration'))
-    )
+    if not inspector.has_table('floating_note'):
+        op.create_table('floating_note',
+        sa.Column('id', sa.INTEGER(), nullable=False),
+        sa.Column('flock_id', sa.INTEGER(), nullable=False),
+        sa.Column('chart_id', sa.VARCHAR(length=50), nullable=False),
+        sa.Column('x_value', sa.VARCHAR(length=50), nullable=False),
+        sa.Column('y_value', sa.FLOAT(), nullable=False),
+        sa.Column('content', sa.TEXT(), nullable=False),
+        sa.Column('created_at', sa.DATETIME(), nullable=True),
+        sa.Column('version', sa.INTEGER(), server_default=sa.text("'1'"), nullable=False),
+        sa.ForeignKeyConstraint(['flock_id'], ['flock.id'], name=op.f('fk_floating_note_flock_id_flock')),
+        sa.PrimaryKeyConstraint('id', name=op.f('pk_floating_note'))
+        )
+
+    if not inspector.has_table('chart_note'):
+        op.create_table('chart_note',
+        sa.Column('id', sa.INTEGER(), nullable=False),
+        sa.Column('flock_id', sa.INTEGER(), nullable=False),
+        sa.Column('chart_identifier', sa.VARCHAR(length=50), nullable=False),
+        sa.Column('content', sa.TEXT(), nullable=False),
+        sa.Column('pos_x', sa.FLOAT(), nullable=False),
+        sa.Column('pos_y', sa.FLOAT(), nullable=False),
+        sa.Column('width', sa.FLOAT(), nullable=False),
+        sa.Column('height', sa.FLOAT(), nullable=False),
+        sa.Column('created_at', sa.DATETIME(), nullable=True),
+        sa.Column('version', sa.INTEGER(), server_default=sa.text("'1'"), nullable=False),
+        sa.ForeignKeyConstraint(['flock_id'], ['flock.id'], name=op.f('fk_chart_note_flock_id_flock')),
+        sa.PrimaryKeyConstraint('id', name=op.f('pk_chart_note'))
+        )
+        with op.batch_alter_table('chart_note', schema=None) as batch_op:
+            batch_op.create_index(batch_op.f('ix_chart_note_flock_id'), ['flock_id'], unique=False)
+            batch_op.create_index(batch_op.f('ix_chart_note_chart_identifier'), ['chart_identifier'], unique=False)
+
+    if not inspector.has_table('overview_configuration'):
+        op.create_table('overview_configuration',
+        sa.Column('id', sa.INTEGER(), nullable=False),
+        sa.Column('house_id', sa.INTEGER(), nullable=False),
+        sa.Column('visible_metrics_json', sa.TEXT(), nullable=False),
+        sa.ForeignKeyConstraint(['house_id'], ['house.id'], name=op.f('fk_overview_configuration_house_id_house')),
+        sa.PrimaryKeyConstraint('id', name=op.f('pk_overview_configuration')),
+        sa.UniqueConstraint('house_id', name=op.f('uq_overview_configuration_house_id'))
+        )
+
+    if not inspector.has_table('chart_configuration'):
+        op.create_table('chart_configuration',
+        sa.Column('id', sa.INTEGER(), nullable=False),
+        sa.Column('house_id', sa.INTEGER(), nullable=False),
+        sa.Column('title', sa.VARCHAR(length=100), nullable=False),
+        sa.Column('chart_type', sa.VARCHAR(length=20), nullable=True),
+        sa.Column('config_json', sa.TEXT(), nullable=False),
+        sa.Column('is_template', sa.BOOLEAN(), nullable=True),
+        sa.ForeignKeyConstraint(['house_id'], ['house.id'], name=op.f('fk_chart_configuration_house_id_house')),
+        sa.PrimaryKeyConstraint('id', name=op.f('pk_chart_configuration'))
+        )
     # ### end Alembic commands ###
