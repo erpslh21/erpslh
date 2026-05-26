@@ -729,6 +729,9 @@
 
     let currentStep = 1;
     let layoutMode = localStorage.getItem('slh_form_layout_mode') || 'wizard';
+    const isExistingLog = {{ 'true' if log else 'false' }};
+    let isUserModified = false;
+    let modifiedSteps = {};
 
     let miniChart = null;
     let autoSaveTimeout = null;
@@ -745,6 +748,7 @@
     }
 
     function saveLocalDraft() {
+        if (!isUserModified) return;
         let key = getDraftKey();
         if (!key) return;
         
@@ -798,6 +802,12 @@
                 }
             });
             
+            // Mark all steps as modified because we are restoring user-entered draft data
+            isUserModified = true;
+            for (let i = 1; i <= 5; i++) {
+                modifiedSteps[i] = true;
+            }
+
             calculateWater();
             calculateLiveFeed();
             validateRealTimeValues();
@@ -1274,10 +1284,28 @@
         applyLayoutMode();
         setupInputEventListeners();
 
-        // Setup draft auto-saving listeners on all inputs
+        // Setup draft auto-saving and user modification tracking on all form fields
         document.querySelectorAll('form input, form select, form textarea').forEach(el => {
-            el.addEventListener('input', triggerAutoSave);
-            el.addEventListener('change', triggerAutoSave);
+            // Exclude metadata fields (House and Date) so changes to them don't trigger auto-save or mark steps completed
+            if (el.id === 'house_id' || el.id === 'date') return;
+
+            const sectionEl = el.closest('.wizard-step-section');
+            let stepNum = null;
+            if (sectionEl) {
+                const match = sectionEl.id.match(/step-section-(\d+)/);
+                if (match) stepNum = parseInt(match[1]);
+            }
+
+            const handler = () => {
+                isUserModified = true;
+                if (stepNum) {
+                    modifiedSteps[stepNum] = true;
+                }
+                triggerAutoSave();
+            };
+
+            el.addEventListener('input', handler);
+            el.addEventListener('change', handler);
         });
 
         // Clear draft on successful form submit
@@ -1492,6 +1520,10 @@
             // Production: eggs collected should be filled
             const eggs = document.getElementById('eggs_collected');
             if (eggs && eggs.value === '') return false;
+        }
+        // If it is a new log and has not been user-modified yet, keep it pending (except Step 1 - General, which is metadata set on load)
+        if (!isExistingLog && step > 1 && !modifiedSteps[step]) {
+            return false;
         }
         
         return true;
