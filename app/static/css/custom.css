@@ -1,27 +1,102 @@
-/* --- Global Typography Scaling --- */
-/* Reset scaling to match standard production sizing */
+/* --- Premium Modern Typography & Color Tokens --- */
+:root {
+    --tblr-font-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    --tblr-body-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    
+    /* Light Mode Tokens */
+    --slh-bg-main: #f8fafc;
+    --slh-card-bg: #ffffff;
+    --slh-border-color: rgba(226, 232, 240, 0.8);
+    --slh-text-primary: #1e293b;
+    --slh-text-secondary: #64748b;
+    --slh-shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+    --slh-shadow-md: 0 4px 12px -2px rgba(0,0,0,0.05), 0 2px 6px -1px rgba(0,0,0,0.03);
+    --slh-shadow-lg: 0 12px 24px -4px rgba(0,0,0,0.06), 0 4px 12px -2px rgba(0,0,0,0.04);
+    --slh-glass-bg: rgba(255, 255, 255, 0.7);
+    --slh-glass-border: rgba(255, 255, 255, 0.6);
+}
+
+[data-bs-theme="dark"] {
+    /* Dark Mode OLED Tokens */
+    --slh-bg-main: #060a12;
+    --slh-card-bg: #0b111e;
+    --slh-border-color: rgba(255, 255, 255, 0.05);
+    --slh-text-primary: #f1f5f9;
+    --slh-text-secondary: #94a3b8;
+    --slh-shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --slh-shadow-md: 0 4px 12px -2px rgba(0,0,0,0.25), 0 2px 6px -1px rgba(0,0,0,0.15);
+    --slh-shadow-lg: 0 16px 32px -4px rgba(0,0,0,0.35), 0 6px 16px -2px rgba(0,0,0,0.25);
+    --slh-glass-bg: rgba(11, 17, 30, 0.6);
+    --slh-glass-border: rgba(255, 255, 255, 0.04);
+}
+
 html {
     font-size: 100%;
 }
 
 body {
-    /* Removed padding-top: 56px to let argon handle it */
+    background-color: var(--slh-bg-main) !important;
+    color: var(--slh-text-primary) !important;
+    font-family: var(--tblr-font-sans-serif) !important;
 }
 
-/* Explicitly scale highly interactive components to ensure they feel "fuller" */
-.form-control, .form-select, .btn {
-    /* Keep standard sizing to match production layout */
+h1, h2, h3, h4, h5, h6, .card-title, .navbar-brand, .page-title {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.02em;
 }
 
-/* Table scaling */
-.table th, .table td {
-    /* Keep standard sizing to match production layout */
+/* Premium Card Upgrades & Shadows */
+.card {
+    background-color: var(--slh-card-bg) !important;
+    border: 1px solid var(--slh-border-color) !important;
+    box-shadow: var(--slh-shadow-sm) !important;
+    border-radius: 12px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Increase card title hierarchy */
-.card-title {
-    /* Keep standard sizing to match production layout */
+.card:hover {
+    box-shadow: var(--slh-shadow-md) !important;
 }
+
+/* Hover-Lift micro-interaction */
+.hover-lift {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--slh-shadow-lg) !important;
+}
+
+/* Glassmorphism Card Style */
+.glass-card {
+    background: var(--slh-glass-bg) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid var(--slh-glass-border) !important;
+    box-shadow: var(--slh-shadow-md) !important;
+}
+
+/* Thin Custom Scrollbars for horizontal lists and responsive tables */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
 
 
 /* --- Sticky Headers Implementation --- */
@@ -227,3 +302,331 @@ span.badge,
     fill: #ffffff !important;
     color: #ffffff !important;
 }
+
+/* ==========================================================================
+   Modern Wizard Stepper, Glassmorphism Cards, & Validation Glow Styles
+   ========================================================================== */
+
+/* 1. Guided Stepper Layout */
+.wizard-stepper-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 1.5rem 0.5rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 1rem;
+    scrollbar-width: none; /* Hide scrollbar for clean UI */
+}
+.wizard-stepper-container::-webkit-scrollbar {
+    display: none;
+}
+
+.wizard-step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    min-width: 75px;
+    flex-grow: 1;
+    transition: all 0.3s ease;
+}
+
+.wizard-step-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: var(--tblr-bg-surface, #ffffff);
+    border: 2px solid var(--slh-border-color, #e2e8f0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--slh-text-secondary, #64748b);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--slh-shadow-sm);
+    position: relative;
+}
+
+.wizard-step-title {
+    margin-top: 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600 !important;
+    color: var(--slh-text-secondary);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Connective Line */
+.wizard-step-progress-line {
+    position: absolute;
+    top: 36px;
+    left: 40px;
+    right: 40px;
+    height: 2px;
+    background-color: var(--slh-border-color);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.wizard-step-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #206bc4 0%, #4299e1 100%);
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Stepper States */
+.wizard-step-item.active .wizard-step-circle {
+    border-color: #206bc4;
+    color: #206bc4;
+    box-shadow: 0 0 0 4px rgba(32, 107, 196, 0.15);
+    transform: scale(1.1);
+}
+.wizard-step-item.active .wizard-step-title {
+    color: #206bc4;
+    font-weight: 700 !important;
+}
+
+.wizard-step-item.completed .wizard-step-circle {
+    background-color: #2fb344;
+    border-color: #2fb344;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(47, 179, 68, 0.2);
+}
+.wizard-step-item.completed .wizard-step-title {
+    color: #2fb344;
+}
+
+/* 2. Glassmorphism Card Headers & Modern Icons */
+.glass-card-header {
+    background: var(--slh-glass-bg) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    border-bottom: 1px solid var(--slh-glass-border) !important;
+    padding: 1rem 1.25rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: border-color 0.3s ease;
+}
+
+.glass-card-header .icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background-color: rgba(32, 107, 196, 0.08);
+    color: #206bc4;
+    margin-right: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+[data-bs-theme="dark"] .glass-card-header .icon-wrapper {
+    background-color: rgba(32, 107, 196, 0.15);
+    color: #4299e1;
+}
+
+/* 3. Glowing Validation & Validation States */
+@keyframes pulse-glow-warning {
+    0% { box-shadow: 0 0 0 0 rgba(214, 57, 57, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(214, 57, 57, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(214, 57, 57, 0); }
+}
+
+@keyframes pulse-glow-success {
+    0% { box-shadow: 0 0 0 0 rgba(47, 179, 68, 0.25); }
+    70% { box-shadow: 0 0 0 6px rgba(47, 179, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(47, 179, 68, 0); }
+}
+
+.glow-warning-card {
+    border-color: #d63939 !important;
+    box-shadow: 0 0 12px rgba(214, 57, 57, 0.15) !important;
+    animation: pulse-glow-warning 2s infinite;
+}
+
+.glow-warning-input {
+    border-color: #d63939 !important;
+    background-color: rgba(214, 57, 57, 0.02) !important;
+}
+.glow-warning-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(214, 57, 57, 0.25) !important;
+}
+
+.glow-success-card {
+    border-color: rgba(47, 179, 68, 0.4) !important;
+    box-shadow: 0 0 8px rgba(47, 179, 68, 0.08) !important;
+}
+
+/* 4. Smooth Content Fading Transitions */
+.wizard-step-section {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1), transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    display: none;
+}
+
+.wizard-step-section.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.wizard-step-section.all-visible {
+    display: block !important;
+    opacity: 1 !important;
+    transform: none !important;
+    margin-bottom: 2rem;
+}
+
+/* 5. Navigation Buttons & Micro-interactions */
+.wizard-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    padding: 0.6rem 1.5rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+.wizard-nav-btn svg {
+    transition: transform 0.2s ease;
+}
+.wizard-nav-btn-prev:hover svg {
+    transform: translateX(-4px);
+}
+.wizard-nav-btn-next:hover svg {
+    transform: translateX(4px);
+}
+
+/* Real-time Indicator Badges */
+.badge-interactive {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.35em 0.65em;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background-color: var(--tblr-bg-surface-secondary, #f1f5f9);
+    color: var(--slh-text-secondary);
+    border: 1px solid var(--slh-border-color);
+    transition: all 0.3s ease;
+}
+
+[data-bs-theme="dark"] .badge-interactive {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.badge-interactive.active-glow {
+    background-color: rgba(32, 107, 196, 0.1);
+    color: #206bc4;
+    border-color: rgba(32, 107, 196, 0.2);
+}
+
+.badge-interactive.success-glow {
+    background-color: rgba(47, 179, 68, 0.1);
+    color: #2fb344;
+    border-color: rgba(47, 179, 68, 0.2);
+}
+
+.badge-interactive.warning-glow {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.2);
+}
+
+.badge-interactive.danger-glow {
+    background-color: rgba(214, 57, 57, 0.1);
+    color: #d63939;
+    border-color: rgba(214, 57, 57, 0.2);
+    animation: pulse-glow-warning 2s infinite;
+}
+
+.water-pulse-drop {
+    display: inline-block;
+    animation: pulse-glow-success 2.5s infinite;
+    border-radius: 50%;
+}
+
+/* Prefill Skeleton Mask Animations */
+@keyframes skeleton-mask-pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1.0; }
+    100% { opacity: 0.6; }
+}
+
+.input-skeleton-mask {
+    position: relative;
+    pointer-events: none !important;
+}
+
+.input-skeleton-mask::after {
+    content: "" !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, #e2e8f0 25%, #edf2f7 50%, #e2e8f0 75%) !important;
+    background-size: 200% 100% !important;
+    animation: skeleton-mask-pulse 1.5s infinite ease-in-out !important;
+    border-radius: 6px !important;
+    z-index: 10 !important;
+}
+
+[data-bs-theme="dark"] .input-skeleton-mask::after {
+    background: linear-gradient(90deg, #1a202c 25%, #2d3748 50%, #1a202c 75%) !important;
+}
+
+/* Collapsible Mini Performance Graph */
+.mini-graph-container {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mini-graph-canvas-wrapper {
+    position: relative;
+    height: 180px;
+    width: 100%;
+}
+
+/* Gestures Touch Visual Clues */
+.touch-swipe-cue {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(32, 107, 196, 0.15);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #206bc4;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+.touch-swipe-cue-left {
+    left: 10px;
+}
+
+.touch-swipe-cue-right {
+    right: 10px;
+}
+
+
