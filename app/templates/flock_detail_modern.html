@@ -2649,6 +2649,45 @@
       }, 100);
   }
 
+  // Listen for Theme Changes to Dynamically Adapt Chart Colors
+  window.addEventListener("themeChanged", (e) => {
+      const newTheme = e.detail.theme;
+      const isDark = newTheme === "dark";
+      const textColor = isDark ? "#94a3b8" : "#64748b";
+      const gridColor = isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.04)";
+
+      const charts = [
+          generalChartInstance,
+          hatchingEggChartInstance,
+          waterChartInstance,
+          feedChartInstance,
+          maleChartInstance,
+          femaleChartInstance,
+          weeklyPerformanceChartInstance,
+          hatchChartInstance
+      ];
+
+      charts.forEach(chart => {
+          if (chart && chart.options) {
+              if (chart.options.scales) {
+                  Object.keys(chart.options.scales).forEach(scaleKey => {
+                      const scale = chart.options.scales[scaleKey];
+                      if (scale.grid) {
+                          scale.grid.color = gridColor;
+                      }
+                      if (scale.ticks) {
+                          scale.ticks.color = textColor;
+                      }
+                  });
+              }
+              if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                  chart.options.plugins.legend.labels.color = textColor;
+              }
+              chart.update();
+          }
+      });
+  });
+
   document.addEventListener("fullscreenchange", onFullScreenChange);
   document.addEventListener("webkitfullscreenchange", onFullScreenChange);
   document.addEventListener("mozfullscreenchange", onFullScreenChange);

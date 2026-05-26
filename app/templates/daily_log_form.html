@@ -10,364 +10,566 @@
 {% else %}
   <form id="dailyLogForm" method="POST" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-          <input type="hidden" name="override_validation" id="override_validation" value="false">
-    <div class="card mb-3">
-      <div class="card-header sticky-header bg-primary text-white">General Info <span class="house-name-display"></span></div>
-      <div class="card-body">
-        <div class="mb-3">
-          <label for="house_id" class="form-label">House</label>
-          <select class="form-select form-select-lg" id="house_id" name="house_id" required onchange="onSelectionChange()">
-            {% for house in houses %}
-              {# Pass phase info in data attribute #}
-              {% set flock = house.flocks|selectattr("status", "equalto", "Active")|first %}
-              <option value="{{ house.id }}"
-                      data-phase="{{ flock.phase if flock else 'Rearing' }}"
-                      {{ 'selected' if (log and log.flock.house_id == house.id) or (selected_house_id == house.id) else '' }}>
-                {{ house.name }}
-              </option>
-            {% endfor %}
-          </select>
-          <div id="last_fill_date_display" class="form-text text-muted mt-1 small" style="display: none;">
-             Last log entry: <span id="last_fill_date_val" class="fw-bold"></span>
-          </div>
-          {% if log %}
-             <input type="hidden" id="phase_val" value="{{ log.flock.phase }}">
-          {% endif %}
-        </div>
-        <div class="mb-3">
-          <label for="date" class="form-label">Date</label>
-          <div class="input-group">
-              <input type="date" class="form-control form-control-lg" id="date" name="date" required
-                     value="{{ log.date if log else (selected_date if selected_date else date_today) }}"
-                     onchange="onSelectionChange()">
-              {% if log %}
-                  <span class="input-group-text text-success fw-bold" title="Data loaded from existing log">✅ Data Loaded</span>
-              {% endif %}
-          </div>
-        </div>
-      </div>
-    </div>
+    <input type="hidden" name="override_validation" id="override_validation" value="false">
 
-    <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-body">Mortality & Culls <span class="house-name-display"></span></div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="mortality_male" id="mortality_male" placeholder="Mortality Male" value="{{ log.mortality_male if log else 0 }}">
-              <label for="mortality_male">Mortality Male</label>
+    <!-- Stepper Progress Tracker -->
+    <div class="card mb-4" id="stepperCard">
+        <div class="card-body p-2">
+            <div class="d-flex justify-content-between align-items-center mb-1 px-3 pt-2">
+                <span class="text-uppercase tracking-wider fw-bold text-muted" style="font-size: 0.72rem; letter-spacing: 0.08em;">Data Entry Progress</span>
+                <button type="button" class="btn btn-ghost-secondary btn-sm d-flex align-items-center gap-1 py-1" id="toggleLayoutBtn" onclick="toggleLayoutMode()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-layout-list" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M4 14m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /></svg>
+                    <span id="toggleLayoutText" style="font-size: 0.78rem;">Show All Sections</span>
+                </button>
             </div>
-          </div>
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="mortality_female" id="mortality_female" placeholder="Mortality Female" value="{{ log.mortality_female if log else 0 }}">
-              <label for="mortality_female">Mortality Female</label>
-            </div>
-          </div>
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="culls_male" id="culls_male" placeholder="Culls Male" value="{{ log.culls_male if log else 0 }}">
-              <label for="culls_male">Culls Male</label>
-            </div>
-          </div>
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="number" class="form-control form-control-lg" name="culls_female" id="culls_female" placeholder="Culls Female" value="{{ log.culls_female if log else 0 }}">
-              <label for="culls_female">Culls Female</label>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-3">
-            <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="collapse" data-bs-target="#hospitalSection">
-                Toggle Hospital Data (Male & Female)
-            </button>
-            <div class="collapse" id="hospitalSection">
-                <div class="card card-body bg-light-subtle">
-                    <h6 class="text-body">Hospital Mortality & Culls</h6>
-                    <div class="row">
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Mortality Male (Hosp)</label>
-                            <input type="number" class="form-control form-control-sm" name="mortality_male_hosp" value="{{ log.mortality_male_hosp if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Mortality Female (Hosp)</label>
-                            <input type="number" class="form-control form-control-sm" name="mortality_female_hosp" value="{{ log.mortality_female_hosp if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Culls Male (Hosp)</label>
-                            <input type="number" class="form-control form-control-sm" name="culls_male_hosp" value="{{ log.culls_male_hosp if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Culls Female (Hosp)</label>
-                            <input type="number" class="form-control form-control-sm" name="culls_female_hosp" value="{{ log.culls_female_hosp if log else 0 }}">
-                        </div>
-                    </div>
+            
+            <div class="wizard-stepper-container" id="stepperContainer">
+                <div class="wizard-step-progress-line">
+                    <div class="wizard-step-progress-bar" id="stepperProgressBar"></div>
+                </div>
+                
+                <div class="wizard-step-item active" onclick="goToStep(1)">
+                    <div class="wizard-step-circle">1</div>
+                    <span class="wizard-step-title">General</span>
+                </div>
+                
+                <div class="wizard-step-item" onclick="goToStep(2)">
+                    <div class="wizard-step-circle">2</div>
+                    <span class="wizard-step-title">Mortality</span>
+                </div>
+                
+                <div class="wizard-step-item" onclick="goToStep(3)">
+                    <div class="wizard-step-circle">3</div>
+                    <span class="wizard-step-title">Feed</span>
+                </div>
+                
+                <div class="wizard-step-item" onclick="goToStep(4)">
+                    <div class="wizard-step-circle">4</div>
+                    <span class="wizard-step-title">Water</span>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="mt-2">
-            <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-2" data-bs-toggle="collapse" data-bs-target="#transferSection">
-                Toggle Transfers (In/Out Production)
-            </button>
-            <div class="collapse" id="transferSection">
-                <div class="card card-body bg-light-subtle">
-                    <h6 class="text-body">Transfers</h6>
-                    <div class="row">
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Males -> To Hospital</label>
-                            <input type="number" class="form-control form-control-sm" name="males_moved_to_hosp" value="{{ log.males_moved_to_hosp if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Females -> To Hospital</label>
-                            <input type="number" class="form-control form-control-sm" name="females_moved_to_hosp" value="{{ log.females_moved_to_hosp if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Males -> To Production</label>
-                            <input type="number" class="form-control form-control-sm" name="males_moved_to_prod" value="{{ log.males_moved_to_prod if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-12 mb-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="spiking" id="spiking" {{ 'checked' if log and log.spiking else '' }}>
-                                <label class="form-check-label text-muted small" for="spiking">
-                                    Spiking (Male Movement)
-                                </label>
+    <!-- Collapsible Performance Curve Card -->
+    <div class="card mb-4 border-info d-none" id="miniGraphCard">
+        <div class="card-header bg-info-lt text-info d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#miniGraphSection" style="padding: 0.8rem 1.25rem;">
+            <span class="d-flex align-items-center fw-bold" style="font-size: 0.85rem; letter-spacing: -0.01em;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-line me-2" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19l16 0" /><path d="M4 15l4 -6l4 2l4 -5l4 4" /></svg>
+                7-Day House Performance Curve <span class="house-name-display ms-1"></span>
+            </span>
+            <span class="badge bg-info-lt text-info" style="font-size: 0.72rem; font-weight: 700;">Live Forecast</span>
+        </div>
+        <div class="collapse show" id="miniGraphSection">
+            <div class="card-body p-3">
+                <div class="mini-graph-canvas-wrapper">
+                    <canvas id="miniGraphCanvas"></canvas>
+                </div>
+                <div class="text-muted text-center small mt-2" style="font-size: 0.68rem; letter-spacing: 0.02em;">
+                    💡 today's data point updates and draws dynamically on the trend lines as you type values.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Swipe Touch Visual Indicators -->
+    <div class="touch-swipe-cue touch-swipe-cue-left" id="swipeCueLeft">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 6l-6 6l6 6" /></svg>
+    </div>
+    <div class="touch-swipe-cue touch-swipe-cue-right" id="swipeCueRight">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6" /></svg>
+    </div>
+
+    <!-- STEP 1: GENERAL INFO -->
+    <div class="wizard-step-section active" id="step-section-1">
+        <div class="card mb-3">
+          <div class="card-header glass-card-header" id="header-step-1">
+              <div class="d-flex align-items-center">
+                  <div class="icon-wrapper">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
+                  </div>
+                  <div>
+                      <h3 class="card-title mb-0">General Info <span class="house-name-display text-muted small"></span></h3>
+                      <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Select the operational house and active logging date</p>
+                  </div>
+              </div>
+              <div class="header-status-badge">
+                  <span class="badge-interactive" id="badge-step-1">Pending</span>
+              </div>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="house_id" class="form-label fw-bold">House</label>
+              <select class="form-select form-select-lg" id="house_id" name="house_id" required onchange="onSelectionChange()">
+                {% for house in houses %}
+                  {# Pass phase info in data attribute #}
+                  {% set flock = house.flocks|selectattr("status", "equalto", "Active")|first %}
+                  <option value="{{ house.id }}"
+                          data-phase="{{ flock.phase if flock else 'Rearing' }}"
+                          data-flock-id="{{ flock.id if flock else '' }}"
+                          {{ 'selected' if (log and log.flock.house_id == house.id) or (selected_house_id == house.id) else '' }}>
+                    {{ house.name }}
+                  </option>
+                {% endfor %}
+              </select>
+              <div id="last_fill_date_display" class="form-text text-muted mt-1 small" style="display: none;">
+                 Last log entry: <span id="last_fill_date_val" class="fw-bold text-primary"></span>
+              </div>
+              {% if log %}
+                 <input type="hidden" id="phase_val" value="{{ log.flock.phase }}">
+              {% endif %}
+            </div>
+            <div class="mb-3">
+              <label for="date" class="form-label fw-bold">Date</label>
+              <div class="input-group">
+                  <input type="date" class="form-control form-control-lg" id="date" name="date" required
+                         value="{{ log.date if log else (selected_date if selected_date else date_today) }}"
+                         onchange="onSelectionChange()">
+                  {% if log %}
+                      <span class="input-group-text bg-success-lt text-success fw-bold px-3" title="Data loaded from existing log">✅ Data Loaded</span>
+                  {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- STEP 2: MORTALITY & CULLS -->
+    <div class="wizard-step-section" id="step-section-2">
+        <div class="card mb-3">
+          <div class="card-header glass-card-header" id="header-step-2">
+              <div class="d-flex align-items-center">
+                  <div class="icon-wrapper" style="color: #d63939; background-color: rgba(214, 57, 57, 0.08);">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-activity" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12h4l3 8l4 -16l3 8h4" /></svg>
+                  </div>
+                  <div>
+                      <h3 class="card-title mb-0">Mortality & Culls <span class="house-name-display text-muted small"></span></h3>
+                      <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Daily bird mortality, culls, transfers and spiking</p>
+                  </div>
+              </div>
+              <div class="header-status-badge">
+                  <span class="badge-interactive" id="badge-step-2">Pending</span>
+              </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-12 col-md-6 mb-3">
+                <div class="form-floating">
+                  <input type="number" class="form-control form-control-lg" name="mortality_male" id="mortality_male" placeholder="Mortality Male" value="{{ log.mortality_male if log else 0 }}">
+                  <label for="mortality_male">Mortality Male</label>
+                </div>
+                <div class="mt-1 small px-1 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Mortality Rate: <span id="live-mort-pct-male" class="fw-bold text-primary">0.00%</span></span>
+                    <span id="warning-mort-male" class="d-none"></span>
+                </div>
+              </div>
+              <div class="col-12 col-md-6 mb-3">
+                <div class="form-floating">
+                  <input type="number" class="form-control form-control-lg" name="mortality_female" id="mortality_female" placeholder="Mortality Female" value="{{ log.mortality_female if log else 0 }}">
+                  <label for="mortality_female">Mortality Female</label>
+                </div>
+                <div class="mt-1 small px-1 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Mortality Rate: <span id="live-mort-pct-female" class="fw-bold text-primary">0.00%</span></span>
+                    <span id="warning-mort-female" class="d-none"></span>
+                </div>
+              </div>
+              <div class="col-12 col-md-6 mb-3">
+                <div class="form-floating">
+                  <input type="number" class="form-control form-control-lg" name="culls_male" id="culls_male" placeholder="Culls Male" value="{{ log.culls_male if log else 0 }}">
+                  <label for="culls_male">Culls Male</label>
+                </div>
+              </div>
+              <div class="col-12 col-md-6 mb-3">
+                <div class="form-floating">
+                  <input type="number" class="form-control form-control-lg" name="culls_female" id="culls_female" placeholder="Culls Female" value="{{ log.culls_female if log else 0 }}">
+                  <label for="culls_female">Culls Female</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-3" data-bs-toggle="collapse" data-bs-target="#hospitalSection">
+                    Toggle Hospital Data (Male & Female)
+                </button>
+                <div class="collapse" id="hospitalSection">
+                    <div class="card card-body bg-light-subtle p-3 mb-3 border-dashed">
+                        <h6 class="text-body fw-bold mb-2">Hospital Mortality & Culls</h6>
+                        <div class="row">
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Mortality Male (Hosp)</label>
+                                <input type="number" class="form-control form-control-sm" name="mortality_male_hosp" value="{{ log.mortality_male_hosp if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Mortality Female (Hosp)</label>
+                                <input type="number" class="form-control form-control-sm" name="mortality_female_hosp" value="{{ log.mortality_female_hosp if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Culls Male (Hosp)</label>
+                                <input type="number" class="form-control form-control-sm" name="culls_male_hosp" value="{{ log.culls_male_hosp if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Culls Female (Hosp)</label>
+                                <input type="number" class="form-control form-control-sm" name="culls_female_hosp" value="{{ log.culls_female_hosp if log else 0 }}">
                             </div>
                         </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Females -> To Production</label>
-                            <input type="number" class="form-control form-control-sm" name="females_moved_to_prod" value="{{ log.females_moved_to_prod if log else 0 }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100 mb-3" data-bs-toggle="collapse" data-bs-target="#transferSection">
+                    Toggle Transfers (In/Out Production)
+                </button>
+                <div class="collapse" id="transferSection">
+                    <div class="card card-body bg-light-subtle p-3 mb-3 border-dashed">
+                        <h6 class="text-body fw-bold mb-2">Transfers & Movements</h6>
+                        <div class="row">
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Males -> To Hospital</label>
+                                <input type="number" class="form-control form-control-sm" name="males_moved_to_hosp" value="{{ log.males_moved_to_hosp if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Females -> To Hospital</label>
+                                <input type="number" class="form-control form-control-sm" name="females_moved_to_hosp" value="{{ log.females_moved_to_hosp if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Males -> To Production</label>
+                                <input type="number" class="form-control form-control-sm" name="males_moved_to_prod" value="{{ log.males_moved_to_prod if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-12 mb-2 mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="spiking" id="spiking" {{ 'checked' if log and log.spiking else '' }}>
+                                    <label class="form-check-label text-muted small fw-bold" for="spiking">
+                                        Spiking (Male Movement Active)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Females -> To Production</label>
+                                <input type="number" class="form-control form-control-sm" name="females_moved_to_prod" value="{{ log.females_moved_to_prod if log else 0 }}">
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <h6 class="text-body fw-bold mb-2">Flock Adjustment (Overall Stock)</h6>
+                        <div class="row">
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Males -> Adjust In Flock</label>
+                                <input type="number" class="form-control form-control-sm" name="males_in_flock" value="{{ log.males_in_flock if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Males -> Adjust Out of Flock</label>
+                                <input type="number" class="form-control form-control-sm" name="males_out_flock" value="{{ log.males_out_flock if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Females -> Adjust In Flock</label>
+                                <input type="number" class="form-control form-control-sm" name="females_in_flock" value="{{ log.females_in_flock if log else 0 }}">
+                            </div>
+                            <div class="col-12 col-md-6 mb-2">
+                                <label class="form-label small">Females -> Adjust Out of Flock</label>
+                                <input type="number" class="form-control form-control-sm" name="females_out_flock" value="{{ log.females_out_flock if log else 0 }}">
+                            </div>
                         </div>
                     </div>
                 </div>
-                    <hr>
-                    <h6 class="text-body">In/Out of Flock (Overall Stock)</h6>
-                    <div class="row">
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Males -> In Flock</label>
-                            <input type="number" class="form-control form-control-sm" name="males_in_flock" value="{{ log.males_in_flock if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Males -> Out of Flock</label>
-                            <input type="number" class="form-control form-control-sm" name="males_out_flock" value="{{ log.males_out_flock if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Females -> In Flock</label>
-                            <input type="number" class="form-control form-control-sm" name="females_in_flock" value="{{ log.females_in_flock if log else 0 }}">
-                        </div>
-                        <div class="col-12 col-md-6 mb-2">
-                            <label class="form-label small">Females -> Out of Flock</label>
-                            <input type="number" class="form-control form-control-sm" name="females_out_flock" value="{{ log.females_out_flock if log else 0 }}">
-                        </div>
-                    </div>
             </div>
+          </div>
         </div>
-
-      </div>
     </div>
 
-    <div class="card mb-3">
-      <div class="card-header sticky-header bg-success text-white">Feed & Lighting <span class="house-name-display"></span></div>
-      <div class="card-body">
-        <div class="row mb-3">
-            <div class="col-12 col-md-6 mb-2">
-              <div class="form-floating">
-                <input type="time" class="form-control form-control-lg" name="light_on_time" id="light_on_time" placeholder="Light On" value="{{ log.light_on_time if log else '' }}">
-                <label for="light_on_time">Light On Time</label>
+    <!-- STEP 3: FEED & LIGHTING -->
+    <div class="wizard-step-section" id="step-section-3">
+        <div class="card mb-3">
+          <div class="card-header glass-card-header" id="header-step-3">
+              <div class="d-flex align-items-center">
+                  <div class="icon-wrapper" style="color: #2fb344; background-color: rgba(47, 179, 68, 0.08);">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-tools-kitchen-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 3v12h-5c-.029 -3.682 .173 -7.364 -.5 -11h5.5z" /><path d="M19 15v6h-3v-6" /><path d="M14 5a3.001 3.001 0 0 0 -5.657 -1.3a3.5 3.5 0 0 0 -2.343 3.3v8h8V5z" /><path d="M6 15v6h3v-6" /><path d="M14 9h-8" /></svg>
+                  </div>
+                  <div>
+                      <h3 class="card-title mb-0">Feed & Lighting <span class="house-name-display text-muted small"></span></h3>
+                      <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Feeding program, feed code allotments, and day light hours</p>
+                  </div>
               </div>
-            </div>
-            <div class="col-12 col-md-6 mb-2">
-              <div class="form-floating">
-                <input type="time" class="form-control form-control-lg" name="light_off_time" id="light_off_time" placeholder="Light Off" value="{{ log.light_off_time if log else '' }}">
-                <label for="light_off_time">Light Off Time</label>
+              <div class="header-status-badge">
+                  <span class="badge-interactive" id="badge-step-3">Pending</span>
               </div>
-            </div>
-        </div>
-        <hr>
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <label class="form-label">Feed Program</label>
-                <select class="form-select form-select-lg" name="feed_program">
-                    <option value="Full Feed" {{ 'selected' if log and log.feed_program == 'Full Feed' else '' }}>Full Feed</option>
-                    <option value="Skip-a-day" {{ 'selected' if log and log.feed_program == 'Skip-a-day' else '' }}>Skip-a-day</option>
-                    <option value="2/1" {{ 'selected' if log and log.feed_program == '2/1' else '' }}>2/1</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Male Feed Code</label>
-                <select class="form-select form-select-lg" name="feed_code_male_id">
-                    <option value="">-- Select Code --</option>
-                    {% for fc in feed_codes %}
-                    <option value="{{ fc.id }}" {{ 'selected' if log and log.feed_code_male_id == fc.id else '' }}>{{ fc.code }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Female Feed Code</label>
-                <select class="form-select form-select-lg" name="feed_code_female_id">
-                    <option value="">-- Select Code --</option>
-                    {% for fc in feed_codes %}
-                    <option value="{{ fc.id }}" {{ 'selected' if log and log.feed_code_female_id == fc.id else '' }}>{{ fc.code }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="row">
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="number" step="0.01" class="form-control form-control-lg" name="feed_male_gp_bird" id="feed_male_gp_bird" placeholder="Male Feed (g/bird)" value="{{ log.feed_male_gp_bird if log and log.feed_male_gp_bird else '' }}">
-              <label for="feed_male_gp_bird">Male Feed (g/bird)</label>
-            </div>
-            <div class="mt-1 small text-muted px-2">Auto Calc: <span id="live-feed-calc-male" class="fw-bold text-primary">0 kg</span></div>
           </div>
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="number" step="0.01" class="form-control form-control-lg" name="feed_female_gp_bird" id="feed_female_gp_bird" placeholder="Female Feed (g/bird)" value="{{ log.feed_female_gp_bird if log and log.feed_female_gp_bird else '' }}">
-              <label for="feed_female_gp_bird">Female Feed (g/bird)</label>
-            </div>
-            <div class="mt-1 small text-muted px-2">Auto Calc: <span id="live-feed-calc-female" class="fw-bold text-primary">0 kg</span></div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="time" class="form-control form-control-lg" name="feed_cleanup_start" id="feed_cleanup_start" placeholder="Feed Cleanup Start" value="{{ log.feed_cleanup_start if log else '' }}">
-              <label for="feed_cleanup_start">Feed Cleanup Start</label>
-            </div>
-          </div>
-          <div class="col-12 col-md-6 mb-2">
-            <div class="form-floating">
-              <input type="time" class="form-control form-control-lg" name="feed_cleanup_end" id="feed_cleanup_end" placeholder="Feed Cleanup End" value="{{ log.feed_cleanup_end if log else '' }}">
-              <label for="feed_cleanup_end">Feed Cleanup End</label>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card mb-3">
-      <div class="card-header sticky-header bg-info text-white">Water Readings (Enter Whole Numbers) <span class="house-name-display"></span></div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-12 col-md-4 mb-2">
-            <label class="form-label">Reading 1</label>
-            <input type="number" class="form-control form-control-lg" name="water_reading_1" value="{{ log.water_reading_1 if log else 0 }}" onchange="calculateWater()">
-          </div>
-          <div class="col-12 col-md-4 mb-2">
-            <label class="form-label">Reading 2</label>
-            <input type="number" class="form-control form-control-lg" name="water_reading_2" value="{{ log.water_reading_2 if log else 0 }}" onchange="calculateWater()">
-          </div>
-          <div class="col-12 col-md-4 mb-2">
-            <label class="form-label">Reading 3</label>
-            <input type="number" class="form-control form-control-lg" name="water_reading_3" value="{{ log.water_reading_3 if log else 0 }}" onchange="calculateWater()">
-          </div>
-        </div>
-        <div class="mb-3">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="flushing" id="flushing" {{ 'checked' if log and log.flushing else '' }}>
-                <label class="form-check-label" for="flushing">
-                    Flushing Active?
-                </label>
-            </div>
-        </div>
-        <small class="text-muted">
-          12h Consumption: <span id="water_12h">0</span> Liters
-        </small>
-      </div>
-    </div>
-
-    <div class="card mb-3">
-      <div class="card-header sticky-header bg-warning text-body">Production <span class="house-name-display"></span></div>
-      <div class="card-body">
-        <div class="mb-3">
-          <label class="form-label">Eggs Collected</label>
-          <input type="number" class="form-control form-control-lg" name="eggs_collected" id="eggs_collected" value="{{ log.eggs_collected if log else 0 }}">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">Egg Weight (avg)</label>
-          <input type="number" step="0.01" class="form-control form-control-lg" name="egg_weight" id="egg_weight" value="{{ log.egg_weight if log else 0 }}">
-        </div>
-        <label class="form-label">Cull Eggs</label>
-        <div class="row">
-          <div class="col-12 col-md-3"><input type="number" class="form-control form-control-sm" name="cull_eggs_jumbo" placeholder="Jumbo" value="{{ log.cull_eggs_jumbo if log else '' }}"></div>
-          <div class="col-12 col-md-3"><input type="number" class="form-control form-control-sm" name="cull_eggs_small" placeholder="Small" value="{{ log.cull_eggs_small if log else '' }}"></div>
-          <div class="col-12 col-md-3"><input type="number" class="form-control form-control-sm" name="cull_eggs_abnormal" placeholder="Abnormal" value="{{ log.cull_eggs_abnormal if log else '' }}"></div>
-          <div class="col-12 col-md-3"><input type="number" class="form-control form-control-sm" name="cull_eggs_crack" placeholder="Crack" value="{{ log.cull_eggs_crack if log else '' }}"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card mb-3">
-      <div class="card-header sticky-header bg-dark text-white">Remarks <span class="house-name-display"></span></div>
-      <div class="card-body">
-        <div class="mb-3">
-          <label class="form-label">Supervisor Notes for the Day</label>
-          <textarea class="form-control form-control-lg" name="remarks" rows="3" placeholder="Enter any general remarks or observations...">{{ log.remarks if log else '' }}</textarea>
-        </div>
-      </div>
-    </div>
-
-    {% if vaccines_due %}
-    <div class="card mb-3 border-info">
-      <div class="card-header sticky-header bg-info text-white d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#vaccinesSection">
-        <span>Vaccinations (Pending / Done Today) <span class="house-name-display"></span></span>
-        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
-      </div>
-      <div class="collapse" id="vaccinesSection">
           <div class="card-body">
-            <div class="alert alert-light border small mb-2">
-                Below are vaccines scheduled around this date or marked as completed today.
-                Check the box to mark as <strong>Completed on {{ (log.date if log else selected_date) | date_fmt }}</strong>.
+            <div class="row mb-3">
+                <div class="col-12 col-md-6 mb-2">
+                  <div class="form-floating">
+                    <input type="time" class="form-control form-control-lg" name="light_on_time" id="light_on_time" placeholder="Light On" value="{{ log.light_on_time if log else '' }}">
+                    <label for="light_on_time">Light On Time</label>
+                  </div>
+                </div>
+                <div class="col-12 col-md-6 mb-2">
+                  <div class="form-floating">
+                    <input type="time" class="form-control form-control-lg" name="light_off_time" id="light_off_time" placeholder="Light Off" value="{{ log.light_off_time if log else '' }}">
+                    <label for="light_off_time">Light Off Time</label>
+                  </div>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-sm table-striped">
-                    <thead>
-                        <tr>
-                            <th>Status</th>
-                            <th>Age</th>
-                            <th>Vaccine</th>
-                            <th>Est. Date</th>
-                            <th>Mark Completed</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for v in vaccines_due %}
-                        <tr class="{{ 'table-success' if v.actual_date else '' }}">
-                            <td>
-                                <input type="hidden" name="vaccine_present_ids" value="{{ v.id }}">
-                                {% if v.actual_date %}
-                                    <span class="badge bg-success text-white">Done</span>
-                                {% else %}
-                                    <span class="badge bg-warning text-body">Pending</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ v.age_code }}</td>
-                            <td>{{ v.vaccine_name }}</td>
-                            <td>{{ v.est_date }}</td>
-                            <td>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="vaccine_completed_ids" value="{{ v.id }}" id="vac_{{ v.id }}" {{ 'checked' if v.actual_date else '' }}>
-                                    <label class="form-check-label" for="vac_{{ v.id }}">Completed</label>
-                                </div>
-                            </td>
-                        </tr>
+            <hr class="my-3">
+            <div class="row mb-3">
+                <div class="col-12 col-md-4 mb-2">
+                    <label class="form-label fw-bold">Feed Program</label>
+                    <select class="form-select form-select-lg" name="feed_program">
+                        <option value="Full Feed" {{ 'selected' if log and log.feed_program == 'Full Feed' else '' }}>Full Feed</option>
+                        <option value="Skip-a-day" {{ 'selected' if log and log.feed_program == 'Skip-a-day' else '' }}>Skip-a-day</option>
+                        <option value="2/1" {{ 'selected' if log and log.feed_program == '2/1' else '' }}>2/1</option>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4 mb-2">
+                    <label class="form-label fw-bold">Male Feed Code</label>
+                    <select class="form-select form-select-lg" name="feed_code_male_id">
+                        <option value="">-- Select Code --</option>
+                        {% for fc in feed_codes %}
+                        <option value="{{ fc.id }}" {{ 'selected' if log and log.feed_code_male_id == fc.id else '' }}>{{ fc.code }}</option>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    </select>
+                </div>
+                <div class="col-12 col-md-4 mb-2">
+                    <label class="form-label fw-bold">Female Feed Code</label>
+                    <select class="form-select form-select-lg" name="feed_code_female_id">
+                        <option value="">-- Select Code --</option>
+                        {% for fc in feed_codes %}
+                        <option value="{{ fc.id }}" {{ 'selected' if log and log.feed_code_female_id == fc.id else '' }}>{{ fc.code }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-12 col-md-6 mb-2">
+                <div class="form-floating">
+                  <input type="number" step="0.01" class="form-control form-control-lg" name="feed_male_gp_bird" id="feed_male_gp_bird" placeholder="Male Feed (g/bird)" value="{{ log.feed_male_gp_bird if log and log.feed_male_gp_bird else '' }}">
+                  <label for="feed_male_gp_bird">Male Feed (g/bird)</label>
+                </div>
+                <div class="mt-2 small px-2">
+                    <span class="badge-interactive active-glow">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calculator" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M9 14h6" /><path d="M12 6v4" /><path d="M10 8h4" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 17h.01" /><path d="M12 17h.01" /><path d="M16 17h.01" /></svg>
+                        Male Total: <span id="live-feed-calc-male" class="fw-bold">0.00 kg</span>
+                    </span>
+                </div>
+              </div>
+              <div class="col-12 col-md-6 mb-2">
+                <div class="form-floating">
+                  <input type="number" step="0.01" class="form-control form-control-lg" name="feed_female_gp_bird" id="feed_female_gp_bird" placeholder="Female Feed (g/bird)" value="{{ log.feed_female_gp_bird if log and log.feed_female_gp_bird else '' }}">
+                  <label for="feed_female_gp_bird">Female Feed (g/bird)</label>
+                </div>
+                <div class="mt-2 small px-2">
+                    <span class="badge-interactive active-glow">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calculator" width="16" height="16" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M9 14h6" /><path d="M12 6v4" /><path d="M10 8h4" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 17h.01" /><path d="M12 17h.01" /><path d="M16 17h.01" /></svg>
+                        Female Total: <span id="live-feed-calc-female" class="fw-bold">0.00 kg</span>
+                    </span>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12 col-md-6 mb-2">
+                <div class="form-floating">
+                  <input type="time" class="form-control form-control-lg" name="feed_cleanup_start" id="feed_cleanup_start" placeholder="Feed Cleanup Start" value="{{ log.feed_cleanup_start if log else '' }}">
+                  <label for="feed_cleanup_start">Feed Cleanup Start</label>
+                </div>
+              </div>
+              <div class="col-12 col-md-6 mb-2">
+                <div class="form-floating">
+                  <input type="time" class="form-control form-control-lg" name="feed_cleanup_end" id="feed_cleanup_end" placeholder="Feed Cleanup End" value="{{ log.feed_cleanup_end if log else '' }}">
+                  <label for="feed_cleanup_end">Feed Cleanup End</label>
+                </div>
+              </div>
             </div>
           </div>
-      </div>
+        </div>
     </div>
-    {% endif %}
 
-    <div class="d-flex gap-2 mb-5">
-        <button type="button" class="btn btn-primary flex-grow-1" onclick="triggerUpdateModal()">{{ 'Update Log' if log else 'Submit Log' }}</button>
+    <!-- STEP 4: WATER READINGS -->
+    <div class="wizard-step-section" id="step-section-4">
+        <div class="card mb-3">
+          <div class="card-header glass-card-header" id="header-step-4">
+              <div class="d-flex align-items-center">
+                  <div class="icon-wrapper" style="color: #4299e1; background-color: rgba(66, 153, 225, 0.08);">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-droplet" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6.8 11a6 6 0 1 0 10.396 0l-5.197 -8l-5.2 8z" /><path d="M12 3v5" /></svg>
+                  </div>
+                  <div>
+                      <h3 class="card-title mb-0">Water Readings <span class="house-name-display text-muted small"></span></h3>
+                      <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Daily meter readings and line flushing logs (Whole Numbers)</p>
+                  </div>
+              </div>
+              <div class="header-status-badge">
+                  <span class="badge-interactive" id="badge-step-4">Pending</span>
+              </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-12 col-md-4 mb-2">
+                <label class="form-label fw-bold">Reading 1 (m³ × 100)</label>
+                <input type="number" class="form-control form-control-lg" name="water_reading_1" value="{{ log.water_reading_1 if log else 0 }}" onchange="calculateWater()">
+              </div>
+              <div class="col-12 col-md-4 mb-2">
+                <label class="form-label fw-bold">Reading 2 (m³ × 100)</label>
+                <input type="number" class="form-control form-control-lg" name="water_reading_2" value="{{ log.water_reading_2 if log else 0 }}" onchange="calculateWater()">
+              </div>
+              <div class="col-12 col-md-4 mb-2">
+                <label class="form-label fw-bold">Reading 3 (m³ × 100)</label>
+                <input type="number" class="form-control form-control-lg" name="water_reading_3" value="{{ log.water_reading_3 if log else 0 }}" onchange="calculateWater()">
+              </div>
+            </div>
+            <div class="mb-3 d-flex justify-content-between align-items-center">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="flushing" id="flushing" {{ 'checked' if log and log.flushing else '' }}>
+                    <label class="form-check-label text-muted small fw-bold" for="flushing">
+                        Line Flushing Administered Today?
+                    </label>
+                </div>
+                
+                <span class="badge-interactive" id="water-consumption-badge">
+                    Pending input
+                </span>
+            </div>
+            <div class="card bg-light-subtle p-3 text-start mb-0 border-dashed">
+              <h5 class="text-body fw-bold mb-1">Interactive Water Totals</h5>
+              <div class="text-muted small">
+                  Based on difference of readings, the computed 12h water intake is <strong class="text-primary"><span id="water_12h">0.00</span> Liters</strong>.
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- STEP 5: PRODUCTION, REMARKS, VACCINES -->
+    <div class="wizard-step-section" id="step-section-5">
+        <!-- Card 5.1: Production -->
+        <div class="card mb-3">
+          <div class="card-header glass-card-header" id="header-step-5">
+              <div class="d-flex align-items-center">
+                  <div class="icon-wrapper" style="color: #f59e0b; background-color: rgba(245, 158, 11, 0.08);">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-egg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 12c0 4.418 -3.582 8 -8 8s-8 -3.582 -8 -8c0 -4.418 3.582 -10 8 -10s8 5.582 8 10z" /></svg>
+                  </div>
+                  <div>
+                      <h3 class="card-title mb-0">Production & Remarks <span class="house-name-display text-muted small"></span></h3>
+                      <p class="text-muted mb-0 small" style="font-size: 0.75rem;">Egg counts, egg quality weights, and notes</p>
+                  </div>
+              </div>
+              <div class="header-status-badge">
+                  <span class="badge-interactive" id="badge-step-5">Pending</span>
+              </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+                <div class="col-12 col-md-6 mb-3">
+                  <label class="form-label fw-bold">Eggs Collected</label>
+                  <input type="number" class="form-control form-control-lg" name="eggs_collected" id="eggs_collected" value="{{ log.eggs_collected if log else 0 }}">
+                </div>
+                <div class="col-12 col-md-6 mb-3">
+                  <label class="form-label fw-bold">Egg Weight (g - avg)</label>
+                  <input type="number" step="0.01" class="form-control form-control-lg" name="egg_weight" id="egg_weight" value="{{ log.egg_weight if log else 0 }}">
+                </div>
+            </div>
+            
+            <label class="form-label fw-bold mb-2">Cull Eggs Classification</label>
+            <div class="row mb-2">
+              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_jumbo" placeholder="Jumbo" value="{{ log.cull_eggs_jumbo if log else '' }}"><div class="text-muted small text-center mt-1">Jumbo</div></div>
+              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_small" placeholder="Small" value="{{ log.cull_eggs_small if log else '' }}"><div class="text-muted small text-center mt-1">Small</div></div>
+              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_abnormal" placeholder="Abnormal" value="{{ log.cull_eggs_abnormal if log else '' }}"><div class="text-muted small text-center mt-1">Abnormal</div></div>
+              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_crack" placeholder="Crack" value="{{ log.cull_eggs_crack if log else '' }}"><div class="text-muted small text-center mt-1">Crack</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5.2: Remarks -->
+        <div class="card mb-3">
+          <div class="card-header bg-light-subtle py-2">
+              <h4 class="card-title text-muted mb-0 small" style="font-size: 0.85rem;">Supervisor Observations</h4>
+          </div>
+          <div class="card-body">
+            <div class="mb-0">
+              <textarea class="form-control form-control-lg" name="remarks" rows="3" placeholder="Enter any general remarks, observations, or system details...">{{ log.remarks if log else '' }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5.3: Vaccinations (Conditional) -->
+        {% if vaccines_due %}
+        <div class="card mb-3 border-info">
+          <div class="card-header sticky-header bg-info text-white d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#vaccinesSection">
+            <span>Vaccinations (Pending / Done Today) <span class="house-name-display"></span></span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-down text-white" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M6 9l6 6l6 -6" /></svg>
+          </div>
+          <div class="collapse" id="vaccinesSection">
+              <div class="card-body">
+                <div class="alert alert-light border small mb-2">
+                    Below are vaccines scheduled around this date or marked as completed today.
+                    Check the box to mark as <strong>Completed on {{ (log.date if log else selected_date) | date_fmt }}</strong>.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Age</th>
+                                <th>Vaccine</th>
+                                <th>Est. Date</th>
+                                <th>Mark Completed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for v in vaccines_due %}
+                            <tr class="{{ 'table-success' if v.actual_date else '' }}">
+                                <td>
+                                    <input type="hidden" name="vaccine_present_ids" value="{{ v.id }}">
+                                    {% if v.actual_date %}
+                                        <span class="badge bg-success text-white">Done</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-body">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ v.age_code }}</td>
+                                <td>{{ v.vaccine_name }}</td>
+                                <td>{{ v.est_date }}</td>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="vaccine_completed_ids" value="{{ v.id }}" id="vac_{{ v.id }}" {{ 'checked' if v.actual_date else '' }}>
+                                        <label class="form-check-label" for="vac_{{ v.id }}">Completed</label>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+              </div>
+          </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- WIZARD STEP NAVIGATION CONTROLS -->
+    <div class="d-flex justify-content-between align-items-center mb-5 gap-3" id="wizardNavControls">
+        <button type="button" class="btn btn-outline-secondary wizard-nav-btn wizard-nav-btn-prev py-2 px-3" id="btnPrevStep" onclick="navigateStep(-1)">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-narrow-left" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M5 12l4 4" /><path d="M5 12l4 -4" /></svg>
+            Previous
+        </button>
+        <button type="button" class="btn btn-primary wizard-nav-btn wizard-nav-btn-next flex-grow-1 py-2" id="btnNextStep" onclick="navigateStep(1)">
+            Next Step
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-narrow-right" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M15 16l4 -4" /><path d="M15 8l4 4" /></svg>
+        </button>
+        <button type="button" class="btn btn-success wizard-nav-btn flex-grow-1 py-2 d-none" id="btnSubmitWizard" onclick="triggerUpdateModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-check" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
+            {{ 'Update Log' if log else 'Submit Log' }}
+        </button>
         {% if log and is_admin %}
-        <button type="button" class="btn btn-danger" onclick="triggerDeleteModal()">Delete Log</button>
+        <button type="button" class="btn btn-danger py-2" id="btnDeleteWizard" onclick="triggerDeleteModal()">Delete</button>
+        {% endif %}
+    </div>
+
+    <!-- LEGACY VIEW CONTROLS (Only visible in Show All Mode) -->
+    <div class="d-flex gap-2 mb-5 d-none" id="legacySubmitControls">
+        <button type="button" class="btn btn-primary flex-grow-1 py-2 fw-bold" onclick="triggerUpdateModal()">{{ 'Update Log' if log else 'Submit Log' }}</button>
+        {% if log and is_admin %}
+        <button type="button" class="btn btn-danger py-2" onclick="triggerDeleteModal()">Delete Log</button>
         {% endif %}
     </div>
   </form>
+
 
   <!-- Update/Submit Confirmation Modal -->
   <div class="modal fade" id="updateConfirmModal" tabindex="-1" aria-hidden="true">
@@ -469,6 +671,28 @@
       </div>
   </div>
 
+  <!-- Restore Draft Modal -->
+  <div class="modal fade" id="restoreDraftModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-sm">          <div class="modal-content">
+              <div class="modal-status bg-primary"></div>
+              <div class="modal-body text-center py-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-primary icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width: 4rem; height: 4rem; margin: 0 auto; display: block;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -5v5h5" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 5v-5h-5" /></svg>
+                  <h3>Unsaved progress found</h3>
+                  <div class="text-muted">We found an unsaved local draft for this House and Date. Would you like to restore it and continue?</div>
+              </div>
+              <div class="modal-footer">
+                  <div class="w-100">
+                      <div class="row">
+                          <div class="col"><button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal" onclick="discardLocalDraft()">Discard</button></div>
+                          <div class="col"><button type="button" class="btn btn-primary w-100 fw-bold" data-bs-dismiss="modal" onclick="restoreLocalDraft()">Restore</button></div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+
   <!-- Delete Log Modal -->
   <div class="modal fade" id="deleteLogModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-sm">          <div class="modal-content">
@@ -496,19 +720,422 @@
               </div>
           </div>
       </div>
-  </div>
-  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     {% if not log and not selected_date %}
     // Set default date to today only for new logs (if no date selected)
     document.getElementById('date').valueAsDate = new Date();
     {% endif %}
 
+    let currentStep = 1;
+    let layoutMode = localStorage.getItem('slh_form_layout_mode') || 'wizard';
+    const isExistingLog = {{ 'true' if log else 'false' }};
+    let isUserModified = false;
+    let modifiedSteps = {};
+
+    let miniChart = null;
+    let autoSaveTimeout = null;
+
+    function getDraftKey() {
+        let houseId = document.getElementById('house_id')?.value;
+        let dateVal = document.getElementById('date')?.value;
+        return (houseId && dateVal) ? `slh_draft_${houseId}_${dateVal}` : null;
+    }
+
+    function triggerAutoSave() {
+        if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(saveLocalDraft, 500);
+    }
+
+    function saveLocalDraft() {
+        if (!isUserModified) return;
+        let key = getDraftKey();
+        if (!key) return;
+        
+        let form = document.querySelector('form');
+        if (!form) return;
+        
+        let formData = {};
+        let elements = form.querySelectorAll('input, select, textarea');
+        elements.forEach(el => {
+            if (el.name && el.type !== 'hidden' && el.type !== 'submit') {
+                if (el.type === 'checkbox') {
+                    formData[el.name] = el.checked;
+                } else if (el.type === 'radio') {
+                    if (el.checked) formData[el.name] = el.value;
+                } else {
+                    formData[el.name] = el.value;
+                }
+            }
+        });
+        
+        localStorage.setItem(key, JSON.stringify(formData));
+        console.log('Draft saved successfully:', key);
+    }
+
+    function restoreLocalDraft() {
+        let key = getDraftKey();
+        if (!key) return;
+        
+        let dataStr = localStorage.getItem(key);
+        if (!dataStr) return;
+        
+        try {
+            let data = JSON.parse(dataStr);
+            let form = document.querySelector('form');
+            if (!form) return;
+            
+            Object.keys(data).forEach(name => {
+                let inputs = form.querySelectorAll(`[name="${name}"]`);
+                if (inputs.length > 0) {
+                    inputs.forEach(input => {
+                        if (input.type === 'checkbox') {
+                            input.checked = !!data[name];
+                        } else if (input.type === 'radio') {
+                            if (input.value === data[name]) input.checked = true;
+                        } else {
+                            input.value = data[name];
+                        }
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
+                }
+            });
+            
+            // Mark all steps as modified because we are restoring user-entered draft data
+            isUserModified = true;
+            for (let i = 1; i <= 5; i++) {
+                modifiedSteps[i] = true;
+            }
+
+            calculateWater();
+            calculateLiveFeed();
+            validateRealTimeValues();
+            updateMiniGraphLive();
+            
+            console.log('Draft restored successfully!');
+        } catch (e) {
+            console.error('Failed to parse draft:', e);
+        }
+    }
+
+    function discardLocalDraft() {
+        let key = getDraftKey();
+        if (key) {
+            localStorage.removeItem(key);
+            console.log('Draft discarded:', key);
+        }
+    }
+
+    function togglePrefillSkeletons(show) {
+        const inputNames = [
+            'feed_program', 'feed_code_male_id', 'feed_code_female_id',
+            'feed_male_gp_bird', 'feed_female_gp_bird',
+            'feed_cleanup_start', 'feed_cleanup_end',
+            'light_on_time', 'light_off_time'
+        ];
+        inputNames.forEach(name => {
+            let input = document.querySelector(`[name="${name}"]`);
+            if (input) {
+                let container = input.closest('.mb-3') || input.parentElement;
+                if (container) {
+                    if (show) {
+                        container.classList.add('input-skeleton-mask');
+                    } else {
+                        container.classList.remove('input-skeleton-mask');
+                    }
+                }
+            }
+        });
+    }
+
+    function fetchPerformanceTrend(flockId, dateVal) {
+        if (!flockId || !dateVal) return;
+        const card = document.getElementById('miniGraphCard');
+        
+        fetch(`/api/daily_log/trend?flock_id=${flockId}&date=${dateVal}`)
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error('Failed to fetch trend data');
+            })
+            .then(data => {
+                if (data && data.trend && data.trend.length > 0) {
+                    if (card) card.classList.remove('d-none');
+                    initMiniGraph(data);
+                } else {
+                    if (card) card.classList.add('d-none');
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching trend:', err);
+                if (card) card.classList.add('d-none');
+            });
+    }
+
+    function initMiniGraph(data) {
+        const canvas = document.getElementById('miniGraphCanvas');
+        if (!canvas) return;
+
+        if (miniChart) {
+            miniChart.destroy();
+            miniChart = null;
+        }
+
+        let trend = data.trend || [];
+        let todayStr = document.getElementById('date').value;
+        
+        let todayInTrend = trend.find(t => t.date === todayStr);
+        if (!todayInTrend) {
+            trend.push({
+                date: todayStr,
+                mort_f_pct: 0.0,
+                egg_prod_pct: 0.0,
+                is_today_draft: true
+            });
+        }
+
+        trend.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let labels = trend.map(t => {
+            let d = new Date(t.date);
+            return isNaN(d.getTime()) ? t.date : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+        });
+
+        let eggData = trend.map(t => t.egg_prod_pct || 0.0);
+        let mortData = trend.map(t => t.mort_f_pct || 0.0);
+
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        const ctx = canvas.getContext('2d');
+        
+        let eggGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        eggGradient.addColorStop(0, 'rgba(32, 107, 196, 0.25)');
+        eggGradient.addColorStop(1, 'rgba(32, 107, 196, 0.00)');
+
+        let mortGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        mortGradient.addColorStop(0, 'rgba(214, 57, 57, 0.25)');
+        mortGradient.addColorStop(1, 'rgba(214, 57, 57, 0.00)');
+
+        miniChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Egg Prod %',
+                        data: eggData,
+                        borderColor: '#206bc4',
+                        backgroundColor: eggGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointRadius: trend.map(t => t.is_today_draft ? 5 : 3),
+                        pointBackgroundColor: trend.map(t => t.is_today_draft ? '#206bc4' : '#fff'),
+                        yAxisID: 'yEgg'
+                    },
+                    {
+                        label: 'Mortality Female %',
+                        data: mortData,
+                        borderColor: '#d63939',
+                        backgroundColor: mortGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointRadius: trend.map(t => t.is_today_draft ? 5 : 3),
+                        pointBackgroundColor: trend.map(t => t.is_today_draft ? '#d63939' : '#fff'),
+                        yAxisID: 'yMort'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            font: { size: 10, weight: '600' },
+                            color: textColor
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        padding: 8,
+                        titleFont: { size: 11 },
+                        bodyFont: { size: 11 }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 9 }, color: textColor }
+                    },
+                    yEgg: {
+                        type: 'linear',
+                        position: 'left',
+                        min: 0,
+                        max: 100,
+                        grid: { color: gridColor },
+                        ticks: {
+                            font: { size: 9 },
+                            color: textColor,
+                            callback: val => val + '%'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Egg Production',
+                            font: { size: 9, weight: 'bold' },
+                            color: textColor
+                        }
+                    },
+                    yMort: {
+                        type: 'linear',
+                        position: 'right',
+                        min: 0,
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            font: { size: 9 },
+                            color: textColor,
+                            callback: val => val.toFixed(2) + '%'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Mortality',
+                            font: { size: 9, weight: 'bold' },
+                            color: textColor
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add visual top buffer 1.1x standard rule
+        let allMortValues = [...miniChart.data.datasets[1].data];
+        let maxMort = Math.max(...allMortValues, 0.05);
+        miniChart.options.scales.yMort.max = maxMort * 1.1;
+        miniChart.update('none');
+
+        updateMiniGraphLive();
+    }
+
+    function updateMiniGraphLive() {
+        if (!miniChart) return;
+        
+        let eggsCollected = parseFloat(document.getElementById('eggs_collected')?.value) || 0;
+        let femaleStock = currentStockF;
+        let eggProdPct = femaleStock > 0 ? (eggsCollected / femaleStock * 100) : 0;
+        
+        let mortFemale = parseFloat(document.getElementById('mortality_female')?.value) || 0;
+        let mortF_Pct = femaleStock > 0 ? (mortFemale / femaleStock * 100) : 0;
+        
+        let chartDataLength = miniChart.data.labels.length;
+        if (chartDataLength > 0) {
+            miniChart.data.datasets[0].data[chartDataLength - 1] = eggProdPct;
+            miniChart.data.datasets[1].data[chartDataLength - 1] = mortF_Pct;
+            
+            let allMortValues = [...miniChart.data.datasets[1].data];
+            let maxMort = Math.max(...allMortValues, 0.05);
+            miniChart.options.scales.yMort.max = maxMort * 1.1;
+
+            miniChart.update('none');
+        }
+    }
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    function setupSwipeGestures() {
+        const sections = document.querySelectorAll('.wizard-step-section');
+        sections.forEach(section => {
+            section.addEventListener('touchstart', (e) => {
+                if (layoutMode !== 'wizard') return;
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            section.addEventListener('touchend', (e) => {
+                if (layoutMode !== 'wizard') return;
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipeGesture();
+            }, { passive: true });
+        });
+    }
+
+    function handleSwipeGesture() {
+        let diffX = touchEndX - touchStartX;
+        let diffY = touchEndY - touchStartY;
+        
+        if (Math.abs(diffX) > 75 && Math.abs(diffY) < 30) {
+            if (diffX < 0) {
+                if (currentStep < 5) {
+                    showSwipeCue('right');
+                    goToStep(currentStep + 1);
+                }
+            } else {
+                if (currentStep > 1) {
+                    showSwipeCue('left');
+                    goToStep(currentStep - 1);
+                }
+            }
+        }
+    }
+
+    function showSwipeCue(direction) {
+        let cue = document.getElementById(direction === 'left' ? 'swipeCueLeft' : 'swipeCueRight');
+        if (cue) {
+            cue.style.opacity = '1';
+            cue.style.transform = 'translateY(-50%) scale(1.1)';
+            setTimeout(() => {
+                cue.style.opacity = '0';
+                cue.style.transform = 'translateY(-50%) scale(1)';
+            }, 300);
+        }
+    }
+
+    window.addEventListener('themeChanged', () => {
+        if (!miniChart) return;
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        miniChart.options.scales.x.ticks.color = textColor;
+        miniChart.options.scales.yEgg.grid.color = gridColor;
+        miniChart.options.scales.yEgg.ticks.color = textColor;
+        miniChart.options.scales.yEgg.title.color = textColor;
+        miniChart.options.scales.yMort.ticks.color = textColor;
+        miniChart.options.scales.yMort.title.color = textColor;
+        miniChart.options.plugins.legend.labels.color = textColor;
+        
+        const ctx = document.getElementById('miniGraphCanvas').getContext('2d');
+        let eggGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        eggGradient.addColorStop(0, 'rgba(32, 107, 196, 0.25)');
+        eggGradient.addColorStop(1, 'rgba(32, 107, 196, 0.00)');
+
+        let mortGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        mortGradient.addColorStop(0, 'rgba(214, 57, 57, 0.25)');
+        mortGradient.addColorStop(1, 'rgba(214, 57, 57, 0.00)');
+        
+        miniChart.data.datasets[0].backgroundColor = eggGradient;
+        miniChart.data.datasets[1].backgroundColor = mortGradient;
+        
+        miniChart.update();
+    });
+
     function prefillPreviousData() {
         let houseId = document.getElementById('house_id').value;
         let dateVal = document.getElementById('date').value;
 
         if (!houseId || !dateVal) return;
+
+        // Toggle skeletons on during latency phase
+        togglePrefillSkeletons(true);
 
         fetch(`{{ url_for('get_previous_daily_log_data') }}?house_id=${houseId}&date=${dateVal}`)
             .then(response => {
@@ -532,7 +1159,9 @@
                 yesterdayWater = data.yesterday_water || 0;
                 yesterdayWaterR1 = data.yesterday_water_r1 || 0;
                 flockAgeWeeks = data.flock_age_weeks || 0;
+                
                 calculateLiveFeed();
+                validateRealTimeValues();
 
                 {% if not log %}
                 if (data.feed_program) document.querySelector('[name="feed_program"]').value = data.feed_program;
@@ -557,10 +1186,27 @@
                 let lightOffInput = document.querySelector('[name="light_off_time"]');
                 if (data.light_off_time && lightOffInput.value === '') lightOffInput.value = data.light_off_time;
                 {% endif %}
-            })
-            .catch(error => console.log(error));
-    }
+                
+                // Recalculate everything after setting prefilled data
+                calculateLiveFeed();
+                calculateWater();
+                validateRealTimeValues();
 
+                // Fetch Trend Data for Performance Curve Mini-Graph
+                let select = document.getElementById('house_id');
+                if (select && select.options.length > 0 && select.selectedIndex >= 0) {
+                    let flockId = select.options[select.selectedIndex].getAttribute('data-flock-id');
+                    if (flockId) {
+                        fetchPerformanceTrend(flockId, dateVal);
+                    }
+                }
+            })
+            .catch(error => console.log(error))
+            .finally(() => {
+                // Always disable skeleton overlays on settle
+                togglePrefillSkeletons(false);
+            });
+    }
 
     function fetchLatestLogDate() {
         let houseId = document.getElementById('house_id').value;
@@ -576,7 +1222,6 @@
             })
             .then(data => {
                 if (data.latest_date) {
-                    // format date from yyyy-mm-dd to dd-mm-yyyy
                     let dateParts = data.latest_date.split('-');
                     let formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
                     document.getElementById('last_fill_date_val').textContent = formattedDate;
@@ -590,7 +1235,6 @@
                 document.getElementById('last_fill_date_display').style.display = 'none';
             });
     }
-
 
     function updateHouseNameDisplay() {
         let select = document.getElementById('house_id');
@@ -610,40 +1254,83 @@
         let houseId = document.getElementById('house_id').value;
         let dateVal = document.getElementById('date').value;
         if (houseId && dateVal) {
-             // Reload page with query params to check for existing data
              window.location.href = "{{ url_for('daily_log') }}?house_id=" + houseId + "&date=" + dateVal;
              return;
         }
         {% endif %}
-
     }
 
     function calculateWater() {
-        // Get values (integers)
         let r1 = parseFloat(document.getElementsByName('water_reading_1')[0].value) || 0;
         let r3 = parseFloat(document.getElementsByName('water_reading_3')[0].value) || 0;
         
-        // Convert to real values (divide by 100)
         let r1_real = r1 / 100;
         let r3_real = r3 / 100;
         
-        // 12h Consumption = (R3 - R1) * 1000 Liters
-        // Wait, unit: meter cubic. 1 m3 = 1000 L.
-        // Formula: (R3 - R1) * 1000.
-        
         let consumption12h = (r3_real - r1_real) * 1000;
         document.getElementById('water_12h').innerText = consumption12h.toFixed(2);
+        
+        validateRealTimeValues();
     }
 
-    // Initialize
+    // Initialize layout and state
     window.onload = function() {
         updateHouseNameDisplay();
         prefillPreviousData(); // Always call to get global validation state
         {% if not log %}
         fetchLatestLogDate();
         {% endif %}
-    };
+        
+        applyLayoutMode();
+        setupInputEventListeners();
 
+        // Setup draft auto-saving and user modification tracking on all form fields
+        document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+            // Exclude metadata fields (House and Date) so changes to them don't trigger auto-save or mark steps completed
+            if (el.id === 'house_id' || el.id === 'date') return;
+
+            const sectionEl = el.closest('.wizard-step-section');
+            let stepNum = null;
+            if (sectionEl) {
+                const match = sectionEl.id.match(/step-section-(\d+)/);
+                if (match) stepNum = parseInt(match[1]);
+            }
+
+            const handler = () => {
+                isUserModified = true;
+                if (stepNum) {
+                    modifiedSteps[stepNum] = true;
+                }
+                triggerAutoSave();
+            };
+
+            el.addEventListener('input', handler);
+            el.addEventListener('change', handler);
+        });
+
+        // Clear draft on successful form submit
+        let form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                let key = getDraftKey();
+                if (key) localStorage.removeItem(key);
+            });
+        }
+
+        // Check if an unsaved draft exists to prompt user
+        let key = getDraftKey();
+        if (key && localStorage.getItem(key)) {
+            try {
+                let restoreModal = new bootstrap.Modal(document.getElementById('restoreDraftModal'));
+                restoreModal.show();
+            } catch (err) {
+                console.error('Failed to trigger restore modal:', err);
+            }
+        }
+
+        // Setup horizontal swipe gestures
+        setupSwipeGestures();
+    };
 
     let currentStockM = 0;
     let currentStockF = 0;
@@ -652,14 +1339,12 @@
     let dayMinus2FeedM = 0;
     let dayMinus2FeedF = 0;
 
-    // Summary Details Globals
     let yesterdayEggPct = 0;
     let yesterdayMortPctF = 0;
     let yesterdayMortPctM = 0;
     let yesterdayWater = 0;
     let yesterdayWaterR1 = 0;
     let flockAgeWeeks = 0;
-
 
     function getMultiplier() {
         let progElem = document.querySelector('[name="feed_program"]');
@@ -679,11 +1364,337 @@
 
         document.getElementById('live-feed-calc-male').innerText = maleTotalKg.toFixed(2) + ' kg';
         document.getElementById('live-feed-calc-female').innerText = femaleTotalKg.toFixed(2) + ' kg';
+        
+        validateRealTimeValues();
     }
 
-    document.getElementById('feed_male_gp_bird').addEventListener('input', calculateLiveFeed);
-    document.getElementById('feed_female_gp_bird').addEventListener('input', calculateLiveFeed);
-    document.querySelector('[name="feed_program"]').addEventListener('change', calculateLiveFeed);
+    // ==========================================
+    // WIZARD / STEPPER NAVIGATION AND VALIDATION
+    // ==========================================
+
+    function toggleLayoutMode() {
+        if (layoutMode === 'wizard') {
+            layoutMode = 'all';
+        } else {
+            layoutMode = 'wizard';
+        }
+        localStorage.setItem('slh_form_layout_mode', layoutMode);
+        applyLayoutMode();
+    }
+
+    function applyLayoutMode() {
+        const toggleText = document.getElementById('toggleLayoutText');
+        const stepperCard = document.getElementById('stepperCard');
+        const wizardNavControls = document.getElementById('wizardNavControls');
+        const legacySubmitControls = document.getElementById('legacySubmitControls');
+        
+        if (layoutMode === 'all') {
+            toggleText.innerText = 'Show Wizard Stepper';
+            document.querySelectorAll('.wizard-step-section').forEach(sec => {
+                sec.classList.add('all-visible');
+                sec.classList.remove('active');
+            });
+            if (wizardNavControls) wizardNavControls.classList.add('d-none');
+            if (legacySubmitControls) legacySubmitControls.classList.remove('d-none');
+        } else {
+            toggleText.innerText = 'Show All Sections';
+            document.querySelectorAll('.wizard-step-section').forEach(sec => {
+                sec.classList.remove('all-visible');
+            });
+            if (wizardNavControls) wizardNavControls.classList.remove('d-none');
+            if (legacySubmitControls) legacySubmitControls.classList.add('d-none');
+            goToStep(currentStep);
+        }
+        validateRealTimeValues();
+    }
+
+    function goToStep(step) {
+        if (layoutMode === 'all') return;
+        
+        // Prevent going forward if the current step is not valid
+        if (step > currentStep) {
+            for (let i = currentStep; i < step; i++) {
+                if (!validateStep(i)) return;
+            }
+        }
+        
+        currentStep = step;
+        
+        // Toggle Step Sections
+        document.querySelectorAll('.wizard-step-section').forEach((sec, idx) => {
+            if (idx + 1 === step) {
+                sec.classList.add('active');
+            } else {
+                sec.classList.remove('active');
+            }
+        });
+        
+        // Toggle Active Stepper Class
+        document.querySelectorAll('.wizard-step-item').forEach((item, idx) => {
+            if (idx + 1 === step) {
+                item.classList.add('active');
+                item.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+        
+        // Update Buttons Display
+        const btnPrev = document.getElementById('btnPrevStep');
+        const btnNext = document.getElementById('btnNextStep');
+        const btnSubmit = document.getElementById('btnSubmitWizard');
+        
+        if (step === 1) {
+            btnPrev.disabled = true;
+        } else {
+            btnPrev.disabled = false;
+        }
+        
+        if (step === 5) {
+            btnNext.classList.add('d-none');
+            btnSubmit.classList.remove('d-none');
+        } else {
+            btnNext.classList.remove('d-none');
+            btnSubmit.classList.add('d-none');
+        }
+        
+        validateRealTimeValues();
+    }
+
+    function navigateStep(direction) {
+        let target = currentStep + direction;
+        if (target >= 1 && target <= 5) {
+            goToStep(target);
+        }
+    }
+
+    function validateStep(step) {
+        const section = document.getElementById(`step-section-${step}`);
+        if (!section) return true;
+        
+        // Standard HTML5 validation check
+        const inputs = section.querySelectorAll('input[required], select[required]');
+        let valid = true;
+        inputs.forEach(input => {
+            if (!input.checkValidity()) {
+                input.reportValidity();
+                valid = false;
+            }
+        });
+        return valid;
+    }
+
+    function checkStepCompletion(step) {
+        const section = document.getElementById(`step-section-${step}`);
+        if (!section) return false;
+        
+        // Check if all required inputs are completed
+        const required = section.querySelectorAll('input[required], select[required]');
+        for (let input of required) {
+            if (!input.value.trim()) return false;
+        }
+        
+        // Section specific checks for completeness
+        if (step === 2) {
+            // Mortality: both male & female inputs should be populated
+            const mMort = document.getElementById('mortality_male');
+            const fMort = document.getElementById('mortality_female');
+            if (mMort && mMort.value === '') return false;
+            if (fMort && fMort.value === '') return false;
+        }
+        if (step === 3) {
+            // Feed: male and female birds feed inputs should be populated
+            const mFeed = document.getElementById('feed_male_gp_bird');
+            const fFeed = document.getElementById('feed_female_gp_bird');
+            if (mFeed && mFeed.value === '') return false;
+            if (fFeed && fFeed.value === '') return false;
+        }
+        if (step === 4) {
+            // Water: reading 1 and 3 should be non-zero / filled
+            const r1 = document.getElementsByName('water_reading_1')[0];
+            const r3 = document.getElementsByName('water_reading_3')[0];
+            if (r1 && r1.value === '') return false;
+            if (r3 && r3.value === '') return false;
+        }
+        if (step === 5) {
+            // Production: eggs collected should be filled
+            const eggs = document.getElementById('eggs_collected');
+            if (eggs && eggs.value === '') return false;
+        }
+        // If it is a new log and has not been user-modified yet, keep it pending (except Step 1 - General, which is metadata set on load)
+        if (!isExistingLog && step > 1 && !modifiedSteps[step]) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    function updateStepStates() {
+        const totalSteps = 5;
+        
+        for (let i = 1; i <= totalSteps; i++) {
+            const stepItem = document.querySelectorAll('.wizard-step-item')[i-1];
+            const headerBadge = document.getElementById(`badge-step-${i}`);
+            const isCompleted = checkStepCompletion(i);
+            
+            if (isCompleted) {
+                if (stepItem) {
+                    stepItem.classList.add('completed');
+                    stepItem.querySelector('.wizard-step-circle').innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="20" height="20" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
+                    `;
+                }
+                if (headerBadge) {
+                    headerBadge.className = 'badge-interactive success-glow';
+                    headerBadge.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-check" width="16" height="16" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-top: -2px;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
+                        Completed
+                    `;
+                }
+            } else {
+                if (stepItem) {
+                    stepItem.classList.remove('completed');
+                    stepItem.querySelector('.wizard-step-circle').innerHTML = i;
+                }
+                if (headerBadge) {
+                    if (i === currentStep && layoutMode === 'wizard') {
+                        headerBadge.className = 'badge-interactive active-glow';
+                        headerBadge.innerHTML = 'In Progress';
+                    } else {
+                        headerBadge.className = 'badge-interactive';
+                        headerBadge.innerHTML = 'Pending';
+                    }
+                }
+            }
+        }
+        
+        // Update ProgressBar
+        const bar = document.getElementById('stepperProgressBar');
+        if (bar) {
+            let percent = ((currentStep - 1) / 4) * 100;
+            bar.style.width = percent + '%';
+        }
+    }
+
+    function setupInputEventListeners() {
+        // Step 2 Listeners
+        document.getElementById('mortality_male').addEventListener('input', validateRealTimeValues);
+        document.getElementById('mortality_female').addEventListener('input', validateRealTimeValues);
+        document.querySelector('[name="mortality_male_hosp"]').addEventListener('input', validateRealTimeValues);
+        document.querySelector('[name="mortality_female_hosp"]').addEventListener('input', validateRealTimeValues);
+        
+        // Step 3 Listeners
+        document.getElementById('feed_male_gp_bird').addEventListener('input', calculateLiveFeed);
+        document.getElementById('feed_female_gp_bird').addEventListener('input', calculateLiveFeed);
+        document.querySelector('[name="feed_program"]').addEventListener('change', calculateLiveFeed);
+        
+        // Step 4 Listeners
+        document.getElementsByName('water_reading_1')[0].addEventListener('input', calculateWater);
+        document.getElementsByName('water_reading_2')[0].addEventListener('input', calculateWater);
+        document.getElementsByName('water_reading_3')[0].addEventListener('input', calculateWater);
+        
+        // Step 5 Listeners
+        document.getElementById('eggs_collected').addEventListener('input', validateRealTimeValues);
+    }
+
+    function validateRealTimeValues() {
+        // 1. Mortality Warnings & glow
+        let mMortVal = parseInt(document.getElementById('mortality_male').value) || 0;
+        let fMortVal = parseInt(document.getElementById('mortality_female').value) || 0;
+        let mMortHosp = parseInt(document.querySelector('[name="mortality_male_hosp"]').value) || 0;
+        let fMortHosp = parseInt(document.querySelector('[name="mortality_female_hosp"]').value) || 0;
+        
+        let totalMortM = mMortVal + mMortHosp;
+        let totalMortF = fMortVal + fMortHosp;
+        
+        let mPct = currentStockM > 0 ? (totalMortM / currentStockM) * 100 : 0;
+        let fPct = currentStockF > 0 ? (totalMortF / currentStockF) * 100 : 0;
+        
+        document.getElementById('live-mort-pct-male').innerText = mPct.toFixed(2) + '%';
+        document.getElementById('live-mort-pct-female').innerText = fPct.toFixed(2) + '%';
+        
+        let mortCard = document.getElementById('step-section-2').querySelector('.card');
+        let mInput = document.getElementById('mortality_male');
+        let fInput = document.getElementById('mortality_female');
+        let mWarningSpan = document.getElementById('warning-mort-male');
+        let fWarningSpan = document.getElementById('warning-mort-female');
+        
+        let isMortMaleCritical = mPct > 1.0;
+        let isMortFemaleCritical = fPct > 1.0;
+        
+        if (isMortMaleCritical) {
+            mInput.classList.add('glow-warning-input');
+            mWarningSpan.className = 'badge bg-danger text-white';
+            mWarningSpan.innerText = '⚠️ Critical >1%';
+            mWarningSpan.classList.remove('d-none');
+        } else if (mPct > 0.05) {
+            mInput.classList.remove('glow-warning-input');
+            mWarningSpan.className = 'badge bg-warning text-body';
+            mWarningSpan.innerText = 'High Mortality';
+            mWarningSpan.classList.remove('d-none');
+        } else {
+            mInput.classList.remove('glow-warning-input');
+            mWarningSpan.classList.add('d-none');
+        }
+        
+        if (isMortFemaleCritical) {
+            fInput.classList.add('glow-warning-input');
+            fWarningSpan.className = 'badge bg-danger text-white';
+            fWarningSpan.innerText = '⚠️ Critical >1%';
+            fWarningSpan.classList.remove('d-none');
+        } else if (fPct > 0.05) {
+            fInput.classList.remove('glow-warning-input');
+            fWarningSpan.className = 'badge bg-warning text-body';
+            fWarningSpan.innerText = 'High Mortality';
+            fWarningSpan.classList.remove('d-none');
+        } else {
+            fInput.classList.remove('glow-warning-input');
+            fWarningSpan.classList.add('d-none');
+        }
+        
+        if (isMortMaleCritical || isMortFemaleCritical) {
+            mortCard.classList.add('glow-warning-card');
+        } else {
+            mortCard.classList.remove('glow-warning-card');
+        }
+        
+        // 2. Water Reading Warnings & droplet glow
+        let r1 = parseFloat(document.getElementsByName('water_reading_1')[0].value) || 0;
+        let r3 = parseFloat(document.getElementsByName('water_reading_3')[0].value) || 0;
+        let r1_real = r1 / 100;
+        let r3_real = r3 / 100;
+        let consumption12h = (r3_real - r1_real) * 1000;
+        
+        let waterCard = document.getElementById('step-section-4').querySelector('.card');
+        let waterIndicator = document.getElementById('water-consumption-badge');
+        
+        if (consumption12h < 0) {
+            waterCard.classList.add('glow-warning-card');
+            waterIndicator.className = 'badge-interactive danger-glow';
+            waterIndicator.innerHTML = '⚠️ Negative flow!';
+        } else if (consumption12h > 0) {
+            waterCard.classList.remove('glow-warning-card');
+            waterIndicator.className = 'badge-interactive success-glow';
+            waterIndicator.innerHTML = `
+                <span class="water-pulse-drop text-primary">💧</span>
+                <span>Flow active</span>
+            `;
+        } else {
+            waterCard.classList.remove('glow-warning-card');
+            waterIndicator.className = 'badge-interactive';
+            waterIndicator.innerHTML = 'Pending input';
+        }
+        
+        // Live update today's coordinate on mini performance graph
+        updateMiniGraphLive();
+
+        // Run stepper completion checklist
+        updateStepStates();
+    }
+
+    // ==========================================
+    // FASTING DAY LOGIC
+    // ==========================================
 
     window.checkFastingDay = function() {
         let progElem = document.querySelector('[name="feed_program"]');
@@ -709,8 +1720,12 @@
         return isFastingDay;
     }
 
+    // ==========================================
+    // MODAL TRIGGERS AND SUBMISSIONS
+    // ==========================================
+
     window.triggerUpdateModal = function() {
-        // Trigger default HTML5 validation first
+        // Trigger default HTML5 validation check
         if (!document.getElementById('dailyLogForm').checkValidity()) {
             document.getElementById('dailyLogForm').reportValidity();
             return;
@@ -723,17 +1738,17 @@
 
         if (program === 'Full Feed') {
             if (maleGpBird <= 0 || femaleGpBird <= 0) {
-                alert("Invalid Entry: Grams per bird for male and female cannot be 0 for Full Feed program.");
+                document.getElementById('errorMessageText').innerHTML = "Invalid Entry: Grams per bird for male and female cannot be 0 for Full Feed program.";
+                let errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+                errorModal.show();
                 return;
             }
         }
 
-        // Populate house name and date
         let houseSelect = document.getElementById('house_id'); if (!houseSelect) return;
         let selectedHouseName = houseSelect.options[houseSelect.selectedIndex].text.trim();
         let selectedDate = document.getElementById('date').value;
 
-        // format date if needed from yyyy-mm-dd to dd/mm/yyyy
         let dateParts = selectedDate.split('-');
         let formattedDate = selectedDate;
         if (dateParts.length === 3) {
@@ -743,7 +1758,6 @@
         document.getElementById('modalHouseName').textContent = selectedHouseName;
         document.getElementById('modalDate').textContent = formattedDate;
 
-        // Check for fasting day warning
         let isFastingDay = checkFastingDay();
         let fastingWarningDiv = document.getElementById('fastingWarningDiv');
 
@@ -776,20 +1790,16 @@
 
         let inEggs = parseInt(document.getElementById('eggs_collected') ? document.getElementById('eggs_collected').value : 0) || 0;
 
-        // Water is calculated on the fly, grab it from UI element
         let elemWater = document.getElementById('water_12h');
         let waterVal = elemWater ? elemWater.innerText : '0';
 
-        // Calculate 24h water
         let r1 = parseFloat(document.getElementsByName('water_reading_1')[0].value) || 0;
         let r1_real = r1 / 100;
         let yesterdayR1_real = yesterdayWaterR1 / 100;
         let water24h = (r1_real - yesterdayR1_real) * 1000;
 
-        // Calculations
         let mortPctF = currentStockF > 0 ? (totalMortF / currentStockF) * 100 : 0;
         let mortPctM = currentStockM > 0 ? (totalMortM / currentStockM) * 100 : 0;
-
         let eggPct = currentStockF > 0 ? (inEggs / currentStockF) * 100 : 0;
 
         if (eggPct > 100) {
@@ -806,7 +1816,6 @@
             return;
         }
 
-        // Validations
         let mortFWarning = '';
         if (mortPctF > 1.0) {
             mortFWarning = '<span class="badge bg-danger text-white ms-2">CRITICAL: Abnormal data (possible wrong input)</span>';
@@ -815,8 +1824,6 @@
         }
 
         let mortMWarning = '';
-        // Assuming we apply the same for males? Requirement only mentioned Female explicitly,
-        // but we'll add basic check for > 1.0%
         if (mortPctM > 1.0) {
              mortMWarning = '<span class="badge bg-danger text-white ms-2">CRITICAL: Abnormal data</span>';
         }
@@ -826,7 +1833,6 @@
         if (eggDiff < -2.0) {
              eggWarning = '<span class="badge bg-warning text-body ms-2">Warning: Drop > 2%</span>';
         } else if (eggDiff > 2.0) {
-             // Exception: Week 25-33
              if (flockAgeWeeks >= 25 && flockAgeWeeks <= 33) {
                  // Do not warn
              } else {
@@ -849,7 +1855,6 @@
             waterWarning = '<span class="badge bg-danger text-white ms-2">CRITICAL: 0 L Consumption</span>';
         }
 
-        // Build HTML
         let html = `
             <div class="card border-0 shadow-none text-start">
                 <div class="card-header bg-light-subtle py-2">
@@ -900,14 +1905,12 @@
         `;
 
         smartSummaryContainer.innerHTML = html;
-        // --- END SUMMARY DETAILS LOGIC ---
 
         let myModal = new bootstrap.Modal(document.getElementById('updateConfirmModal'));
         myModal.show();
     }
 
     function confirmUpdateSubmit() {
-        // Disable button to prevent double submit
         let modalBtn = document.querySelector('#updateConfirmModal .btn-primary');
         if (modalBtn) {
             modalBtn.disabled = true;
@@ -927,7 +1930,6 @@
                 'X-CSRFToken': csrfToken
             }
         })
-
         .then(response => {
             if (!response.ok) {
                 return response.json().then(err => { throw err; });
@@ -935,12 +1937,10 @@
             return response.json();
         })
         .then(data => {
-            // Hide the confirmation modal
             let updateModal = bootstrap.Modal.getInstance(document.getElementById('updateConfirmModal'));
             if (updateModal) updateModal.hide();
 
             if (data.success) {
-                // Populate Transition Modal
                 let houseListHtml = '';
                 if (data.houses && data.houses.length > 0) {
                     data.houses.forEach(house => {
@@ -968,7 +1968,6 @@
 
                 document.getElementById('transitionHouseList').innerHTML = houseListHtml;
 
-                // Show Transition Modal
                 let transitionModal = new bootstrap.Modal(document.getElementById('transitionModal'));
                 transitionModal.show();
             } else {
@@ -984,7 +1983,6 @@
             console.error('Error:', error);
         })
         .finally(() => {
-            // Re-enable the button
             if (modalBtn) {
                 modalBtn.disabled = false;
                 modalBtn.innerHTML = "Yes, {{ 'Update' if log else 'Submit' }}";
@@ -996,7 +1994,6 @@
         let deleteModal = new bootstrap.Modal(document.getElementById('deleteLogModal'));
         deleteModal.show();
     }
-
-</script>
+  </script>
 {% endif %}
 {% endblock %}

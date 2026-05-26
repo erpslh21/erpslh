@@ -31,3 +31,4 @@ logs/
 /backup_patch.js
 /image.png
 
+test_venv/

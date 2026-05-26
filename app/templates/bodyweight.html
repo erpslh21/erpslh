@@ -20,6 +20,7 @@
     </div>
 
     <div class="card">
+        <!-- DEBUG: User={{ current_user.username if current_user.is_authenticated else 'Guest' }}, Role={{ current_user.role if current_user.is_authenticated else 'None' }}, Dept={{ current_user.dept if current_user.is_authenticated else 'None' }} -->
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
                 <li class="nav-item">
@@ -28,6 +29,11 @@
                 <li class="nav-item">
                     <a href="#tab-history" class="nav-link" data-bs-toggle="tab">Bodyweight Grading</a>
                 </li>
+                {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+                <li class="nav-item">
+                    <a href="#tab-excel-export" class="nav-link" data-bs-toggle="tab">Admin Tabular View</a>
+                </li>
+                {% endif %}
             </ul>
         </div>
         <div class="card-body">
@@ -389,8 +395,72 @@
                         {% else %}
                         <div class="text-center py-4 text-muted">No grading data available.</div>
                         {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+                
+                {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+                <div class="tab-pane" id="tab-excel-export">
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-md-6 d-flex align-items-center">
+                            <label class="form-label me-2 mb-0 text-nowrap">Choose House:</label>
+                            <select id="excelHouseSelect" class="form-select">
+                                <option value="">-- Select House --</option>
+                                {% set seen_houses_excel = [] %}
+                                {% for f in active_flocks %}
+                                    {% if f.house.name not in seen_houses_excel %}
+                                        <option value="{{ f.house.name }}">{{ f.house.name }}</option>
+                                        {% set _ = seen_houses_excel.append(f.house.name) %}
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button id="btnCopyExcel" class="btn btn-success btn-sm" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8v-2a2 2 0 0 0 -2 -2h-8a2 2 0 0 0 -2 2v8a2 2 0 0 0 2 2h2" /></svg>
+                                Copy to Clipboard (Excel format)
+                            </button>
+                            <button id="btnDownloadCSV" class="btn btn-outline-success btn-sm ms-2" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-download" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><polyline points="7 11 12 16 17 11" /><line x1="12" y1="4" x2="12" y2="16" /></svg>
+                                Download CSV
+                            </button>
+                        </div>
                     </div>
-                </div>                </div>
+
+                    <div id="excelViewEmpty" class="text-center py-5 text-muted border border-dashed rounded-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-table text-muted mb-2" width="48" height="48" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="4" y1="10" x2="20" y2="10" /><line x1="10" y1="4" x2="10" y2="20" /></svg>
+                        <p class="mb-0">Please select a house to load the bodyweight and uniformity spreadsheet data.</p>
+                    </div>
+
+                    <div id="excelTableContainer" class="table-responsive" style="display: none;">
+                        <table class="table table-bordered table-striped table-hover align-middle" id="excelDataTable" style="font-size: 13px;">
+                            <thead class="bg-primary text-white">
+                                <tr>
+                                    <th rowspan="2" class="text-center align-middle">Week</th>
+                                    <th rowspan="2" class="text-center align-middle">Date</th>
+                                    <th rowspan="2" class="text-center align-middle">Sex</th>
+                                    <th rowspan="2" class="text-center align-middle">Avg BW (g)</th>
+                                    <th rowspan="2" class="text-center align-middle">Avg Unif (%)</th>
+                                    <th colspan="8" class="text-center">Partitions</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-center">P1</th>
+                                    <th class="text-center">P2</th>
+                                    <th class="text-center">P3</th>
+                                    <th class="text-center">P4</th>
+                                    <th class="text-center">P5</th>
+                                    <th class="text-center">P6</th>
+                                    <th class="text-center">P7</th>
+                                    <th class="text-center">P8</th>
+                                </tr>
+                            </thead>
+                            <tbody id="excelTableBody">
+                                <!-- Dynamically populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -784,7 +854,6 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   {% endfor %}
 {% endfor %}
-{% endif %}
 
 
 
@@ -1397,5 +1466,184 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('A network error occurred', 'error');
         });
     }
+
+    // Admin Excel Export data and event handling
+    {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+    const allBodyweightLogs = [
+        {% for log in bodyweight_logs %}
+        {
+            house_name: {{ log.house_name | tojson }},
+            age_weeks: {{ log.age_weeks | tojson }},
+            date: "{{ log.date.strftime('%Y-%m-%d') if log.date else '' }}",
+            avg_m: {{ log.avg_m | tojson }},
+            uni_m: {{ log.uni_m | tojson }},
+            avg_f: {{ log.avg_f | tojson }},
+            uni_f: {{ log.uni_f | tojson }},
+            m_parts: {
+                {% for p in log.m_parts %}
+                "{{ p.name }}": { bw: {{ p.bw }}, unif: {{ p.unif }} },
+                {% endfor %}
+            },
+            f_parts: {
+                {% for p in log.f_parts %}
+                "{{ p.name }}": { bw: {{ p.bw }}, unif: {{ p.unif }} },
+                {% endfor %}
+            }
+        },
+        {% endfor %}
+    ];
+
+    const excelHouseSelect = document.getElementById('excelHouseSelect');
+    const excelViewEmpty = document.getElementById('excelViewEmpty');
+    const excelTableContainer = document.getElementById('excelTableContainer');
+    const excelTableBody = document.getElementById('excelTableBody');
+    const btnCopyExcel = document.getElementById('btnCopyExcel');
+    const btnDownloadCSV = document.getElementById('btnDownloadCSV');
+
+    if (excelHouseSelect) {
+        excelHouseSelect.addEventListener('change', function() {
+            const houseName = this.value;
+            if (!houseName) {
+                excelViewEmpty.style.display = 'block';
+                excelTableContainer.style.display = 'none';
+                btnCopyExcel.disabled = true;
+                btnDownloadCSV.disabled = true;
+                return;
+            }
+
+            const filtered = allBodyweightLogs.filter(log => log.house_name === houseName);
+            filtered.sort((a, b) => a.age_weeks - b.age_weeks);
+
+            excelTableBody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                excelTableBody.innerHTML = '<tr><td colspan="13" class="text-center text-muted">No bodyweight records found for this house.</td></tr>';
+                excelViewEmpty.style.display = 'none';
+                excelTableContainer.style.display = 'block';
+                btnCopyExcel.disabled = true;
+                btnDownloadCSV.disabled = true;
+                return;
+            }
+
+            filtered.forEach(log => {
+                // Render Male row
+                let maleRow = document.createElement('tr');
+                let malePartCells = '';
+                for (let i = 1; i <= 8; i++) {
+                    const part = log.m_parts['M' + i];
+                    if (part) {
+                        malePartCells += `<td class="text-center">${part.bw}g (${part.unif.toFixed(1)}%)</td>`;
+                    } else {
+                        malePartCells += `<td class="text-center text-muted">-</td>`;
+                    }
+                }
+                maleRow.innerHTML = `
+                    <td class="text-center align-middle" rowspan="2"><strong>Week ${log.age_weeks}</strong></td>
+                    <td class="text-center align-middle" rowspan="2">${log.date}</td>
+                    <td class="text-center text-primary font-weight-bold">Male</td>
+                    <td class="text-center text-primary">${log.avg_m || 0}g</td>
+                    <td class="text-center text-primary">${(log.uni_m || 0).toFixed(1)}%</td>
+                    ${malePartCells}
+                `;
+                excelTableBody.appendChild(maleRow);
+
+                // Render Female row
+                let femaleRow = document.createElement('tr');
+                let femalePartCells = '';
+                for (let i = 1; i <= 8; i++) {
+                    const part = log.f_parts['F' + i];
+                    if (part) {
+                        femalePartCells += `<td class="text-center">${part.bw}g (${part.unif.toFixed(1)}%)</td>`;
+                    } else {
+                        femalePartCells += `<td class="text-center text-muted">-</td>`;
+                    }
+                }
+                femaleRow.innerHTML = `
+                    <td class="text-center text-danger font-weight-bold">Female</td>
+                    <td class="text-center text-danger">${log.avg_f || 0}g</td>
+                    <td class="text-center text-danger">${(log.uni_f || 0).toFixed(1)}%</td>
+                    ${femalePartCells}
+                `;
+                excelTableBody.appendChild(femaleRow);
+            });
+
+            excelViewEmpty.style.display = 'none';
+            excelTableContainer.style.display = 'block';
+            btnCopyExcel.disabled = false;
+            btnDownloadCSV.disabled = false;
+        });
+    }
+
+    if (btnCopyExcel) {
+        btnCopyExcel.addEventListener('click', function() {
+            const houseName = excelHouseSelect.value;
+            const filtered = allBodyweightLogs.filter(log => log.house_name === houseName);
+            filtered.sort((a, b) => a.age_weeks - b.age_weeks);
+
+            let tsv = 'Week\tDate\tSex\tAvg BW (g)\tAvg Unif (%)\tP1\tP2\tP3\tP4\tP5\tP6\tP7\tP8\n';
+            filtered.forEach(log => {
+                // Male
+                let maleLine = `${log.age_weeks}\t${log.date}\tMale\t${log.avg_m}\t${log.uni_m.toFixed(1)}`;
+                for (let i = 1; i <= 8; i++) {
+                    const part = log.m_parts['M' + i];
+                    maleLine += `\t${part ? `${part.bw} (${part.unif.toFixed(1)}%)` : '-'}`;
+                }
+                tsv += maleLine + '\n';
+
+                // Female
+                let femaleLine = `${log.age_weeks}\t${log.date}\tFemale\t${log.avg_f}\t${log.uni_f.toFixed(1)}`;
+                for (let i = 1; i <= 8; i++) {
+                    const part = log.f_parts['F' + i];
+                    femaleLine += `\t${part ? `${part.bw} (${part.unif.toFixed(1)}%)` : '-'}`;
+                }
+                tsv += femaleLine + '\n';
+            });
+
+            navigator.clipboard.writeText(tsv).then(() => {
+                showToast('Tabular data copied to clipboard! Paste it into Excel.', 'success');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                showToast('Failed to copy to clipboard', 'error');
+            });
+        });
+    }
+
+    if (btnDownloadCSV) {
+        btnDownloadCSV.addEventListener('click', function() {
+            const houseName = excelHouseSelect.value;
+            const filtered = allBodyweightLogs.filter(log => log.house_name === houseName);
+            filtered.sort((a, b) => a.age_weeks - b.age_weeks);
+
+            let csv = 'Week,Date,Sex,Avg BW (g),Avg Unif (%),P1,P2,P3,P4,P5,P6,P7,P8\n';
+            filtered.forEach(log => {
+                // Male
+                let maleLine = `Week ${log.age_weeks},${log.date},Male,${log.avg_m},${log.uni_m.toFixed(1)}`;
+                for (let i = 1; i <= 8; i++) {
+                    const part = log.m_parts['M' + i];
+                    maleLine += `,${part ? `"${part.bw} (${part.unif.toFixed(1)}%)"` : '"-"'}`;
+                }
+                csv += maleLine + '\n';
+
+                // Female
+                let femaleLine = `Week ${log.age_weeks},${log.date},Female,${log.avg_f},${log.uni_f.toFixed(1)}`;
+                for (let i = 1; i <= 8; i++) {
+                    const part = log.f_parts['F' + i];
+                    femaleLine += `,${part ? `"${part.bw} (${part.unif.toFixed(1)}%)"` : '"-"'}`;
+                }
+                csv += femaleLine + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `bodyweight_uniformity_${houseName.replace(/\s+/g, '_')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    }
+    {% endif %}
 </script>
 {% endblock %}

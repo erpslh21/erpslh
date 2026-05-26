@@ -323,8 +323,8 @@
       {% for flock in active_flocks %}
       <div class="col-sm-6 col-lg-4 mb-4">
         <div
-          class="card shadow-sm h-100 border {% if flock.calculated_phase == 'Brooding' %}border-primary{% elif flock.calculated_phase == 'Growing' %}border-info{% elif flock.calculated_phase == 'Pre-lay' %}border-warning{% else %}border-success{% endif %}"
-          style="border-width: 2px !important; border-radius: 8px"
+          class="card hover-lift h-100 border-top-0 border-start-0 border-end-0 border-bottom-wide {% if flock.calculated_phase == 'Brooding' %}border-primary{% elif flock.calculated_phase == 'Growing' %}border-info{% elif flock.calculated_phase == 'Pre-lay' %}border-warning{% else %}border-success{% endif %}"
+          style="border-width: 4px !important; border-radius: 12px !important;"
         >
           <div class="card-body">
             <div class="d-flex align-items-center justify-content-between mb-3">
