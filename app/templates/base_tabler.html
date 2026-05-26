@@ -1634,8 +1634,8 @@
         }
 
         const userId = "{{ session.get('user_id', '') }}";
-        const rawUserRole = "{{ session.get('user_role', '') }}";
-        const rawUserDept = "{{ session.get('user_dept', '') }}";
+        const rawUserRole = "{{ user_role or session.get('user_role', '') }}";
+        const rawUserDept = "{{ user_dept or session.get('user_dept', '') }}";
 
         let displayRole = rawUserRole || "Guest";
         let displayDept = rawUserDept || "Guest";

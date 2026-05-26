@@ -6,23 +6,31 @@ class MyHTMLParser(HTMLParser):
         self.div_depth = 0
         self.tab_content_depth = -1
         self.history_depth = -1
+        self.in_tab_content = False
 
     def handle_starttag(self, tag, attrs):
         if tag == 'div':
             self.div_depth += 1
+            attr_dict = dict(attrs)
+            if attr_dict.get('class') == 'tab-content':
+                self.tab_content_depth = self.div_depth
+                print(f"tab-content started at depth {self.div_depth}, line {self.getpos()[0]}")
+            if attr_dict.get('id') == 'tab-history':
+                self.history_depth = self.div_depth
+                print(f"tab-history started at depth {self.div_depth}, line {self.getpos()[0]}")
+            if attr_dict.get('id') == 'tab-excel-export':
+                print(f"tab-excel-export started at depth {self.div_depth}, line {self.getpos()[0]}. tab_content_depth={self.tab_content_depth}")
 
     def handle_endtag(self, tag):
         if tag == 'div':
+            if self.div_depth == self.tab_content_depth:
+                print(f"tab-content ended at depth {self.div_depth}, line {self.getpos()[0]}")
+                self.tab_content_depth = -1
+            if self.div_depth == self.history_depth:
+                print(f"tab-history ended at depth {self.div_depth}, line {self.getpos()[0]}")
+                self.history_depth = -1
             self.div_depth -= 1
 
 parser = MyHTMLParser()
 with open("app/templates/bodyweight.html", "r") as f:
-    text = f.read()
-
-lines = text.split('\n')
-for i, line in enumerate(lines):
-    parser.feed(line + '\n')
-    if i + 1 == 397:
-        print(f"At line 397, div_depth is {parser.div_depth}")
-    if i + 1 == 399:
-        print(f"At line 399, div_depth is {parser.div_depth}")
+    parser.feed(f.read())
