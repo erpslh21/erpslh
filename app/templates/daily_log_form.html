@@ -47,13 +47,37 @@
                     <div class="wizard-step-circle">4</div>
                     <span class="wizard-step-title">Water</span>
                 </div>
-                
-                <div class="wizard-step-item" onclick="goToStep(5)">
-                    <div class="wizard-step-circle">5</div>
-                    <span class="wizard-step-title">Submit</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Collapsible Performance Curve Card -->
+    <div class="card mb-4 border-info d-none" id="miniGraphCard">
+        <div class="card-header bg-info-lt text-info d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#miniGraphSection" style="padding: 0.8rem 1.25rem;">
+            <span class="d-flex align-items-center fw-bold" style="font-size: 0.85rem; letter-spacing: -0.01em;">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chart-line me-2" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 19l16 0" /><path d="M4 15l4 -6l4 2l4 -5l4 4" /></svg>
+                7-Day House Performance Curve <span class="house-name-display ms-1"></span>
+            </span>
+            <span class="badge bg-info-lt text-info" style="font-size: 0.72rem; font-weight: 700;">Live Forecast</span>
+        </div>
+        <div class="collapse show" id="miniGraphSection">
+            <div class="card-body p-3">
+                <div class="mini-graph-canvas-wrapper">
+                    <canvas id="miniGraphCanvas"></canvas>
+                </div>
+                <div class="text-muted text-center small mt-2" style="font-size: 0.68rem; letter-spacing: 0.02em;">
+                    💡 today's data point updates and draws dynamically on the trend lines as you type values.
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Swipe Touch Visual Indicators -->
+    <div class="touch-swipe-cue touch-swipe-cue-left" id="swipeCueLeft">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 6l-6 6l6 6" /></svg>
+    </div>
+    <div class="touch-swipe-cue touch-swipe-cue-right" id="swipeCueRight">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-chevron-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 6l6 6l-6 6" /></svg>
     </div>
 
     <!-- STEP 1: GENERAL INFO -->
@@ -82,6 +106,7 @@
                   {% set flock = house.flocks|selectattr("status", "equalto", "Active")|first %}
                   <option value="{{ house.id }}"
                           data-phase="{{ flock.phase if flock else 'Rearing' }}"
+                          data-flock-id="{{ flock.id if flock else '' }}"
                           {{ 'selected' if (log and log.flock.house_id == house.id) or (selected_house_id == house.id) else '' }}>
                     {{ house.name }}
                   </option>
@@ -646,6 +671,28 @@
       </div>
   </div>
 
+  <!-- Restore Draft Modal -->
+  <div class="modal fade" id="restoreDraftModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-sm">          <div class="modal-content">
+              <div class="modal-status bg-primary"></div>
+              <div class="modal-body text-center py-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="icon mb-2 text-primary icon-lg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round" style="width: 4rem; height: 4rem; margin: 0 auto; display: block;"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -5v5h5" /><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 5v-5h-5" /></svg>
+                  <h3>Unsaved progress found</h3>
+                  <div class="text-muted">We found an unsaved local draft for this House and Date. Would you like to restore it and continue?</div>
+              </div>
+              <div class="modal-footer">
+                  <div class="w-100">
+                      <div class="row">
+                          <div class="col"><button type="button" class="btn btn-outline-secondary w-100" data-bs-dismiss="modal" onclick="discardLocalDraft()">Discard</button></div>
+                          <div class="col"><button type="button" class="btn btn-primary w-100 fw-bold" data-bs-dismiss="modal" onclick="restoreLocalDraft()">Restore</button></div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+
   <!-- Delete Log Modal -->
   <div class="modal fade" id="deleteLogModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-sm">          <div class="modal-content">
@@ -673,6 +720,7 @@
               </div>
           </div>
       </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     {% if not log and not selected_date %}
     // Set default date to today only for new logs (if no date selected)
@@ -682,11 +730,402 @@
     let currentStep = 1;
     let layoutMode = localStorage.getItem('slh_form_layout_mode') || 'wizard';
 
+    let miniChart = null;
+    let autoSaveTimeout = null;
+
+    function getDraftKey() {
+        let houseId = document.getElementById('house_id')?.value;
+        let dateVal = document.getElementById('date')?.value;
+        return (houseId && dateVal) ? `slh_draft_${houseId}_${dateVal}` : null;
+    }
+
+    function triggerAutoSave() {
+        if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(saveLocalDraft, 500);
+    }
+
+    function saveLocalDraft() {
+        let key = getDraftKey();
+        if (!key) return;
+        
+        let form = document.querySelector('form');
+        if (!form) return;
+        
+        let formData = {};
+        let elements = form.querySelectorAll('input, select, textarea');
+        elements.forEach(el => {
+            if (el.name && el.type !== 'hidden' && el.type !== 'submit') {
+                if (el.type === 'checkbox') {
+                    formData[el.name] = el.checked;
+                } else if (el.type === 'radio') {
+                    if (el.checked) formData[el.name] = el.value;
+                } else {
+                    formData[el.name] = el.value;
+                }
+            }
+        });
+        
+        localStorage.setItem(key, JSON.stringify(formData));
+        console.log('Draft saved successfully:', key);
+    }
+
+    function restoreLocalDraft() {
+        let key = getDraftKey();
+        if (!key) return;
+        
+        let dataStr = localStorage.getItem(key);
+        if (!dataStr) return;
+        
+        try {
+            let data = JSON.parse(dataStr);
+            let form = document.querySelector('form');
+            if (!form) return;
+            
+            Object.keys(data).forEach(name => {
+                let inputs = form.querySelectorAll(`[name="${name}"]`);
+                if (inputs.length > 0) {
+                    inputs.forEach(input => {
+                        if (input.type === 'checkbox') {
+                            input.checked = !!data[name];
+                        } else if (input.type === 'radio') {
+                            if (input.value === data[name]) input.checked = true;
+                        } else {
+                            input.value = data[name];
+                        }
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    });
+                }
+            });
+            
+            calculateWater();
+            calculateLiveFeed();
+            validateRealTimeValues();
+            updateMiniGraphLive();
+            
+            console.log('Draft restored successfully!');
+        } catch (e) {
+            console.error('Failed to parse draft:', e);
+        }
+    }
+
+    function discardLocalDraft() {
+        let key = getDraftKey();
+        if (key) {
+            localStorage.removeItem(key);
+            console.log('Draft discarded:', key);
+        }
+    }
+
+    function togglePrefillSkeletons(show) {
+        const inputNames = [
+            'feed_program', 'feed_code_male_id', 'feed_code_female_id',
+            'feed_male_gp_bird', 'feed_female_gp_bird',
+            'feed_cleanup_start', 'feed_cleanup_end',
+            'light_on_time', 'light_off_time'
+        ];
+        inputNames.forEach(name => {
+            let input = document.querySelector(`[name="${name}"]`);
+            if (input) {
+                let container = input.closest('.mb-3') || input.parentElement;
+                if (container) {
+                    if (show) {
+                        container.classList.add('input-skeleton-mask');
+                    } else {
+                        container.classList.remove('input-skeleton-mask');
+                    }
+                }
+            }
+        });
+    }
+
+    function fetchPerformanceTrend(flockId, dateVal) {
+        if (!flockId || !dateVal) return;
+        const card = document.getElementById('miniGraphCard');
+        
+        fetch(`/api/daily_log/trend?flock_id=${flockId}&date=${dateVal}`)
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error('Failed to fetch trend data');
+            })
+            .then(data => {
+                if (data && data.trend && data.trend.length > 0) {
+                    if (card) card.classList.remove('d-none');
+                    initMiniGraph(data);
+                } else {
+                    if (card) card.classList.add('d-none');
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching trend:', err);
+                if (card) card.classList.add('d-none');
+            });
+    }
+
+    function initMiniGraph(data) {
+        const canvas = document.getElementById('miniGraphCanvas');
+        if (!canvas) return;
+
+        if (miniChart) {
+            miniChart.destroy();
+            miniChart = null;
+        }
+
+        let trend = data.trend || [];
+        let todayStr = document.getElementById('date').value;
+        
+        let todayInTrend = trend.find(t => t.date === todayStr);
+        if (!todayInTrend) {
+            trend.push({
+                date: todayStr,
+                mort_f_pct: 0.0,
+                egg_prod_pct: 0.0,
+                is_today_draft: true
+            });
+        }
+
+        trend.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        let labels = trend.map(t => {
+            let d = new Date(t.date);
+            return isNaN(d.getTime()) ? t.date : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+        });
+
+        let eggData = trend.map(t => t.egg_prod_pct || 0.0);
+        let mortData = trend.map(t => t.mort_f_pct || 0.0);
+
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        const ctx = canvas.getContext('2d');
+        
+        let eggGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        eggGradient.addColorStop(0, 'rgba(32, 107, 196, 0.25)');
+        eggGradient.addColorStop(1, 'rgba(32, 107, 196, 0.00)');
+
+        let mortGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        mortGradient.addColorStop(0, 'rgba(214, 57, 57, 0.25)');
+        mortGradient.addColorStop(1, 'rgba(214, 57, 57, 0.00)');
+
+        miniChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Egg Prod %',
+                        data: eggData,
+                        borderColor: '#206bc4',
+                        backgroundColor: eggGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointRadius: trend.map(t => t.is_today_draft ? 5 : 3),
+                        pointBackgroundColor: trend.map(t => t.is_today_draft ? '#206bc4' : '#fff'),
+                        yAxisID: 'yEgg'
+                    },
+                    {
+                        label: 'Mortality Female %',
+                        data: mortData,
+                        borderColor: '#d63939',
+                        backgroundColor: mortGradient,
+                        fill: true,
+                        tension: 0.35,
+                        borderWidth: 2,
+                        pointRadius: trend.map(t => t.is_today_draft ? 5 : 3),
+                        pointBackgroundColor: trend.map(t => t.is_today_draft ? '#d63939' : '#fff'),
+                        yAxisID: 'yMort'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            boxWidth: 12,
+                            font: { size: 10, weight: '600' },
+                            color: textColor
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        padding: 8,
+                        titleFont: { size: 11 },
+                        bodyFont: { size: 11 }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 9 }, color: textColor }
+                    },
+                    yEgg: {
+                        type: 'linear',
+                        position: 'left',
+                        min: 0,
+                        max: 100,
+                        grid: { color: gridColor },
+                        ticks: {
+                            font: { size: 9 },
+                            color: textColor,
+                            callback: val => val + '%'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Egg Production',
+                            font: { size: 9, weight: 'bold' },
+                            color: textColor
+                        }
+                    },
+                    yMort: {
+                        type: 'linear',
+                        position: 'right',
+                        min: 0,
+                        grid: { drawOnChartArea: false },
+                        ticks: {
+                            font: { size: 9 },
+                            color: textColor,
+                            callback: val => val.toFixed(2) + '%'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Mortality',
+                            font: { size: 9, weight: 'bold' },
+                            color: textColor
+                        }
+                    }
+                }
+            }
+        });
+
+        // Add visual top buffer 1.1x standard rule
+        let allMortValues = [...miniChart.data.datasets[1].data];
+        let maxMort = Math.max(...allMortValues, 0.05);
+        miniChart.options.scales.yMort.max = maxMort * 1.1;
+        miniChart.update('none');
+
+        updateMiniGraphLive();
+    }
+
+    function updateMiniGraphLive() {
+        if (!miniChart) return;
+        
+        let eggsCollected = parseFloat(document.getElementById('eggs_collected')?.value) || 0;
+        let femaleStock = currentStockF;
+        let eggProdPct = femaleStock > 0 ? (eggsCollected / femaleStock * 100) : 0;
+        
+        let mortFemale = parseFloat(document.getElementById('mortality_female')?.value) || 0;
+        let mortF_Pct = femaleStock > 0 ? (mortFemale / femaleStock * 100) : 0;
+        
+        let chartDataLength = miniChart.data.labels.length;
+        if (chartDataLength > 0) {
+            miniChart.data.datasets[0].data[chartDataLength - 1] = eggProdPct;
+            miniChart.data.datasets[1].data[chartDataLength - 1] = mortF_Pct;
+            
+            let allMortValues = [...miniChart.data.datasets[1].data];
+            let maxMort = Math.max(...allMortValues, 0.05);
+            miniChart.options.scales.yMort.max = maxMort * 1.1;
+
+            miniChart.update('none');
+        }
+    }
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    function setupSwipeGestures() {
+        const sections = document.querySelectorAll('.wizard-step-section');
+        sections.forEach(section => {
+            section.addEventListener('touchstart', (e) => {
+                if (layoutMode !== 'wizard') return;
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            }, { passive: true });
+            
+            section.addEventListener('touchend', (e) => {
+                if (layoutMode !== 'wizard') return;
+                touchEndX = e.changedTouches[0].screenX;
+                touchEndY = e.changedTouches[0].screenY;
+                handleSwipeGesture();
+            }, { passive: true });
+        });
+    }
+
+    function handleSwipeGesture() {
+        let diffX = touchEndX - touchStartX;
+        let diffY = touchEndY - touchStartY;
+        
+        if (Math.abs(diffX) > 75 && Math.abs(diffY) < 30) {
+            if (diffX < 0) {
+                if (currentStep < 5) {
+                    showSwipeCue('right');
+                    goToStep(currentStep + 1);
+                }
+            } else {
+                if (currentStep > 1) {
+                    showSwipeCue('left');
+                    goToStep(currentStep - 1);
+                }
+            }
+        }
+    }
+
+    function showSwipeCue(direction) {
+        let cue = document.getElementById(direction === 'left' ? 'swipeCueLeft' : 'swipeCueRight');
+        if (cue) {
+            cue.style.opacity = '1';
+            cue.style.transform = 'translateY(-50%) scale(1.1)';
+            setTimeout(() => {
+                cue.style.opacity = '0';
+                cue.style.transform = 'translateY(-50%) scale(1)';
+            }, 300);
+        }
+    }
+
+    window.addEventListener('themeChanged', () => {
+        if (!miniChart) return;
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        miniChart.options.scales.x.ticks.color = textColor;
+        miniChart.options.scales.yEgg.grid.color = gridColor;
+        miniChart.options.scales.yEgg.ticks.color = textColor;
+        miniChart.options.scales.yEgg.title.color = textColor;
+        miniChart.options.scales.yMort.ticks.color = textColor;
+        miniChart.options.scales.yMort.title.color = textColor;
+        miniChart.options.plugins.legend.labels.color = textColor;
+        
+        const ctx = document.getElementById('miniGraphCanvas').getContext('2d');
+        let eggGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        eggGradient.addColorStop(0, 'rgba(32, 107, 196, 0.25)');
+        eggGradient.addColorStop(1, 'rgba(32, 107, 196, 0.00)');
+
+        let mortGradient = ctx.createLinearGradient(0, 0, 0, 150);
+        mortGradient.addColorStop(0, 'rgba(214, 57, 57, 0.25)');
+        mortGradient.addColorStop(1, 'rgba(214, 57, 57, 0.00)');
+        
+        miniChart.data.datasets[0].backgroundColor = eggGradient;
+        miniChart.data.datasets[1].backgroundColor = mortGradient;
+        
+        miniChart.update();
+    });
+
     function prefillPreviousData() {
         let houseId = document.getElementById('house_id').value;
         let dateVal = document.getElementById('date').value;
 
         if (!houseId || !dateVal) return;
+
+        // Toggle skeletons on during latency phase
+        togglePrefillSkeletons(true);
 
         fetch(`{{ url_for('get_previous_daily_log_data') }}?house_id=${houseId}&date=${dateVal}`)
             .then(response => {
@@ -742,8 +1181,21 @@
                 calculateLiveFeed();
                 calculateWater();
                 validateRealTimeValues();
+
+                // Fetch Trend Data for Performance Curve Mini-Graph
+                let select = document.getElementById('house_id');
+                if (select && select.options.length > 0 && select.selectedIndex >= 0) {
+                    let flockId = select.options[select.selectedIndex].getAttribute('data-flock-id');
+                    if (flockId) {
+                        fetchPerformanceTrend(flockId, dateVal);
+                    }
+                }
             })
-            .catch(error => console.log(error));
+            .catch(error => console.log(error))
+            .finally(() => {
+                // Always disable skeleton overlays on settle
+                togglePrefillSkeletons(false);
+            });
     }
 
     function fetchLatestLogDate() {
@@ -821,6 +1273,35 @@
         
         applyLayoutMode();
         setupInputEventListeners();
+
+        // Setup draft auto-saving listeners on all inputs
+        document.querySelectorAll('form input, form select, form textarea').forEach(el => {
+            el.addEventListener('input', triggerAutoSave);
+            el.addEventListener('change', triggerAutoSave);
+        });
+
+        // Clear draft on successful form submit
+        let form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                let key = getDraftKey();
+                if (key) localStorage.removeItem(key);
+            });
+        }
+
+        // Check if an unsaved draft exists to prompt user
+        let key = getDraftKey();
+        if (key && localStorage.getItem(key)) {
+            try {
+                let restoreModal = new bootstrap.Modal(document.getElementById('restoreDraftModal'));
+                restoreModal.show();
+            } catch (err) {
+                console.error('Failed to trigger restore modal:', err);
+            }
+        }
+
+        // Setup horizontal swipe gestures
+        setupSwipeGestures();
     };
 
     let currentStockM = 0;
@@ -998,7 +1479,7 @@
             const mFeed = document.getElementById('feed_male_gp_bird');
             const fFeed = document.getElementById('feed_female_gp_bird');
             if (mFeed && mFeed.value === '') return false;
-            if (fMort && fMort.value === '') return false;
+            if (fFeed && fFeed.value === '') return false;
         }
         if (step === 4) {
             // Water: reading 1 and 3 should be non-zero / filled
@@ -1172,6 +1653,9 @@
             waterIndicator.innerHTML = 'Pending input';
         }
         
+        // Live update today's coordinate on mini performance graph
+        updateMiniGraphLive();
+
         // Run stepper completion checklist
         updateStepStates();
     }
