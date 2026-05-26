@@ -570,7 +570,7 @@
                     class="dropdown-item theme-toggle-btn"
                   >
                     <span
-                      class="theme-icon-dark d-none d-flex align-items-center"
+                      class="theme-icon-dark align-items-center" style="display: none;"
                       ><svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="icon icon-tabler icon-tabler-moon me-2"
@@ -591,7 +591,7 @@
                       Enable Dark Mode</span
                     >
                     <span
-                      class="theme-icon-light d-none d-flex align-items-center"
+                      class="theme-icon-light align-items-center" style="display: none;"
                       ><svg
                         xmlns="http://www.w3.org/2000/svg"
                         class="icon icon-tabler icon-tabler-sun me-2"
@@ -642,6 +642,7 @@
         You are currently in Offline Mode (Read-Only). Changes cannot be saved.
       </div>
 
+      {% if session.get('user_id') %}
       <!-- Secondary Navbar for Links -->
       <header class="navbar-expand-md secondary-header" style="z-index: 1020; position: relative;">
         <div class="collapse navbar-collapse" id="navbar-menu">
@@ -793,6 +794,7 @@
           </div>
         </div>
       </header>
+      {% endif %}
 
       </div>
 
@@ -1495,12 +1497,12 @@
         function updateThemeUI(theme) {
           if (theme === "dark") {
             // If we are IN dark mode, show the "Enable Light Mode" button
-            iconLight.classList.remove("d-none");
-            iconDark.classList.add("d-none");
+            iconLight.style.display = 'flex';
+            iconDark.style.display = 'none';
           } else {
             // If we are IN light mode, show the "Enable Dark Mode" button
-            iconDark.classList.remove("d-none");
-            iconLight.classList.add("d-none");
+            iconDark.style.display = 'flex';
+            iconLight.style.display = 'none';
           }
         }
 
