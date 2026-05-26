@@ -395,6 +395,7 @@
                         <div class="text-center py-4 text-muted">No grading data available.</div>
                         {% endfor %}
                 </div>
+</div>
                 
                 <!-- Admin Excel Export Tab -->
                 {% if current_user.is_authenticated and current_user.role.strip().lower() in ['admin', 'management'] %}
@@ -459,7 +460,6 @@
                     </div>
                 </div>
                 {% endif %}
-            </div>
             </div>
         </div>
     </div>
