@@ -20,7 +20,6 @@
     </div>
 
     <div class="card">
-        <!-- DEBUG: User={{ current_user.username if current_user.is_authenticated else 'Guest' }}, Role={{ current_user.role if current_user.is_authenticated else 'None' }}, Dept={{ current_user.dept if current_user.is_authenticated else 'None' }} -->
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
                 <li class="nav-item">
@@ -29,7 +28,7 @@
                 <li class="nav-item">
                     <a href="#tab-history" class="nav-link" data-bs-toggle="tab">Bodyweight Grading</a>
                 </li>
-                {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+{% if session.get('user_id') and ((session.get('user_role') and session.get('user_role').strip().lower() in ['admin', 'management', 'manager']) or (session.get('user_dept') and session.get('user_dept').strip().lower() in ['admin', 'management', 'manager'])) %}
                 <li class="nav-item">
                     <a href="#tab-excel-export" class="nav-link" data-bs-toggle="tab">Admin Tabular View</a>
                 </li>
@@ -399,7 +398,7 @@
             </div>
             {% endif %}
                 
-                {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+{% if session.get('user_id') and ((session.get('user_role') and session.get('user_role').strip().lower() in ['admin', 'management', 'manager']) or (session.get('user_dept') and session.get('user_dept').strip().lower() in ['admin', 'management', 'manager'])) %}
                 <div class="tab-pane" id="tab-excel-export">
                     <div class="row mb-3 align-items-center">
                         <div class="col-md-6 d-flex align-items-center">
@@ -1468,7 +1467,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Admin Excel Export data and event handling
-    {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+{% if session.get('user_id') and ((session.get('user_role') and session.get('user_role').strip().lower() in ['admin', 'management', 'manager']) or (session.get('user_dept') and session.get('user_dept').strip().lower() in ['admin', 'management', 'manager'])) %}
     const allBodyweightLogs = [
         {% for log in bodyweight_logs %}
         {
