@@ -930,6 +930,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Pass the log data from python to JS
         const logData = {{ bodyweight_logs | tojson | safe }};
+        const allStandards = {{ all_standards | tojson | safe }};
         if (!logData) return;
 
         function renderCharts(selectedHouse) {
@@ -939,12 +940,43 @@ document.addEventListener('DOMContentLoaded', function() {
             // Sort by age week ascending for charts
             filteredLogs.sort((a, b) => a.age_weeks - b.age_weeks);
 
-            // Limit by start week selection
-            const numWeeks = chartStartWeek.value;
-            if (numWeeks !== 'all') {
-                const limit = parseInt(numWeeks);
-                filteredLogs = filteredLogs.slice(-limit);
+            // Fill missing weeks so X-Axis is continuous and Standards don't break
+            let filledLogs = [];
+            if (filteredLogs.length > 0) {
+                let minWeek = filteredLogs[0].age_weeks;
+                let maxWeek = filteredLogs[filteredLogs.length - 1].age_weeks;
+
+                // Limit by start week selection
+                const numWeeks = chartStartWeek.value;
+                if (numWeeks !== 'all') {
+                    const limit = parseInt(numWeeks);
+                    // Adjust minWeek based on the limit if the range is greater
+                    if ((maxWeek - minWeek + 1) > limit) {
+                        minWeek = maxWeek - limit + 1;
+                    }
+                }
+
+                for (let w = minWeek; w <= maxWeek; w++) {
+                    let existingLog = filteredLogs.find(l => l.age_weeks === w);
+                    if (existingLog) {
+                        filledLogs.push(existingLog);
+                    } else {
+                        let stdData = allStandards[w] || {std_m: null, std_f: null};
+                        filledLogs.push({
+                            age_weeks: w,
+                            std_m: stdData.std_m,
+                            std_f: stdData.std_f,
+                            avg_m: null,
+                            avg_f: null,
+                            uni_m: null,
+                            uni_f: null,
+                            m_parts: [],
+                            f_parts: []
+                        });
+                    }
+                }
             }
+            filteredLogs = filledLogs;
 
             const categories = filteredLogs.map(log => 'Week ' + log.age_weeks);
             const showPartitions = togglePartitions.checked;
@@ -960,28 +992,31 @@ document.addEventListener('DOMContentLoaded', function() {
             let allFemaleUni = [];
 
             function addMainLines(seriesArr, avgData, stdData, unifData, allBwArr, allUniArr) {
-                let bwData = avgData.map(v => v ? parseFloat(v) : null);
-                let stdBwData = stdData.map(v => v ? parseFloat(v) : null);
-                let uData = unifData.map(v => v ? parseFloat(v) : null);
+                let bwData = avgData.map(v => (v !== null && v !== undefined && v !== '') ? parseFloat(v) : null);
+                let stdBwData = stdData.map(v => (v !== null && v !== undefined && v !== '') ? parseFloat(v) : null);
+                let uData = unifData.map(v => (v !== null && v !== undefined && v !== '') ? parseFloat(v) : null);
 
                 seriesArr.push({
                     name: 'Average BW',
                     type: 'line',
-                    data: bwData
+                    data: bwData,
+                    spanGaps: true
                 });
                 allBwArr.push(...bwData.filter(v => v !== null));
 
                 seriesArr.push({
                     name: 'Standard BW',
                     type: 'line',
-                    data: stdBwData
+                    data: stdBwData,
+                    spanGaps: true
                 });
                 allBwArr.push(...stdBwData.filter(v => v !== null));
 
                 seriesArr.push({
                     name: 'Average Uniformity',
                     type: 'line',
-                    data: uData
+                    data: uData,
+                    spanGaps: true
                 });
                 allUniArr.push(...uData.filter(v => v !== null));
             }
@@ -990,53 +1025,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Averages only
                 addMainLines(
                     maleSeries,
-                    filteredLogs.map(log => log.avg_m || null),
-                    filteredLogs.map(log => log.std_m || null),
-                    filteredLogs.map(log => log.uni_m || null),
+                    filteredLogs.map(log => (log.avg_m !== null && log.avg_m !== undefined && log.avg_m !== '') ? log.avg_m : null),
+                    filteredLogs.map(log => (log.std_m !== null && log.std_m !== undefined && log.std_m !== '') ? log.std_m : null),
+                    filteredLogs.map(log => (log.uni_m !== null && log.uni_m !== undefined && log.uni_m !== '') ? log.uni_m : null),
                     allMaleBw,
                     allMaleUni
                 );
 
                 addMainLines(
                     femaleSeries,
-                    filteredLogs.map(log => log.avg_f || null),
-                    filteredLogs.map(log => log.std_f || null),
-                    filteredLogs.map(log => log.uni_f || null),
+                    filteredLogs.map(log => (log.avg_f !== null && log.avg_f !== undefined && log.avg_f !== '') ? log.avg_f : null),
+                    filteredLogs.map(log => (log.std_f !== null && log.std_f !== undefined && log.std_f !== '') ? log.std_f : null),
+                    filteredLogs.map(log => (log.uni_f !== null && log.uni_f !== undefined && log.uni_f !== '') ? log.uni_f : null),
                     allFemaleBw,
                     allFemaleUni
                 );
             } else {
                 // Show partitions for BW, but only avg for Uniformity and Standard
 
-                let stdMBw = filteredLogs.map(log => log.std_m ? parseFloat(log.std_m) : null);
+                let stdMBw = filteredLogs.map(log => (log.std_m !== null && log.std_m !== undefined && log.std_m !== '') ? parseFloat(log.std_m) : null);
                 maleSeries.push({
                     name: 'Standard BW',
                     type: 'line',
-                    data: stdMBw
+                    data: stdMBw,
+                    spanGaps: true
                 });
                 allMaleBw.push(...stdMBw.filter(v => v !== null));
 
-                let uniMData = filteredLogs.map(log => log.uni_m ? parseFloat(log.uni_m) : null);
+                let uniMData = filteredLogs.map(log => (log.uni_m !== null && log.uni_m !== undefined && log.uni_m !== '') ? parseFloat(log.uni_m) : null);
                 maleSeries.push({
                     name: 'Average Uniformity',
                     type: 'line',
-                    data: uniMData
+                    data: uniMData,
+                    spanGaps: true
                 });
                 allMaleUni.push(...uniMData.filter(v => v !== null));
 
-                let stdFBw = filteredLogs.map(log => log.std_f ? parseFloat(log.std_f) : null);
+                let stdFBw = filteredLogs.map(log => (log.std_f !== null && log.std_f !== undefined && log.std_f !== '') ? parseFloat(log.std_f) : null);
                 femaleSeries.push({
                     name: 'Standard BW',
                     type: 'line',
-                    data: stdFBw
+                    data: stdFBw,
+                    spanGaps: true
                 });
                 allFemaleBw.push(...stdFBw.filter(v => v !== null));
 
-                let uniFData = filteredLogs.map(log => log.uni_f ? parseFloat(log.uni_f) : null);
+                let uniFData = filteredLogs.map(log => (log.uni_f !== null && log.uni_f !== undefined && log.uni_f !== '') ? parseFloat(log.uni_f) : null);
                 femaleSeries.push({
                     name: 'Average Uniformity',
                     type: 'line',
-                    data: uniFData
+                    data: uniFData,
+                    spanGaps: true
                 });
                 allFemaleUni.push(...uniFData.filter(v => v !== null));
 
@@ -1057,16 +1096,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         maleSeries.push({
                             name: `P${i+1} BW`,
                             type: 'line',
-                            data: pData
+                            data: pData,
+                    spanGaps: true
                         });
                         allMaleBw.push(...pData.filter(v => v !== null));
                     }
                 } else {
-                    let mAvgData = filteredLogs.map(log => log.avg_m ? parseFloat(log.avg_m) : null);
+                    let mAvgData = filteredLogs.map(log => (log.avg_m !== null && log.avg_m !== undefined && log.avg_m !== '') ? parseFloat(log.avg_m) : null);
                     maleSeries.push({
                         name: 'Average BW',
                         type: 'line',
-                        data: mAvgData
+                        data: mAvgData,
+                    spanGaps: true
                     });
                     allMaleBw.push(...mAvgData.filter(v => v !== null));
                 }
@@ -1088,16 +1129,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         femaleSeries.push({
                             name: `P${i+1} BW`,
                             type: 'line',
-                            data: pData
+                            data: pData,
+                    spanGaps: true
                         });
                         allFemaleBw.push(...pData.filter(v => v !== null));
                     }
                 } else {
-                    let fAvgData = filteredLogs.map(log => log.avg_f ? parseFloat(log.avg_f) : null);
+                    let fAvgData = filteredLogs.map(log => (log.avg_f !== null && log.avg_f !== undefined && log.avg_f !== '') ? parseFloat(log.avg_f) : null);
                     femaleSeries.push({
                         name: 'Average BW',
                         type: 'line',
-                        data: fAvgData
+                        data: fAvgData,
+                    spanGaps: true
                     });
                     allFemaleBw.push(...fAvgData.filter(v => v !== null));
                 }
@@ -1154,6 +1197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     datasets.push({
                         label: s.name,
                         data: s.data,
+                        spanGaps: true,
                         borderColor: color,
                         backgroundColor: color,
                         borderWidth: borderWidth,
