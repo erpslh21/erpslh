@@ -53,14 +53,35 @@ def register_health_routes(app):
                 flash("Invalid flock.", "danger")
                 return redirect(url_for('health_log_bodyweight'))
 
-            target_week = calculate_bio_week(flock.intake_date, log_date)
+            raw_target_week = calculate_bio_week(flock.intake_date, log_date)
 
-            # Check for existing logs in the same week
-            existing_logs_in_week = FlockBodyweight.query.filter_by(flock_id=flock_id).all()
-            existing_logs_in_week = [log for log in existing_logs_in_week if calculate_bio_week(flock.intake_date, log.date) == target_week]
+            # Find the highest week explicitly set (or calculated) before this date, to determine the default target week
+            all_logs = FlockBodyweight.query.filter_by(flock_id=flock_id).order_by(FlockBodyweight.date.asc()).all()
 
-            existing_log = next((log for log in existing_logs_in_week if log.date == log_date), None)
-            conflict_log = next((log for log in existing_logs_in_week if log.date != log_date), None)
+            # Find an exact date match first to see what week it was already assigned
+            existing_log_exact_date = next((l for l in all_logs if l.date == log_date), None)
+
+            if existing_log_exact_date:
+                target_week = existing_log_exact_date.age_week if existing_log_exact_date.age_week is not None else raw_target_week
+            else:
+                # If creating a new entry, figure out what week it should naturally be
+                logs_before = [l for l in all_logs if l.date < log_date]
+                if logs_before:
+                    last_log = logs_before[-1]
+                    last_log_week = last_log.age_week if last_log.age_week is not None else calculate_bio_week(flock.intake_date, last_log.date)
+                    # The new log should normally be raw_target_week, but if raw_target_week is the same as last_log_week
+                    # and the dates are different, it defaults to raw_target_week (which will trigger conflict).
+                    target_week = raw_target_week
+
+                    # If we are somehow behind the last log week, we should just use raw_target_week
+                else:
+                    target_week = raw_target_week
+
+            # Check for existing logs in the same target week
+            existing_logs_in_week = [l for l in all_logs if (l.age_week if l.age_week is not None else calculate_bio_week(flock.intake_date, l.date)) == target_week]
+
+            existing_log = next((l for l in existing_logs_in_week if l.date == log_date), None)
+            conflict_log = next((l for l in existing_logs_in_week if l.date != log_date), None)
 
             confirm_overwrite = request.form.get('confirm_overwrite') == 'true'
             confirm_new_week = request.form.get('confirm_new_week') == 'true'
@@ -79,7 +100,7 @@ def register_health_routes(app):
                 db.session.flush()
 
             # Now we proceed to save
-            log = existing_log
+            log = existing_log_exact_date
             if not log:
                 log = FlockBodyweight(
                     flock_id=flock_id,
@@ -92,7 +113,9 @@ def register_health_routes(app):
 
             # Optional explicitly assigned age_week
             if confirm_new_week:
-                log.age_week = target_week + 1 # simplistic: push it to next week logically if "populate as new week", or we can just leave age_week blank and let it recalculate
+                log.age_week = target_week + 1
+            elif log.age_week is None:
+                log.age_week = target_week
 
             # Male weights
             if request.form.get('body_weight_male'):
@@ -212,7 +235,7 @@ def register_health_routes(app):
 
             prev_log = None
             for hl in house_logs:
-                hl_age_weeks = calculate_bio_week(hl.flock.intake_date, hl.date)
+                hl_age_weeks = hl.age_week if hl.age_week is not None else calculate_bio_week(hl.flock.intake_date, hl.date)
                 if hl_age_weeks == age_weeks - 1:
                     prev_log = hl
                     break
