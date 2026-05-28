@@ -257,7 +257,7 @@
                         {% for log in bodyweight_logs %}
                         <div class="accordion-item bw-log-item" data-house="{{ log.house_name }}">
                             <h2 class="accordion-header" id="heading-{{ log.log_id }}">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ log.log_id }}" aria-expanded="false" aria-controls="collapse-{{ log.log_id }}">
+                                <button class="accordion-button collapsed {% if log.has_report %}bg-primary-lt{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ log.log_id }}" aria-expanded="false" aria-controls="collapse-{{ log.log_id }}">
                                     <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                         <div><strong>{{ log.house_name }}</strong>&nbsp;- Age: Week {{ log.age_weeks }}</div>
                                         <div class="text-muted small">{{ log.date.strftime('%d-%m-%y') if log.date else '' }}</div>
@@ -316,14 +316,14 @@
                                                 <div class="mt-2">
                                                     {% if log.m_parts %}
                                                         {% for p in log.m_parts %}
-                                                            <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                            <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                                 {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
                                                         {% endfor %}
                                                     {% else %}
-                                                        <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                        <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                             Avg: {{ log.avg_m }}g <span class="text-muted">({{ log.avg_m_diff }})</span>
                                                             {{ "%.1f"|format(((log.uni_m or 0) | float)) }}%
                                                         </span>
@@ -337,14 +337,14 @@
                                                 <div class="mt-2">
                                                     {% if log.f_parts %}
                                                         {% for p in log.f_parts %}
-                                                            <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                            <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                                 {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
                                                         {% endfor %}
                                                     {% else %}
-                                                        <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                        <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                             Avg: {{ log.avg_f }}g <span class="text-muted">({{ log.avg_f_diff }})</span>
                                                             {{ "%.1f"|format(((log.uni_f or 0) | float)) }}%
                                                         </span>
@@ -807,6 +807,20 @@ document.addEventListener('DOMContentLoaded', function() {
               {% for sex in ['Male', 'Female'] %}
                 {% if sex in sexes %}
                   {% set stat = sexes[sex] %}
+                  {% set ns = namespace(below=0, in_avg=0, above=0) %}
+                  {% set bins = stat.grading_bins | from_json %}
+                  {% set lower_limit = (stat.average_weight * 0.9) | round | int %}
+                  {% set upper_limit = (stat.average_weight * 1.1) | round | int %}
+                  {% for k, v in bins.items() %}
+                    {% set w_val = k | int %}
+                    {% if w_val < lower_limit %}
+                      {% set ns.below = ns.below + v %}
+                    {% elif w_val > upper_limit %}
+                      {% set ns.above = ns.above + v %}
+                    {% else %}
+                      {% set ns.in_avg = ns.in_avg + v %}
+                    {% endif %}
+                  {% endfor %}
                   <div class="col-md-6">
                     <div class="card">
                       <div class="card-header bg-{{ 'blue' if sex == 'Male' else 'pink' }}-lt">
@@ -814,10 +828,17 @@ document.addEventListener('DOMContentLoaded', function() {
                       </div>
                       <div class="card-body">
                         <div class="row g-3">
-                          <div class="col-6"><strong>Count:</strong> {{ stat.count }}</div>
-                          <div class="col-6"><strong>Average:</strong> {{ stat.average_weight | round | int }}g ({{ (stat.average_weight * 0.9) | round | int }}g - {{ (stat.average_weight * 1.1) | round | int }}g)</div>
-                          <div class="col-6"><strong>Uniformity:</strong> <mark class="fw-bold bg-yellow text-body">{{ stat.uniformity | round | int }}%</mark></div>
-                          <div class="col-6"><strong>Range:</strong> {{ stat.lowest_weight | round | int }}g - {{ stat.highest_weight | round | int }}g</div>
+                          <div class="col-6">
+                            <strong>Count:</strong> {{ stat.count }}
+                            <div class="small text-muted mt-1">
+                              <div>Below Avg (&lt;{{ lower_limit }}g): <strong>{{ ns.below }}</strong></div>
+                              <div>In Avg (&ge;{{ lower_limit }}g - &le;{{ upper_limit }}g): <strong>{{ ns.in_avg }}</strong></div>
+                              <div>Above Avg (&gt;{{ upper_limit }}g): <strong>{{ ns.above }}</strong></div>
+                            </div>
+                          </div>
+                          <div class="col-6"><strong>Average:</strong> {{ stat.average_weight | round | int }}g ({{ lower_limit }}g - {{ upper_limit }}g)</div>
+                          <div class="col-6"><strong>Uniformity:</strong> <mark class="fw-bold bg-yellow text-body">{{ "%.1f" | format(stat.uniformity) }}%</mark></div>
+                          <div class="col-6"><strong>Range:</strong> {{ stat.lowest_weight | round | int }}g (Lowest) - {{ stat.highest_weight | round | int }}g (Highest)</div>
 
                           <div class="col-12 mt-4">
                             <h4>Weight Distribution</h4>
