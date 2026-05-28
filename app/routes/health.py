@@ -200,7 +200,7 @@ def register_health_routes(app):
 
 
         all_standards_records = Standard.query.all()
-        all_standards = {s.week: {'std_m': s.std_bw_male if s.std_bw_male else None, 'std_f': s.std_bw_female if s.std_bw_female else None} for s in all_standards_records}
+        all_standards = {s.week: {'std_m': s.std_bw_male if s.std_bw_male is not None else None, 'std_f': s.std_bw_female if s.std_bw_female is not None else None} for s in all_standards_records}
 
         bodyweight_logs = []
 
@@ -227,15 +227,14 @@ def register_health_routes(app):
             m_parts = []
             f_parts = []
 
-            std_m = log.standard_bw_male
-            std_f = log.standard_bw_female
-
-            # Fallback to Standard model if not saved in log or is 0
-            if std_m is None or std_m == 0 or std_f is None or std_f == 0:
-                std_record = Standard.query.filter_by(week=age_weeks).first()
-                if std_record:
-                    if std_m is None or std_m == 0: std_m = std_record.std_bw_male
-                    if std_f is None or std_f == 0: std_f = std_record.std_bw_female
+            # Fallback/Override Standard model to ensure it is always fetched from the Standard table (configured under Admin panel)
+            std_record = Standard.query.filter_by(week=age_weeks).first()
+            if std_record:
+                std_m = std_record.std_bw_male if std_record.std_bw_male is not None else log.standard_bw_male
+                std_f = std_record.std_bw_female if std_record.std_bw_female is not None else log.standard_bw_female
+            else:
+                std_m = log.standard_bw_male
+                std_f = log.standard_bw_female
 
             avg_m_diff = "N/A"
             if prev_log and log.body_weight_male is not None and prev_log.body_weight_male is not None:
@@ -321,8 +320,8 @@ def register_health_routes(app):
                 'house_id': log.flock.house_id,
                 'age_weeks': age_weeks,
                 'date': log.date,
-                'std_m': std_m if std_m else None,
-                'std_f': std_f if std_f else None,
+                'std_m': std_m if std_m is not None else None,
+                'std_f': std_f if std_f is not None else None,
                 'avg_m': log.body_weight_male or 0,
                 'avg_f': log.body_weight_female or 0,
                 'avg_m_diff': avg_m_diff,
