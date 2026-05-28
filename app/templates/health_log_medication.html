@@ -26,7 +26,7 @@
                 <!-- Insert Tab -->
                 <div class="tab-pane active show" id="tab-insert">
                     <form id="insert-medication-form" method="post" action="{{ url_for('health_log_medication') }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label class="form-label required">House</label>
@@ -51,32 +51,33 @@
                             <div class="medication-row border p-3 mb-3 rounded position-relative bg-light-subtle">
                                 <div class="row mb-3">
                                     <div class="col-12 col-md-6 mb-3 mb-md-0">
-                                        <label class="form-label required">Drug Name</label>
-                                        <input type="text" name="drug_name[]" class="form-control drug-name-input" placeholder="Or Type Drug Name" required pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed">
-                                    </div>
-                                    <div class="col-12 col-md-6">
-                                        <label class="form-label">Inventory Item</label>
-                                        <select name="inventory_item_id[]" class="form-select inventory-select" onchange="if(this.value){this.closest('.medication-row').querySelector('.drug-name-input').value=this.options[this.selectedIndex].text.split(' (')[0];}">
-                                            <option value="">-- Select Inventory Item --</option>
+                                        <label class="form-label required">Drug Name (From Masterlist)</label>
+                                        <select name="inventory_item_id[]" class="form-select drug-select" required>
+                                            <option value="" disabled selected>-- Select Medication --</option>
                                             {% for item in medication_inventory %}
                                                 <option value="{{ item.id }}">{{ item.name }}</option>
                                             {% endfor %}
+                                            <option value="Other">Other (Specify manually)</option>
                                         </select>
                                     </div>
+                                    <div class="col-12 col-md-6 drug-manual-container d-none">
+                                        <label class="form-label required">Specify Drug Name</label>
+                                        <input type="text" class="form-control drug-manual-input" placeholder="Type Drug Name" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed">
+                                    </div>
+                                    <!-- Hidden input to submit the actual drug_name[] for backend validation -->
+                                    <input type="hidden" name="drug_name[]" class="drug-name-hidden">
                                 </div>
 
                                 <div class="row mb-3">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-label">Dosage</label>
                                         <input type="text" name="dosage[]" class="form-control" placeholder="Dosage">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-label">Amount Used (Qty Deduct)</label>
-                                        <input type="number" step="0.01" name="amount_used_qty[]" class="form-control" placeholder="Qty">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Amount Text</label>
-                                        <input type="text" name="amount_used[]" class="form-control" placeholder="e.g. 1 Bottle">
+                                        <input type="number" step="0.01" name="amount_used_qty[]" class="form-control amount-qty-input" placeholder="Qty" oninput="this.closest('.medication-row').querySelector('.amount-text-hidden').value = this.value;">
+                                        <!-- Hidden input to submit amount_used[] in sync with amount_used_qty[] -->
+                                        <input type="hidden" name="amount_used[]" class="amount-text-hidden">
                                     </div>
                                 </div>
 
@@ -114,96 +115,96 @@
                     {% for flock, tasks in flock_tasks.items() %}
                         {% set is_editing = (edit_flock_id == flock.id) %}
                         <form method="POST" action="{{ url_for('health_log_medication', flock_id=flock.id) }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <div class="card mb-4 border-primary">
-                            <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0 text-primary">{{ flock.house.name }}</h5>
-                                <div>
-                                    {% if is_editing %}
-                                        <a href="{{ url_for('health_log_medication', flock_id=selected_flock_id) }}" class="btn btn-secondary btn-sm">Cancel</a>
-                                        <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-                                    {% else %}
-                                        <a href="{{ url_for('health_log_medication', flock_id=selected_flock_id, edit_flock_id=flock.id, _anchor='tab-history') }}" class="btn btn-outline-primary btn-sm">Edit</a>
-                                    {% endif %}
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <div class="card mb-4 border-primary">
+                                <div class="card-header bg-light-subtle d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0 text-primary">{{ flock.house.name }}</h5>
+                                    <div>
+                                        {% if is_editing %}
+                                            <a href="{{ url_for('health_log_medication', flock_id=selected_flock_id) }}" class="btn btn-secondary btn-sm">Cancel</a>
+                                            <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+                                        {% else %}
+                                            <a href="{{ url_for('health_log_medication', flock_id=selected_flock_id, edit_flock_id=flock.id, _anchor='tab-history') }}" class="btn btn-outline-primary btn-sm">Edit</a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-vcenter card-table table-striped mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Drug Name</th>
+                                                    <th>Dosage</th>
+                                                    <th>Amount Used</th>
+                                                    <th>Start Date</th>
+                                                    <th>End Date</th>
+                                                    <th>Remarks</th>
+                                                    {% if is_editing %}
+                                                    <th>Action</th>
+                                                    {% endif %}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for m in tasks.medications %}
+                                                <tr>
+                                                    <td>
+                                                        {% if is_editing %}
+                                                            <input type="text" name="m_drug_{{ m.id }}" value="{{ m.drug_name }}" class="form-control form-control-sm">
+                                                        {% else %}
+                                                            {{ m.drug_name }}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if is_editing %}
+                                                            <input type="text" name="m_dosage_{{ m.id }}" value="{{ m.dosage }}" class="form-control form-control-sm">
+                                                        {% else %}
+                                                            {{ m.dosage }}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if is_editing %}
+                                                            <input type="text" name="m_amount_{{ m.id }}" value="{{ m.amount_used or '' }}" class="form-control form-control-sm">
+                                                        {% else %}
+                                                            {{ m.amount_used or '-' }}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if is_editing %}
+                                                            <input type="date" name="m_start_{{ m.id }}" value="{{ m.start_date }}" class="form-control form-control-sm" style="width: 130px;">
+                                                        {% else %}
+                                                            {{ m.start_date | date_fmt }}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if is_editing %}
+                                                            <input type="date" name="m_end_{{ m.id }}" value="{{ m.end_date or '' }}" class="form-control form-control-sm" style="width: 130px;">
+                                                        {% else %}
+                                                            {{ m.end_date | date_fmt if m.end_date else '-' }}
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        {% if is_editing %}
+                                                            <input type="text" name="m_rem_{{ m.id }}" value="{{ m.remarks or '' }}" class="form-control form-control-sm">
+                                                        {% else %}
+                                                            {{ m.remarks or '-' }}
+                                                        {% endif %}
+                                                    </td>
+                                                    {% if is_editing %}
+                                                    <td>
+                                                        <button type="submit" name="delete_medication_id" value="{{ m.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete medication record?');">&times;</button>
+                                                    </td>
+                                                    {% endif %}
+                                                </tr>
+                                                {% else %}
+                                                <tr>
+                                                    <td colspan="{% if is_editing %}7{% else %}6{% endif %}" class="text-center text-muted py-3">No medication records.</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="card-body p-0">
-                                <div class="table-responsive">
-                                    <table class="table table-vcenter card-table table-striped mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>Drug Name</th>
-                                                <th>Dosage</th>
-                                                <th>Amount Used</th>
-                                                <th>Start Date</th>
-                                                <th>End Date</th>
-                                                <th>Remarks</th>
-                                                {% if is_editing %}
-                                                <th>Action</th>
-                                                {% endif %}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {% for m in tasks.medications %}
-                                            <tr>
-                                                <td>
-                                                    {% if is_editing %}
-                                                        <input type="text" name="m_drug_{{ m.id }}" value="{{ m.drug_name }}" class="form-control form-control-sm">
-                                                    {% else %}
-                                                        {{ m.drug_name }}
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if is_editing %}
-                                                        <input type="text" name="m_dosage_{{ m.id }}" value="{{ m.dosage }}" class="form-control form-control-sm">
-                                                    {% else %}
-                                                        {{ m.dosage }}
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if is_editing %}
-                                                        <input type="text" name="m_amount_{{ m.id }}" value="{{ m.amount_used or '' }}" class="form-control form-control-sm">
-                                                    {% else %}
-                                                        {{ m.amount_used or '-' }}
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if is_editing %}
-                                                        <input type="date" name="m_start_{{ m.id }}" value="{{ m.start_date }}" class="form-control form-control-sm" style="width: 130px;">
-                                                    {% else %}
-                                                        {{ m.start_date | date_fmt }}
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if is_editing %}
-                                                        <input type="date" name="m_end_{{ m.id }}" value="{{ m.end_date or '' }}" class="form-control form-control-sm" style="width: 130px;">
-                                                    {% else %}
-                                                        {{ m.end_date | date_fmt if m.end_date else '-' }}
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if is_editing %}
-                                                        <input type="text" name="m_rem_{{ m.id }}" value="{{ m.remarks or '' }}" class="form-control form-control-sm">
-                                                    {% else %}
-                                                        {{ m.remarks or '-' }}
-                                                    {% endif %}
-                                                </td>
-                                                {% if is_editing %}
-                                                <td>
-                                                    <button type="submit" name="delete_medication_id" value="{{ m.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete medication record?');">&times;</button>
-                                                </td>
-                                                {% endif %}
-                                            </tr>
-                                            {% else %}
-                                            <tr>
-                                                <td colspan="{% if is_editing %}7{% else %}6{% endif %}" class="text-center text-muted py-3">No medication records.</td>
-                                            </tr>
-                                            {% endfor %}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
                         </form>
                     {% else %}
                         <div class="text-center text-muted py-4">No active flocks.</div>
@@ -213,9 +214,6 @@
         </div>
     </div>
 </div>
-
-
-
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -234,6 +232,41 @@
         const container = document.getElementById('medications-container');
         const addBtn = document.getElementById('add-medication-btn');
 
+        function bindRowEvents(row) {
+            const select = row.querySelector('.drug-select');
+            const manualContainer = row.querySelector('.drug-manual-container');
+            const manualInput = row.querySelector('.drug-manual-input');
+            const hiddenInput = row.querySelector('.drug-name-hidden');
+
+            select.addEventListener('change', function() {
+                if (this.value === 'Other') {
+                    manualContainer.classList.remove('d-none');
+                    manualInput.setAttribute('required', 'required');
+                    hiddenInput.value = manualInput.value.trim();
+                } else {
+                    manualContainer.classList.add('d-none');
+                    manualInput.removeAttribute('required');
+                    if (this.selectedIndex >= 0) {
+                        hiddenInput.value = this.options[this.selectedIndex].text.trim();
+                    } else {
+                        hiddenInput.value = '';
+                    }
+                }
+            });
+
+            manualInput.addEventListener('input', function() {
+                if (select.value === 'Other') {
+                    hiddenInput.value = this.value.trim();
+                }
+            });
+        }
+
+        // Bind events to the initial row
+        const initialRow = container.querySelector('.medication-row');
+        if (initialRow) {
+            bindRowEvents(initialRow);
+        }
+
         if (addBtn) {
             addBtn.addEventListener('click', function() {
                 const firstRow = container.querySelector('.medication-row');
@@ -242,16 +275,19 @@
                 // Clear inputs
                 newRow.querySelectorAll('input, select').forEach(input => {
                     input.value = '';
+                    if (input.classList.contains('drug-manual-input')) {
+                        input.removeAttribute('required');
+                    }
                 });
+
+                // Hide specify field on clone
+                newRow.querySelector('.drug-manual-container').classList.add('d-none');
 
                 // Show remove button
                 newRow.querySelector('.remove-medication-btn').style.display = 'block';
 
-                // Add event listener to remove button
-                newRow.querySelector('.remove-medication-btn').addEventListener('click', function() {
-                    newRow.remove();
-                    updateRemoveButtons();
-                });
+                // Add event listener to select in the new row
+                bindRowEvents(newRow);
 
                 container.appendChild(newRow);
                 updateRemoveButtons();
@@ -284,24 +320,28 @@
                 const flockId = document.getElementById('flock_id').value;
                 const startDate = document.getElementById('start_date').value;
 
-                const drugInputs = document.querySelectorAll('.drug-name-input');
+                const hiddenInputs = document.querySelectorAll('.drug-name-hidden');
                 const seenDrugs = new Set();
                 const regex = /^[A-Za-z0-9 ]+$/;
 
-                for (let input of drugInputs) {
+                for (let input of hiddenInputs) {
                     const drugName = input.value.trim().toUpperCase();
+
+                    if (!drugName) {
+                        e.preventDefault();
+                        alert("Drug Name is required.");
+                        return;
+                    }
 
                     if (!regex.test(drugName)) {
                         e.preventDefault();
                         alert("Only letters, numbers, and spaces are allowed in the drug name.");
-                        input.focus();
                         return;
                     }
 
                     if (seenDrugs.has(drugName)) {
                         e.preventDefault();
                         alert("Please fill in one medication only");
-                        input.focus();
                         return;
                     }
                     seenDrugs.add(drugName);
@@ -316,7 +356,6 @@
                     if (isDuplicate) {
                         e.preventDefault();
                         alert("Please fill in one medication only");
-                        input.focus();
                         return;
                     }
                 }
@@ -324,15 +363,12 @@
         }
 
         // Read the 'tab' URL parameter
-
         const urlParams = new URLSearchParams(window.location.search);
         const activeTab = urlParams.get('tab');
 
         if (activeTab) {
-            // Find the tab link corresponding to this tab ID
             const tabLink = document.querySelector(`a[href="#${activeTab}"]`);
             if (tabLink) {
-                // Activate using Bootstrap Tab API
                 const tab = new bootstrap.Tab(tabLink);
                 tab.show();
             }
@@ -350,5 +386,4 @@
         });
     });
 </script>
-
 {% endblock %}

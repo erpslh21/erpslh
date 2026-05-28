@@ -838,7 +838,9 @@ def register_production_routes(app):
     @login_required
     @dept_required('Breeder')
     def edit_inventory_transaction(id):
-        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+        if not (current_user.role == 'Admin' or current_user.role == 'Management'):
+            flash('Access denied.', 'danger')
+            return redirect(url_for('inventory') + '#movements')
 
         tx = InventoryTransaction.query.get_or_404(id)
         if tx.location != 'Breeder':
@@ -855,14 +857,15 @@ def register_production_routes(app):
         old_qty = tx.quantity
         item = tx.item
 
+        # Revert old stock effect
         if item:
             if tx.transaction_type == 'Out' or tx.transaction_type in INV_TX_TYPES_USAGE_WASTE:
                 item.current_stock += old_qty
-            elif tx.transaction_type == 'In' or tx.transaction_type in ('Purchase', 'Adjustment'):
+            else:
                 item.current_stock -= old_qty
 
         tx.quantity = new_qty
-        tx.notes = request.form.get('notes')
+        tx.notes = request.form.get('remarks')
         tx.batch_number = request.form.get('batch_number') or None
 
         expiry_date_str = request.form.get('expiry_date')
@@ -875,84 +878,41 @@ def register_production_routes(app):
         if new_type:
             tx.transaction_type = new_type
 
+        # Apply new stock effect
         if item:
             if tx.transaction_type == 'Out' or tx.transaction_type in INV_TX_TYPES_USAGE_WASTE:
                 item.current_stock -= new_qty
-            elif tx.transaction_type == 'In' or tx.transaction_type in ('Purchase', 'Adjustment'):
+            else:
                 item.current_stock += new_qty
 
         safe_commit()
-        flash('Transaction updated.', 'success')
+        flash('Movement log updated.', 'success')
         return redirect(url_for('inventory') + '#movements')
-
-        if new_type and new_type not in INV_TX_TYPES_ALL:
-            flash("Invalid transaction type.", "danger")
-            return redirect(url_for('inventory'))
-
-        # Revert Old Effect
-        if item:
-            if t.transaction_type in INV_TX_TYPES_USAGE_WASTE:
-                item.current_stock += t.quantity
-            else:
-                item.current_stock -= t.quantity
-
-        # Update Transaction
-        t.quantity = new_qty
-        t.notes = new_notes
-        if new_type:
-            t.transaction_type = new_type
-
-        if new_date_str:
-            try:
-                t.transaction_date = datetime.strptime(new_date_str, '%Y-%m-%d').date()
-            except: pass
-
-        new_data = {
-            'quantity': t.quantity,
-            'transaction_type': t.transaction_type,
-            'transaction_date': t.transaction_date.strftime('%Y-%m-%d') if t.transaction_date else None,
-            'notes': t.notes
-        }
-
-        changes = {k: {'old': old_data[k], 'new': new_data[k]} for k in old_data if old_data[k] != new_data[k]}
-        if changes:
-            log_user_activity(current_user.id, 'Edit', 'InventoryTransaction', t.id, details=changes)
-
-        # Apply New Effect
-        if item:
-            if t.transaction_type in INV_TX_TYPES_USAGE_WASTE:
-                item.current_stock -= new_qty
-            else:
-                item.current_stock += new_qty
-
-        safe_commit()
-        flash("Transaction updated.", "success")
-        return redirect(url_for('inventory'))
 
     @app.route('/inventory/transaction/<int:id>/delete', methods=['POST'])
     @login_required
     @dept_required('Breeder')
     def delete_inventory_transaction(id):
-        if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
+        if not (current_user.role == 'Admin' or current_user.role == 'Management'):
+            flash('Access denied.', 'danger')
+            return redirect(url_for('inventory') + '#movements')
 
-        t = InventoryTransaction.query.get_or_404(id)
-        item = InventoryItem.query.get(t.inventory_item_id)
-        t_type = t.transaction_type
-        t_qty = t.quantity
-        item_name = item.name if item else "Unknown"
+        tx = InventoryTransaction.query.get_or_404(id)
+        if tx.location != 'Breeder':
+            flash('Invalid transaction.', 'danger')
+            return redirect(url_for('inventory') + '#movements')
 
-        log_user_activity(current_user.id, 'Delete', 'InventoryTransaction', id, details={'item_name': item_name, 'type': t_type, 'quantity': t_qty})
-
+        item = tx.item
         if item:
-            if t.transaction_type == 'Out' or t.transaction_type in INV_TX_TYPES_USAGE_WASTE:
-                item.current_stock += t.quantity
-            elif t.transaction_type == 'In' or t.transaction_type in ('Purchase', 'Adjustment'):
-                item.current_stock -= t.quantity
+            if tx.transaction_type == 'Out' or tx.transaction_type in INV_TX_TYPES_USAGE_WASTE:
+                item.current_stock += tx.quantity
+            else:
+                item.current_stock -= tx.quantity
 
-        db.session.delete(t)
+        db.session.delete(tx)
         safe_commit()
-        flash(f"Transaction deleted. Stock reverted.", "info")
-        return redirect(url_for('inventory'))
+        flash('Movement log deleted and stock reverted.', 'success')
+        return redirect(url_for('inventory') + '#movements')
 
     @app.route('/inventory/item/<int:id>/delete', methods=['POST'])
     @login_required
@@ -983,135 +943,61 @@ def register_production_routes(app):
             return redirect(url_for('inventory') + '#masterlist')
 
         item.name = request.form.get('name')
+        item.type = request.form.get('type') or item.type
         item.category = request.form.get('category')
         item.unit_of_measurement = request.form.get('unit') or None
         item.unit = request.form.get('unit') or None
+        item.min_stock_level = float(request.form.get('min_stock_level') or 0.0)
 
         safe_commit()
         flash(f'Updated {item.name}.', 'success')
         return redirect(url_for('inventory') + '#masterlist')
 
-        old_data = {
-            'name': item.name,
-            'type': item.type,
-            'unit': item.unit,
-            'min_stock_level': item.min_stock_level,
-            'doses_per_unit': item.doses_per_unit,
-            'batch_number': '',
-            'expiry_date': ''
-        }
-
-        item.name = request.form.get('name')
-        item.type = request.form.get('type')
-        item.unit = request.form.get('unit')
-        item.min_stock_level = float(request.form.get('min_stock_level') or 0)
-
-        doses = request.form.get('doses_per_unit')
-        item.doses_per_unit = int(doses) if doses else None
-
-
-
-
-
-        new_data = {
-            'name': item.name,
-            'type': item.type,
-            'unit': item.unit,
-            'min_stock_level': item.min_stock_level,
-            'doses_per_unit': item.doses_per_unit,
-            'batch_number': '',
-            'expiry_date': ''
-        }
-
-        changes = {k: {'old': old_data[k], 'new': new_data[k]} for k in old_data if old_data[k] != new_data[k]}
-        if changes:
-            log_user_activity(current_user.id, 'Edit', 'InventoryItem', item.id, details=changes)
-
-        safe_commit()
-        flash('Item updated.', 'success')
-        return redirect(url_for('inventory'))
-
     @app.route('/inventory/transaction', methods=['POST'])
     @login_required
     @dept_required('Breeder')
     def inventory_transaction():
-        item_id = int(request.form.get('inventory_item_id'))
-        movement_type = request.form.get('transaction_type')
-        classification = request.form.get('classification')
-        qty = float(request.form.get('quantity') or 0)
+        item_id = request.form.get('inventory_item_id')
         date_str = request.form.get('transaction_date')
-        date_val = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else date.today()
-        notes = request.form.get('notes')
+        movement_type = request.form.get('movement_type') # 'In' or 'Out'
+        classification = request.form.get('classification')
+        quantity = float(request.form.get('quantity') or 0.0)
+        remarks = request.form.get('remarks')
         batch_number = request.form.get('batch_number') or None
         expiry_date_str = request.form.get('expiry_date')
         expiry_date = datetime.strptime(expiry_date_str, '%Y-%m-%d').date() if expiry_date_str else None
 
-        if qty <= 0:
+        tx_date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else date.today()
+
+        if quantity <= 0:
             flash('Quantity must be positive.', 'danger')
             return redirect(url_for('inventory'))
 
         item = InventoryItem.query.get_or_404(item_id)
+        if item.location != 'Breeder':
+            flash('Invalid item.', 'danger')
+            return redirect(url_for('inventory'))
 
-        if movement_type == 'Out':
-            item.current_stock -= qty
-        elif movement_type == 'In':
-            item.current_stock += qty
-        elif movement_type in INV_TX_TYPES_USAGE_WASTE:
-            item.current_stock -= qty
-        else:
-            item.current_stock += qty
+        # Update stock
+        if movement_type == 'In':
+            item.current_stock += quantity
+        elif movement_type == 'Out':
+            item.current_stock -= quantity
 
-        if item.current_stock < 0:
-            flash(f'Warning: Stock for {item.name} went negative.', 'warning')
-
-        t = InventoryTransaction(
-            inventory_item_id=item.id,
+        tx = InventoryTransaction(
+            inventory_item_id=item_id,
             transaction_type=movement_type,
             classification=classification,
-            quantity=qty,
-            transaction_date=date_val,
-            notes=notes,
+            quantity=quantity,
+            transaction_date=tx_date,
+            notes=remarks,
             location='Breeder',
             batch_number=batch_number,
             expiry_date=expiry_date
         )
-        db.session.add(t)
-        try:
-            safe_commit()
-            flash('Transaction recorded.', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error recording transaction: {str(e)}', 'danger')
-
-        return redirect(url_for('inventory'))
-
-        item = InventoryItem.query.get_or_404(item_id)
-
-        if type_ in INV_TX_TYPES_USAGE_WASTE:
-            item.current_stock -= qty
-        else: # Purchase, Adjustment
-            item.current_stock += qty
-
-        if item.current_stock < 0:
-            flash(f'Warning: Stock for {item.name} went negative.', 'warning')
-
-        t = InventoryTransaction(
-            inventory_item_id=item.id,
-            transaction_type=type_,
-            quantity=qty,
-            transaction_date=date_val,
-            notes=notes
-        )
-        db.session.add(t)
-        try:
-            db.session.flush()
-            log_user_activity(current_user.id, 'Add', 'InventoryTransaction', t.id, details={'item_name': item.name, 'type': type_, 'quantity': qty})
-            safe_commit()
-            flash('Transaction recorded.', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error recording transaction: {str(e)}', 'danger')
-
+        db.session.add(tx)
+        safe_commit()
+        flash('Movement recorded.', 'success')
         return redirect(url_for('inventory'))
 
     @app.route('/inventory/add', methods=['POST'])
@@ -1119,18 +1005,28 @@ def register_production_routes(app):
     @dept_required('Breeder')
     def add_inventory_item():
         name = request.form.get('name')
+        type_ = request.form.get('type') or 'Medication'
         category = request.form.get('category')
         unit = request.form.get('unit') or None
+        min_stock = float(request.form.get('min_stock_level') or 0.0)
 
         if not name:
             flash('Name is required.', 'danger')
             return redirect(url_for('inventory') + '#masterlist')
 
-        item = InventoryItem(name=name, category=category, unit=unit, unit_of_measurement=unit, location='Breeder', type='Inventory')
+        item = InventoryItem(
+            name=name,
+            type=type_,
+            category=category,
+            unit=unit,
+            unit_of_measurement=unit,
+            min_stock_level=min_stock,
+            location='Breeder'
+        )
         db.session.add(item)
         safe_commit()
         flash(f'Added {name} to Breeder Masterlist.', 'success')
-        return redirect(url_for('inventory'))
+        return redirect(url_for('inventory') + '#masterlist')
 
     @app.route('/inventory')
     @login_required
@@ -1142,12 +1038,9 @@ def register_production_routes(app):
         ).order_by(InventoryTransaction.transaction_date.desc(), InventoryTransaction.id.desc()).limit(100).all()
 
         today = date.today()
-        start_of_month = date(today.year, today.month, 1)
-
         month_str = request.args.get('month', str(today.month))
         year_str = request.args.get('year', str(today.year))
 
-        import calendar
         try:
             filter_month = int(month_str)
             filter_year = int(year_str)
@@ -1176,8 +1069,24 @@ def register_production_routes(app):
             if t.inventory_item_id not in summary_map:
                 summary_map[t.inventory_item_id] = {'purchase': 0, 'usage': 0, 'waste': 0}
 
-            type_key = t.classification.lower() if t.classification else t.transaction_type.lower()
-            if type_key in summary_map[t.inventory_item_id]:
+            type_key = None
+            if t.transaction_type == 'In':
+                type_key = 'purchase'
+            elif t.transaction_type == 'Out':
+                if t.classification in ('Waste', 'Dispose'):
+                    type_key = 'waste'
+                else:
+                    type_key = 'usage'
+            
+            # Fallback to old transaction types
+            elif t.transaction_type in ('Purchase', 'Adjustment'):
+                type_key = 'purchase'
+            elif t.transaction_type == 'Waste':
+                type_key = 'waste'
+            elif t.transaction_type == 'Usage':
+                type_key = 'usage'
+
+            if type_key and type_key in summary_map[t.inventory_item_id]:
                 summary_map[t.inventory_item_id][type_key] += t.quantity
 
         summary_list = []
@@ -1203,8 +1112,55 @@ def register_production_routes(app):
             filter_month=filter_month,
             filter_year=filter_year,
             months=months,
-            years=years
+            years=years,
+            is_admin=(current_user.role == 'Admin')
         )
+
+    @app.route('/api/inventory/<int:item_id>/balance')
+    @login_required
+    @dept_required('Breeder')
+    def breeder_inventory_balance(item_id):
+        item = InventoryItem.query.filter_by(id=item_id, location='Breeder').first_or_404()
+        transactions = InventoryTransaction.query.filter_by(inventory_item_id=item_id, location='Breeder').all()
+        balance = 0.0
+        for t in transactions:
+            if t.transaction_type == 'In':
+                balance += t.quantity
+            elif t.transaction_type == 'Out':
+                balance -= t.quantity
+            elif t.transaction_type in ('Purchase', 'Adjustment'):
+                balance += t.quantity
+            elif t.transaction_type in INV_TX_TYPES_USAGE_WASTE:
+                balance -= t.quantity
+
+        return jsonify({'balance': balance, 'unit': item.unit_of_measurement or item.unit or 'units'})
+
+    @app.route('/api/inventory/<int:item_id>/batches', methods=['GET'])
+    @login_required
+    def breeder_inventory_item_batches(item_id):
+        txs = InventoryTransaction.query.filter_by(inventory_item_id=item_id, location='Breeder').filter(
+            (InventoryTransaction.transaction_type == 'In') | (InventoryTransaction.transaction_type == 'Purchase')
+        ).filter(InventoryTransaction.batch_number.isnot(None)).all()
+        batches = []
+        seen = set()
+        for t in txs:
+            if t.batch_number not in seen:
+                seen.add(t.batch_number)
+                
+                batch_txs = InventoryTransaction.query.filter_by(inventory_item_id=item_id, batch_number=t.batch_number, location='Breeder').all()
+                batch_balance = 0.0
+                for bt in batch_txs:
+                    if bt.transaction_type in ('In', 'Purchase'):
+                        batch_balance += bt.quantity
+                    elif bt.transaction_type in ('Out', 'Usage', 'Waste'):
+                        batch_balance -= bt.quantity
+                        
+                batches.append({
+                    'batch_number': t.batch_number,
+                    'expiry_date': t.expiry_date.strftime('%Y-%m-%d') if t.expiry_date else None,
+                    'balance': batch_balance
+                })
+        return jsonify({'batches': batches})
 
     @app.route('/daily_log/<int:id>/edit', methods=['GET', 'POST'])
     @login_required
