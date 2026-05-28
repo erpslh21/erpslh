@@ -1358,14 +1358,29 @@ def register_api_routes(app):
         if not flock:
             return jsonify({'error': 'No active flock found for this house.'}), 404
 
-        # Find 30 most recent daily logs where all 4 cull egg categories are 0
+        # Find the last keyed-in date (the maximum log date in the database for this flock)
+        last_log = DailyLog.query.filter_by(flock_id=flock.id).order_by(DailyLog.date.desc()).first()
+        if not last_log:
+            # If there are no logs at all, return empty data
+            return jsonify({
+                'success': True,
+                'house_name': flock.house.name,
+                'data': []
+            })
+
+        max_date = last_log.date
+        start_date = max_date - timedelta(days=30)
+
+        # Find daily logs within the last 30 days since max_date where all 4 cull egg categories are 0
         unfilled_logs = DailyLog.query.filter(
             DailyLog.flock_id == flock.id,
+            DailyLog.date >= start_date,
+            DailyLog.date <= max_date,
             DailyLog.cull_eggs_jumbo == 0,
             DailyLog.cull_eggs_small == 0,
             DailyLog.cull_eggs_abnormal == 0,
             DailyLog.cull_eggs_crack == 0
-        ).order_by(DailyLog.date.desc()).limit(30).all()
+        ).order_by(DailyLog.date.desc()).all()
 
         # Format records
         result = []
