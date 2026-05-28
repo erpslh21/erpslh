@@ -317,7 +317,7 @@
                                                     {% if log.m_parts %}
                                                         {% for p in log.m_parts %}
                                                             <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
-                                                                {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
+                                                                {{ p.name }}: {{ "%.0f"|format(((p.bw or 0) | float)) if p.bw else "" }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
@@ -338,7 +338,7 @@
                                                     {% if log.f_parts %}
                                                         {% for p in log.f_parts %}
                                                             <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
-                                                                {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
+                                                                {{ p.name }}: {{ "%.0f"|format(((p.bw or 0) | float)) if p.bw else "" }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
@@ -596,7 +596,7 @@
                 }
             }
         }
-        document.getElementById('body_weight_male').value = m_cnt > 0 ? (m_sum / m_cnt).toFixed(2) : '';
+        document.getElementById('body_weight_male').value = m_cnt > 0 ? (m_sum / m_cnt).toFixed(0) : '';
         document.getElementById('uniformity_male').value = m_cnt > 0 ? (mu_sum / m_cnt).toFixed(2) : '';
 
         // Female
@@ -614,7 +614,7 @@
                 }
             }
         }
-        document.getElementById('body_weight_female').value = f_cnt > 0 ? (f_sum / f_cnt).toFixed(2) : '';
+        document.getElementById('body_weight_female').value = f_cnt > 0 ? (f_sum / f_cnt).toFixed(0) : '';
         document.getElementById('uniformity_female').value = f_cnt > 0 ? (fu_sum / f_cnt).toFixed(2) : '';
     }
 </script>
@@ -1469,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const uniM = document.getElementById(`edit_uni_m_${logId}`);
         if (avgM && uniM) {
             if (mCnt > 0) {
-                avgM.value = (mSum / mCnt).toFixed(2);
+                avgM.value = (mSum / mCnt).toFixed(0);
                 uniM.value = (muSum / mCnt).toFixed(2);
             } else {
                 avgM.value = '0.00';
@@ -1495,7 +1495,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const uniF = document.getElementById(`edit_uni_f_${logId}`);
         if (avgF && uniF) {
             if (fCnt > 0) {
-                avgF.value = (fSum / fCnt).toFixed(2);
+                avgF.value = (fSum / fCnt).toFixed(0);
                 uniF.value = (fuSum / fCnt).toFixed(2);
             } else {
                 avgF.value = '0.00';
@@ -1623,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (let i = 1; i <= 8; i++) {
                     const part = log.m_parts['M' + i];
                     if (part) {
-                        malePartCells += `<td class="text-center">${part.bw}g (${part.unif.toFixed(1)}%)</td>`;
+                        malePartCells += `<td class="text-center">${Math.round(part.bw)}g (${part.unif.toFixed(1)}%)</td>`;
                     } else {
                         malePartCells += `<td class="text-center text-muted">-</td>`;
                     }
@@ -1644,7 +1644,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (let i = 1; i <= 8; i++) {
                     const part = log.f_parts['F' + i];
                     if (part) {
-                        femalePartCells += `<td class="text-center">${part.bw}g (${part.unif.toFixed(1)}%)</td>`;
+                        femalePartCells += `<td class="text-center">${Math.round(part.bw)}g (${part.unif.toFixed(1)}%)</td>`;
                     } else {
                         femalePartCells += `<td class="text-center text-muted">-</td>`;
                     }
@@ -1677,7 +1677,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let maleLine = `${log.age_weeks}\t${log.date}\tMale\t${log.avg_m}\t${log.uni_m.toFixed(1)}`;
                 for (let i = 1; i <= 8; i++) {
                     const part = log.m_parts['M' + i];
-                    maleLine += `\t${part ? `${part.bw} (${part.unif.toFixed(1)}%)` : '-'}`;
+                    maleLine += `\t${part ? `${Math.round(part.bw)} (${part.unif.toFixed(1)}%)` : '-'}`;
                 }
                 tsv += maleLine + '\n';
 
@@ -1685,7 +1685,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let femaleLine = `${log.age_weeks}\t${log.date}\tFemale\t${log.avg_f}\t${log.uni_f.toFixed(1)}`;
                 for (let i = 1; i <= 8; i++) {
                     const part = log.f_parts['F' + i];
-                    femaleLine += `\t${part ? `${part.bw} (${part.unif.toFixed(1)}%)` : '-'}`;
+                    femaleLine += `\t${part ? `${Math.round(part.bw)} (${part.unif.toFixed(1)}%)` : '-'}`;
                 }
                 tsv += femaleLine + '\n';
             });
@@ -1711,7 +1711,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let maleLine = `Week ${log.age_weeks},${log.date},Male,${log.avg_m},${log.uni_m.toFixed(1)}`;
                 for (let i = 1; i <= 8; i++) {
                     const part = log.m_parts['M' + i];
-                    maleLine += `,${part ? `"${part.bw} (${part.unif.toFixed(1)}%)"` : '"-"'}`;
+                    maleLine += `,${part ? `"${Math.round(part.bw)} (${part.unif.toFixed(1)}%)"` : '"-"'}`;
                 }
                 csv += maleLine + '\n';
 
@@ -1719,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 let femaleLine = `Week ${log.age_weeks},${log.date},Female,${log.avg_f},${log.uni_f.toFixed(1)}`;
                 for (let i = 1; i <= 8; i++) {
                     const part = log.f_parts['F' + i];
-                    femaleLine += `,${part ? `"${part.bw} (${part.unif.toFixed(1)}%)"` : '"-"'}`;
+                    femaleLine += `,${part ? `"${Math.round(part.bw)} (${part.unif.toFixed(1)}%)"` : '"-"'}`;
                 }
                 csv += femaleLine + '\n';
             });
