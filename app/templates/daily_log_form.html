@@ -1,7 +1,13 @@
 {% extends "base_tabler.html" %}
 
 {% block content %}
-<h2>{{ 'Edit Daily Log' if log else 'Daily Data Entry' }}</h2>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h2>{{ 'Edit Daily Log' if log else 'Daily Data Entry' }}</h2>
+  <button type="button" class="btn btn-warning text-dark fw-bold d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#bulkCullEggsModal" onclick="openBulkCullEggsModal()">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-egg" width="20" height="20" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 14.083c0 4.154 -3.134 7.517 -7 7.517s-7 -3.363 -7 -7.517c0 -4.962 3.134 -11.083 7 -11.083s7 6.121 7 11.083z" /></svg>
+    Update Cull Eggs
+  </button>
+</div>
 
 {% if not houses and not log %}
   <div class="alert alert-warning">
@@ -1994,6 +2000,212 @@
         let deleteModal = new bootstrap.Modal(document.getElementById('deleteLogModal'));
         deleteModal.show();
     }
+
+    function openBulkCullEggsModal() {
+        let mainHouseId = document.getElementById('house_id')?.value;
+        if (mainHouseId) {
+            document.getElementById('bulk_cull_house_id').value = mainHouseId;
+        }
+        loadUnfilledCullEggs();
+    }
+
+    function loadUnfilledCullEggs() {
+        let houseId = document.getElementById('bulk_cull_house_id').value;
+        if (!houseId) return;
+
+        let tableWrapper = document.getElementById('bulkCullTableWrapper');
+        let loading = document.getElementById('bulkCullLoading');
+        let emptyState = document.getElementById('bulkCullEmptyState');
+        let saveBtn = document.getElementById('bulkCullSaveBtn');
+        let tbody = document.getElementById('bulkCullTableBody');
+
+        tableWrapper.classList.add('d-none');
+        emptyState.classList.add('d-none');
+        loading.classList.remove('d-none');
+        saveBtn.disabled = true;
+        tbody.innerHTML = '';
+
+        fetch(`/api/cull_eggs/unfilled?house_id=${houseId}`)
+            .then(res => res.json())
+            .then(res => {
+                loading.classList.add('d-none');
+                if (res.success && res.data && res.data.length > 0) {
+                    tableWrapper.classList.remove('d-none');
+                    saveBtn.disabled = false;
+
+                    res.data.forEach(row => {
+                        let tr = document.createElement('tr');
+                        tr.setAttribute('data-log-id', row.id);
+                        tr.innerHTML = `
+                            <td class="fw-bold">${row.date}</td>
+                            <td>
+                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="jumbo" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="small" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="abnormal" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                            </td>
+                            <td>
+                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="crack" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    emptyState.classList.remove('d-none');
+                }
+            })
+            .catch(err => {
+                loading.classList.add('d-none');
+                console.error(err);
+                alert('An error occurred while fetching unfilled dates.');
+            });
+    }
+
+    function saveBulkCullEggs() {
+        let houseId = document.getElementById('bulk_cull_house_id').value;
+        if (!houseId) return;
+
+        let tbody = document.getElementById('bulkCullTableBody');
+        let rows = tbody.querySelectorAll('tr');
+        let updates = [];
+
+        rows.forEach(tr => {
+            let logId = tr.getAttribute('data-log-id');
+            let jumboInput = tr.querySelector('input[data-field="jumbo"]');
+            let smallInput = tr.querySelector('input[data-field="small"]');
+            let abnormalInput = tr.querySelector('input[data-field="abnormal"]');
+            let crackInput = tr.querySelector('input[data-field="crack"]');
+
+            let jumbo = jumboInput.value.trim();
+            let small = smallInput.value.trim();
+            let abnormal = abnormalInput.value.trim();
+            let crack = crackInput.value.trim();
+
+            if (jumbo !== '' || small !== '' || abnormal !== '' || crack !== '') {
+                updates.push({
+                    log_id: parseInt(logId),
+                    jumbo: jumbo !== '' ? parseInt(jumbo) : 0,
+                    small: small !== '' ? parseInt(small) : 0,
+                    abnormal: abnormal !== '' ? parseInt(abnormal) : 0,
+                    crack: crack !== '' ? parseInt(crack) : 0
+                });
+            }
+        });
+
+        if (updates.length === 0) {
+            alert('No cull eggs were entered. Please enter values for at least one date.');
+            return;
+        }
+
+        let saveBtn = document.getElementById('bulkCullSaveBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Saving...';
+
+        fetch('/api/cull_eggs/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                house_id: parseInt(houseId),
+                updates: updates
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                let modalEl = document.getElementById('bulkCullEggsModal');
+                let modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+
+                alert(res.message || 'Cull eggs updated successfully.');
+                window.location.reload();
+            } else {
+                alert(res.error || 'An error occurred while saving.');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Save Changes';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('An error occurred while saving.');
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Save Changes';
+        });
+    }
   </script>
+
+  <!-- Bulk Cull Eggs Modal -->
+  <div class="modal fade" id="bulkCullEggsModal" tabindex="-1" role="dialog" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+          <div class="modal-content">
+              <div class="modal-header bg-warning-lt text-warning d-flex justify-content-between align-items-center">
+                  <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-egg" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 14.083c0 4.154 -3.134 7.517 -7 7.517s-7 -3.363 -7 -7.517c0 -4.962 3.134 -11.083 7 -11.083s7 6.121 7 11.083z" /></svg>
+                      Bulk Update Cull Eggs
+                  </h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                  <div class="mb-4">
+                      <label for="bulk_cull_house_id" class="form-label fw-bold">Select House</label>
+                      <select class="form-select form-select-lg" id="bulk_cull_house_id" onchange="loadUnfilledCullEggs()">
+                          {% for house in houses %}
+                              <option value="{{ house.id }}" {{ 'selected' if (log and log.flock.house_id == house.id) or (selected_house_id == house.id) else '' }}>
+                                  {{ house.name }}
+                              </option>
+                          {% endfor %}
+                      </select>
+                      <div class="form-text text-muted mt-1 small">
+                          This will fetch the most recent 30 unfilled daily logs (since intake) for the selected house.
+                      </div>
+                  </div>
+
+                  <div id="bulkCullTableWrapper" class="d-none">
+                      <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                          <table class="table table-bordered table-striped text-center align-middle" style="font-size: 0.85rem;">
+                              <thead class="table-light sticky-top" style="z-index: 1;">
+                                  <tr>
+                                      <th>Date</th>
+                                      <th>Jumbo</th>
+                                      <th>Small</th>
+                                      <th>Abnormal</th>
+                                      <th>Crack</th>
+                                  </tr>
+                              </thead>
+                              <tbody id="bulkCullTableBody">
+                                  <!-- Dynamically populated rows -->
+                              </tbody>
+                          </table>
+                      </div>
+                      <p class="text-muted small mt-2">
+                          💡 Leave fields blank or unmodified for dates you do not wish to update. Only filled/modified rows will be saved.
+                      </p>
+                  </div>
+
+                  <div id="bulkCullLoading" class="text-center py-4 d-none">
+                      <div class="spinner-border text-primary" role="status"></div>
+                      <p class="mt-2 text-muted">Fetching unfilled dates...</p>
+                  </div>
+
+                  <div id="bulkCullEmptyState" class="text-center py-4 d-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-circle-check text-success" width="48" height="48" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M9 12l2 2l4 -4" /></svg>
+                      <h4 class="mt-2 fw-bold">All caught up!</h4>
+                      <p class="text-muted mb-0">No unfilled cull egg dates found for this house.</p>
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" id="bulkCullSaveBtn" class="btn btn-primary px-4 fw-bold" onclick="saveBulkCullEggs()" disabled>
+                      Save Changes
+                  </button>
+              </div>
+          </div>
+      </div>
+  </div>
 {% endif %}
 {% endblock %}

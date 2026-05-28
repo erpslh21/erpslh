@@ -1345,3 +1345,94 @@ def register_api_routes(app):
             'last_weighing_week': last_weighing_week
         }
         return jsonify(response_data)
+
+    @app.route('/api/cull_eggs/unfilled')
+    @login_required
+    @dept_required('Breeder')
+    def get_unfilled_cull_eggs():
+        house_id = request.args.get('house_id', type=int)
+        if not house_id:
+            return jsonify({'error': 'Missing house_id'}), 400
+
+        flock = Flock.query.filter_by(house_id=house_id, status='Active').first()
+        if not flock:
+            return jsonify({'error': 'No active flock found for this house.'}), 404
+
+        # Find 30 most recent daily logs where all 4 cull egg categories are 0
+        unfilled_logs = DailyLog.query.filter(
+            DailyLog.flock_id == flock.id,
+            DailyLog.cull_eggs_jumbo == 0,
+            DailyLog.cull_eggs_small == 0,
+            DailyLog.cull_eggs_abnormal == 0,
+            DailyLog.cull_eggs_crack == 0
+        ).order_by(DailyLog.date.desc()).limit(30).all()
+
+        # Format records
+        result = []
+        for log in unfilled_logs:
+            result.append({
+                'id': log.id,
+                'date': log.date.strftime('%Y-%m-%d'),
+                'jumbo': 0,
+                'small': 0,
+                'abnormal': 0,
+                'crack': 0
+            })
+
+        # We reverse to show oldest first in the data entry table (so user keys in chronological order)
+        result.reverse()
+
+        return jsonify({
+            'success': True,
+            'house_name': flock.house.name,
+            'data': result
+        })
+
+    @app.route('/api/cull_eggs/update', methods=['POST'])
+    @login_required
+    @dept_required('Breeder')
+    def update_cull_eggs_bulk():
+        payload = request.get_json()
+        if not payload:
+            return jsonify({'error': 'Invalid request body.'}), 400
+
+        house_id = payload.get('house_id')
+        updates = payload.get('updates', [])
+
+        if not house_id:
+            return jsonify({'error': 'Missing house_id.'}), 400
+
+        flock = Flock.query.filter_by(house_id=house_id, status='Active').first()
+        if not flock:
+            return jsonify({'error': 'No active flock found for this house.'}), 404
+
+        updated_count = 0
+        for entry in updates:
+            log_id = entry.get('log_id')
+            jumbo = entry.get('jumbo', 0)
+            small = entry.get('small', 0)
+            abnormal = entry.get('abnormal', 0)
+            crack = entry.get('crack', 0)
+
+            # Retrieve the daily log and check that it belongs to this active flock
+            log = db.session.get(DailyLog, log_id)
+            if log and log.flock_id == flock.id:
+                # Update columns
+                log.cull_eggs_jumbo = int(jumbo) if jumbo else 0
+                log.cull_eggs_small = int(small) if small else 0
+                log.cull_eggs_abnormal = int(abnormal) if abnormal else 0
+                log.cull_eggs_crack = int(crack) if crack else 0
+                db.session.add(log)
+                updated_count += 1
+
+        if updated_count > 0:
+            try:
+                safe_commit()
+            except Exception as e:
+                db.session.rollback()
+                return jsonify({'error': f'Database error: {str(e)}'}), 500
+
+        return jsonify({
+            'success': True,
+            'message': f'Updated cull eggs for {updated_count} dates successfully.'
+        })
