@@ -222,10 +222,14 @@
                         </div>
                         <div class="card-body">
                             <div class="row w-100 mb-3">
-                                <div class="col-12 d-flex justify-content-center">
-                                    <label class="form-check form-switch">
+                                <div class="col-12 d-flex justify-content-center gap-4">
+                                    <label class="form-check form-switch mb-0">
                                         <input class="form-check-input" type="checkbox" id="togglePartitions">
                                         <span class="form-check-label small">Show Partitions</span>
+                                    </label>
+                                    <label class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="toggleLabels" checked>
+                                        <span class="form-check-label small">Show Labels</span>
                                     </label>
                                 </div>
                             </div>
@@ -921,6 +925,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const houseFilter = document.getElementById('houseFilter');
         const chartContainer = document.getElementById('chartContainer');
         const togglePartitions = document.getElementById('togglePartitions');
+        const toggleLabels = document.getElementById('toggleLabels');
         const chartStartWeek = document.getElementById('chartStartWeek');
         const accordionItems = document.querySelectorAll('.bw-log-item');
 
@@ -1223,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         pointRadius: 4,
                         pointHoverRadius: 6,
                         datalabels: {
-                            display: true,
+                            display: toggleLabels ? toggleLabels.checked : true,
                             color: '#fff',
                             backgroundColor: color,
                             borderRadius: 4,
@@ -1369,6 +1374,12 @@ document.addEventListener('DOMContentLoaded', function() {
         togglePartitions.addEventListener('change', function() {
             if (houseFilter.value !== 'all') renderCharts(houseFilter.value);
         });
+
+        if (toggleLabels) {
+            toggleLabels.addEventListener('change', function() {
+                if (houseFilter.value !== 'all') renderCharts(houseFilter.value);
+            });
+        }
 
         chartStartWeek.addEventListener('change', function() {
             if (houseFilter.value !== 'all') renderCharts(houseFilter.value);
