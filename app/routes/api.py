@@ -1325,17 +1325,17 @@ def register_api_routes(app):
         # Find standard for this week
         std = Standard.query.filter_by(week=weeks).first()
 
-        last_log = DailyLog.query.filter(
-            DailyLog.flock_id == flock_id,
-            DailyLog.is_weighing_day == True,
-            DailyLog.date <= target_date
-        ).order_by(DailyLog.date.desc()).first()
+        from app.models.models import FlockBodyweight
+        last_log = FlockBodyweight.query.filter(
+            FlockBodyweight.flock_id == flock_id,
+            FlockBodyweight.date < target_date
+        ).order_by(FlockBodyweight.date.desc()).first()
 
         last_weighing_date = None
         last_weighing_week = None
         if last_log:
             last_weighing_date = last_log.date.strftime('%Y-%m-%d')
-            last_weighing_week = calculate_bio_week(flock.intake_date, last_log.date)
+            last_weighing_week = last_log.age_week if last_log.age_week is not None else calculate_bio_week(flock.intake_date, last_log.date)
 
         response_data = {
             'week': weeks,
