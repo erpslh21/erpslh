@@ -351,8 +351,16 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
         # BW (from decoupled FlockBodyweight)
         bw_log = bw_map.get(log.date)
         std_record = std_map.get(bio_week)
-        std_bw_male = std_record.std_bw_male if std_record and std_record.std_bw_male is not None else (bw_log.standard_bw_male if bw_log else None)
-        std_bw_female = std_record.std_bw_female if std_record and std_record.std_bw_female is not None else (bw_log.standard_bw_female if bw_log else None)
+        
+        if std_record and std_record.std_bw_male is not None and std_record.std_bw_male > 0:
+            std_bw_male = std_record.std_bw_male
+        else:
+            std_bw_male = bw_log.standard_bw_male if bw_log else None
+
+        if std_record and std_record.std_bw_female is not None and std_record.std_bw_female > 0:
+            std_bw_female = std_record.std_bw_female
+        else:
+            std_bw_female = bw_log.standard_bw_female if bw_log else None
 
         # Metrics Dict
         d = {

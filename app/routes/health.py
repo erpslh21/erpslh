@@ -229,11 +229,14 @@ def register_health_routes(app):
 
             # Fallback/Override Standard model to ensure it is always fetched from the Standard table (configured under Admin panel)
             std_record = Standard.query.filter_by(week=age_weeks).first()
-            if std_record:
-                std_m = std_record.std_bw_male if std_record.std_bw_male is not None else log.standard_bw_male
-                std_f = std_record.std_bw_female if std_record.std_bw_female is not None else log.standard_bw_female
+            if std_record and std_record.std_bw_male is not None and std_record.std_bw_male > 0:
+                std_m = std_record.std_bw_male
             else:
                 std_m = log.standard_bw_male
+
+            if std_record and std_record.std_bw_female is not None and std_record.std_bw_female > 0:
+                std_f = std_record.std_bw_female
+            else:
                 std_f = log.standard_bw_female
 
             avg_m_diff = "N/A"

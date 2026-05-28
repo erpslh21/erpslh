@@ -1025,7 +1025,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 addMainLines(
                     maleSeries,
                     filteredLogs.map(log => (log.avg_m !== null && log.avg_m !== undefined && log.avg_m !== '') ? log.avg_m : null),
-                    filteredLogs.map(log => (log.std_m !== null && log.std_m !== undefined && log.std_m !== '' && parseFloat(log.std_m) > 0) ? log.std_m : ((allStandards[log.age_weeks] && allStandards[log.age_weeks].std_m) || null)),
+                    filteredLogs.map(log => {
+                        let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_m !== null && allStandards[log.age_weeks].std_m !== undefined && parseFloat(allStandards[log.age_weeks].std_m) > 0) ? parseFloat(allStandards[log.age_weeks].std_m) : null;
+                        if (stdVal !== null) return stdVal;
+                        return (log.std_m !== null && log.std_m !== undefined && log.std_m !== '' && parseFloat(log.std_m) > 0) ? parseFloat(log.std_m) : null;
+                    }),
                     filteredLogs.map(log => (log.uni_m !== null && log.uni_m !== undefined && log.uni_m !== '') ? log.uni_m : null),
                     allMaleBw,
                     allMaleUni
@@ -1034,7 +1038,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 addMainLines(
                     femaleSeries,
                     filteredLogs.map(log => (log.avg_f !== null && log.avg_f !== undefined && log.avg_f !== '') ? log.avg_f : null),
-                    filteredLogs.map(log => (log.std_f !== null && log.std_f !== undefined && log.std_f !== '' && parseFloat(log.std_f) > 0) ? log.std_f : ((allStandards[log.age_weeks] && allStandards[log.age_weeks].std_f) || null)),
+                    filteredLogs.map(log => {
+                        let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_f !== null && allStandards[log.age_weeks].std_f !== undefined && parseFloat(allStandards[log.age_weeks].std_f) > 0) ? parseFloat(allStandards[log.age_weeks].std_f) : null;
+                        if (stdVal !== null) return stdVal;
+                        return (log.std_f !== null && log.std_f !== undefined && log.std_f !== '' && parseFloat(log.std_f) > 0) ? parseFloat(log.std_f) : null;
+                    }),
                     filteredLogs.map(log => (log.uni_f !== null && log.uni_f !== undefined && log.uni_f !== '') ? log.uni_f : null),
                     allFemaleBw,
                     allFemaleUni
@@ -1042,7 +1050,11 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Show partitions for BW, but only avg for Uniformity and Standard
 
-                let stdMBw = filteredLogs.map(log => (log.std_m !== null && log.std_m !== undefined && log.std_m !== '' && parseFloat(log.std_m) > 0) ? parseFloat(log.std_m) : ((allStandards[log.age_weeks] && allStandards[log.age_weeks].std_m) || null));
+                let stdMBw = filteredLogs.map(log => {
+                    let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_m !== null && allStandards[log.age_weeks].std_m !== undefined && parseFloat(allStandards[log.age_weeks].std_m) > 0) ? parseFloat(allStandards[log.age_weeks].std_m) : null;
+                    if (stdVal !== null) return stdVal;
+                    return (log.std_m !== null && log.std_m !== undefined && log.std_m !== '' && parseFloat(log.std_m) > 0) ? parseFloat(log.std_m) : null;
+                });
                 maleSeries.push({
                     name: 'Standard BW',
                     type: 'line',
@@ -1060,7 +1072,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 allMaleUni.push(...uniMData.filter(v => v !== null));
 
-                let stdFBw = filteredLogs.map(log => (log.std_f !== null && log.std_f !== undefined && log.std_f !== '' && parseFloat(log.std_f) > 0) ? parseFloat(log.std_f) : ((allStandards[log.age_weeks] && allStandards[log.age_weeks].std_f) || null));
+                let stdFBw = filteredLogs.map(log => {
+                    let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_f !== null && allStandards[log.age_weeks].std_f !== undefined && parseFloat(allStandards[log.age_weeks].std_f) > 0) ? parseFloat(allStandards[log.age_weeks].std_f) : null;
+                    if (stdVal !== null) return stdVal;
+                    return (log.std_f !== null && log.std_f !== undefined && log.std_f !== '' && parseFloat(log.std_f) > 0) ? parseFloat(log.std_f) : null;
+                });
                 femaleSeries.push({
                     name: 'Standard BW',
                     type: 'line',
