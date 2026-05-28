@@ -107,7 +107,7 @@ h1, h2, h3, h4, h5, h6, .card-title, .navbar-brand, .page-title {
     position: sticky;
     top: var(--navbar-height, 56px); /* Matches navbar height dynamically */
     z-index: 1020; /* Below navbar (1030) */
-    background-color: #ffffff; /* Solid background to prevent overlap transparency */
+    background-color: var(--slh-card-bg) !important; /* Premium adaptive background */
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     padding-top: 0.5rem; /* Add padding for better spacing */
     padding-bottom: 0.5rem;
@@ -223,12 +223,20 @@ h1, h2, h3, h4, h5, h6, .card-title, .navbar-brand, .page-title {
 }
 
 /* Ensure warning badges have high contrast text (dark gray/black instead of white) */
-.badge.bg-warning, .bg-warning {
+.badge.bg-warning {
     color: #212529 !important;
 }
 .badge-warning {
     color: #212529 !important;
     background-color: #ffc107;
+}
+
+/* Standarize warning headers and tables to match others */
+table th.bg-warning, table td.bg-warning {
+    color: inherit !important;
+}
+.bg-warning.text-white {
+    color: #ffffff !important;
 }
 
 /* Ensure disabled buttons have legible contrast */

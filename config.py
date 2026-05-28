@@ -20,8 +20,11 @@ class Config:
         PRIMARY_COLOR = "#005eb8"
 
     database_url = os.getenv('DATABASE_URL')
-    if database_url and database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    if database_url:
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        elif database_url.startswith("mysql://"):
+            database_url = database_url.replace("mysql://", "mysql+pymysql://", 1)
 
     SQLALCHEMY_DATABASE_URI = database_url or 'sqlite:///' + os.path.join(basedir, 'instance', 'farm.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False

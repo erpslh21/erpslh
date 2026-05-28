@@ -113,7 +113,7 @@
 
 <ul class="nav nav-tabs mb-4 gap-2 border-bottom-0" id="flockTabs" role="tablist">
   <li class="nav-item" role="presentation">
-    <button class="nav-link active px-4 py-2 border rounded shadow-sm" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab" aria-controls="daily" aria-selected="true">Daily Logs</button>
+    <button class="nav-link active px-4 py-2 border rounded shadow-sm bg-body" id="daily-tab" data-bs-toggle="tab" data-bs-target="#daily" type="button" role="tab" aria-controls="daily" aria-selected="true">Daily Logs</button>
   </li>
   <li class="nav-item" role="presentation">
     <button class="nav-link px-4 py-2 border rounded shadow-sm bg-body" id="weekly-tab" data-bs-toggle="tab" data-bs-target="#weekly" type="button" role="tab" aria-controls="weekly" aria-selected="false">Weekly Summary</button>
@@ -1543,8 +1543,45 @@
           clip: true
       });
 
-      const maleBWScales = getScaleOptions(maleBWValues, false);
-      const maleUniScales = getScaleOptions([bwData.unif_male], true);
+      // Calculate dynamic scales to keep bodyweight in bottom 50% and uniformity in top 50%
+      let maxBW = 0;
+      maleBWValues.forEach(arr => {
+          if (arr && Array.isArray(arr)) {
+              arr.forEach(val => {
+                  if (val !== null && val !== undefined) {
+                      const num = parseFloat(val);
+                      if (!isNaN(num) && num > maxBW) {
+                          maxBW = num;
+                      }
+                  }
+              });
+          }
+      });
+      const calculatedMaxBW = maxBW > 0 ? maxBW * 2 : 2000;
+
+      let minUni = 100;
+      let hasUniData = false;
+      if (bwData.unif_male && Array.isArray(bwData.unif_male)) {
+          bwData.unif_male.forEach(val => {
+              if (val !== null && val !== undefined) {
+                  const num = parseFloat(val);
+                  if (!isNaN(num)) {
+                      hasUniData = true;
+                      if (num < minUni) {
+                          minUni = num;
+                      }
+                  }
+              }
+          });
+      }
+      const calculatedMinUni = hasUniData ? minUni : 90;
+      let minY1 = Math.max(0, 2 * calculatedMinUni - 100);
+      if (minY1 >= 95) {
+          minY1 = 95; // Ensure at least 5% range width (since max is 100)
+      }
+
+      const maleBWScales = { min: 0, max: calculatedMaxBW };
+      const maleUniScales = { min: minY1, max: 100 };
 
       const maleChartCanvas = document.getElementById('maleChart');
       if (!maleChartCanvas) return;
@@ -1772,8 +1809,45 @@
           clip: true
       });
 
-      const femaleBWScales = getScaleOptions(femaleBWValues, false);
-      const femaleUniScales = getScaleOptions([bwData.unif_female], true);
+      // Calculate dynamic scales to keep bodyweight in bottom 50% and uniformity in top 50%
+      let maxBW = 0;
+      femaleBWValues.forEach(arr => {
+          if (arr && Array.isArray(arr)) {
+              arr.forEach(val => {
+                  if (val !== null && val !== undefined) {
+                      const num = parseFloat(val);
+                      if (!isNaN(num) && num > maxBW) {
+                          maxBW = num;
+                      }
+                  }
+              });
+          }
+      });
+      const calculatedMaxBW = maxBW > 0 ? maxBW * 2 : 2000;
+
+      let minUni = 100;
+      let hasUniData = false;
+      if (bwData.unif_female && Array.isArray(bwData.unif_female)) {
+          bwData.unif_female.forEach(val => {
+              if (val !== null && val !== undefined) {
+                  const num = parseFloat(val);
+                  if (!isNaN(num)) {
+                      hasUniData = true;
+                      if (num < minUni) {
+                          minUni = num;
+                      }
+                  }
+              }
+          });
+      }
+      const calculatedMinUni = hasUniData ? minUni : 90;
+      let minY1 = Math.max(0, 2 * calculatedMinUni - 100);
+      if (minY1 >= 95) {
+          minY1 = 95; // Ensure at least 5% range width (since max is 100)
+      }
+
+      const femaleBWScales = { min: 0, max: calculatedMaxBW };
+      const femaleUniScales = { min: minY1, max: 100 };
 
       const femaleChartCanvas = document.getElementById('femaleChart');
       if (!femaleChartCanvas) return;
