@@ -126,13 +126,19 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
 
     # 1b. Setup Bodyweight Map
     bw_map = {}
+    std_map = {}
     try:
-        from app.models.models import FlockBodyweight
+        from app.models.models import FlockBodyweight, Standard
         bws = FlockBodyweight.query.filter_by(flock_id=flock.id).all()
         for bw in bws:
             bw_map[bw.date] = bw
+        if not all_standards:
+            all_standards = Standard.query.all()
     except Exception:
         pass
+
+    if all_standards:
+        std_map = {s.week: s for s in all_standards if hasattr(s, 'week')}
 
     # 2. Setup Stock Variables
     if custom_start_stock:
@@ -342,6 +348,20 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
                 else:
                     std_hatching_egg_pct_val = std_hatching_egg_pct_curve[-1]
 
+        # BW (from decoupled FlockBodyweight)
+        bw_log = bw_map.get(log.date)
+        std_record = std_map.get(bio_week)
+        
+        if std_record and std_record.std_bw_male is not None and std_record.std_bw_male > 0:
+            std_bw_male = std_record.std_bw_male
+        else:
+            std_bw_male = bw_log.standard_bw_male if bw_log else None
+
+        if std_record and std_record.std_bw_female is not None and std_record.std_bw_female > 0:
+            std_bw_female = std_record.std_bw_female
+        else:
+            std_bw_female = bw_log.standard_bw_female if bw_log else None
+
         # Metrics Dict
         d = {
             'date': log.date,
@@ -391,12 +411,12 @@ def enrich_flock_data(flock, logs, hatchability_data=None, custom_start_stock=No
             'is_daily_entry_submitted': log.is_daily_entry_submitted,
 
             # BW (from decoupled FlockBodyweight)
-            'body_weight_male': bw_map[log.date].body_weight_male if log.date in bw_map else None,
-            'body_weight_female': bw_map[log.date].body_weight_female if log.date in bw_map else None,
-            'uniformity_male': bw_map[log.date].uniformity_male if log.date in bw_map else None,
-            'uniformity_female': bw_map[log.date].uniformity_female if log.date in bw_map else None,
-            'standard_bw_male': bw_map[log.date].standard_bw_male if log.date in bw_map else None,
-            'standard_bw_female': bw_map[log.date].standard_bw_female if log.date in bw_map else None,
+            'body_weight_male': bw_log.body_weight_male if bw_log else None,
+            'body_weight_female': bw_log.body_weight_female if bw_log else None,
+            'uniformity_male': bw_log.uniformity_male if bw_log else None,
+            'uniformity_female': bw_log.uniformity_female if bw_log else None,
+            'standard_bw_male': std_bw_male,
+            'standard_bw_female': std_bw_female,
 
             # Derived %
             'mortality_male_pct': safe_div(mort_m, stock_m_start),

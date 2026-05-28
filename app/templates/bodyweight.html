@@ -20,7 +20,6 @@
     </div>
 
     <div class="card">
-        <!-- DEBUG: User={{ current_user.username if current_user.is_authenticated else 'Guest' }}, Role={{ current_user.role if current_user.is_authenticated else 'None' }}, Dept={{ current_user.dept if current_user.is_authenticated else 'None' }} -->
         <div class="card-header">
             <ul class="nav nav-tabs card-header-tabs" data-bs-toggle="tabs">
                 <li class="nav-item">
@@ -29,7 +28,7 @@
                 <li class="nav-item">
                     <a href="#tab-history" class="nav-link" data-bs-toggle="tab">Bodyweight Grading</a>
                 </li>
-                {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+{% if session.get('user_id') and ((session.get('user_role') and session.get('user_role').strip().lower() in ['admin', 'management', 'manager']) or (session.get('user_dept') and session.get('user_dept').strip().lower() in ['admin', 'management', 'manager'])) %}
                 <li class="nav-item">
                     <a href="#tab-excel-export" class="nav-link" data-bs-toggle="tab">Admin Tabular View</a>
                 </li>
@@ -223,10 +222,14 @@
                         </div>
                         <div class="card-body">
                             <div class="row w-100 mb-3">
-                                <div class="col-12 d-flex justify-content-center">
-                                    <label class="form-check form-switch">
+                                <div class="col-12 d-flex justify-content-center gap-4">
+                                    <label class="form-check form-switch mb-0">
                                         <input class="form-check-input" type="checkbox" id="togglePartitions">
                                         <span class="form-check-label small">Show Partitions</span>
+                                    </label>
+                                    <label class="form-check form-switch mb-0">
+                                        <input class="form-check-input" type="checkbox" id="toggleLabels" checked>
+                                        <span class="form-check-label small">Show Labels</span>
                                     </label>
                                 </div>
                             </div>
@@ -254,7 +257,7 @@
                         {% for log in bodyweight_logs %}
                         <div class="accordion-item bw-log-item" data-house="{{ log.house_name }}">
                             <h2 class="accordion-header" id="heading-{{ log.log_id }}">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ log.log_id }}" aria-expanded="false" aria-controls="collapse-{{ log.log_id }}">
+                                <button class="accordion-button collapsed {% if log.has_report %}bg-primary-lt{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ log.log_id }}" aria-expanded="false" aria-controls="collapse-{{ log.log_id }}">
                                     <div class="d-flex justify-content-between align-items-center w-100 me-3">
                                         <div><strong>{{ log.house_name }}</strong>&nbsp;- Age: Week {{ log.age_weeks }}</div>
                                         <div class="text-muted small">{{ log.date.strftime('%d-%m-%y') if log.date else '' }}</div>
@@ -313,14 +316,14 @@
                                                 <div class="mt-2">
                                                     {% if log.m_parts %}
                                                         {% for p in log.m_parts %}
-                                                            <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                            <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                                 {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
                                                         {% endfor %}
                                                     {% else %}
-                                                        <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                        <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                             Avg: {{ log.avg_m }}g <span class="text-muted">({{ log.avg_m_diff }})</span>
                                                             {{ "%.1f"|format(((log.uni_m or 0) | float)) }}%
                                                         </span>
@@ -334,14 +337,14 @@
                                                 <div class="mt-2">
                                                     {% if log.f_parts %}
                                                         {% for p in log.f_parts %}
-                                                            <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                            <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                                 {{ p.name }}: {{ p.bw }}g <span class="text-muted">({{ p.diff_g }})</span>
                                                                 {{ "%.1f"|format(((p.unif or 0) | float)) }}% <span class="text-muted">({{ p.diff_u }})</span>
                                                                 | Var: <span class="{% if p.var_pct > 0 %}text-success{% elif p.var_pct < 0 %}text-danger{% else %}text-muted{% endif %}">{{ "%.1f"|format(((p.var_pct or 0) | float)) }}%</span>
                                                             </span>
                                                         {% endfor %}
                                                     {% else %}
-                                                        <span class="badge bg-light-subtle text-body mb-1 d-inline-block px-2 py-1 me-2 border">
+                                                        <span class="d-inline-block px-2 py-1 mb-1 me-2 rounded border bg-body-tertiary text-body small">
                                                             Avg: {{ log.avg_f }}g <span class="text-muted">({{ log.avg_f_diff }})</span>
                                                             {{ "%.1f"|format(((log.uni_f or 0) | float)) }}%
                                                         </span>
@@ -399,7 +402,7 @@
             </div>
             {% endif %}
                 
-                {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+{% if session.get('user_id') and ((session.get('user_role') and session.get('user_role').strip().lower() in ['admin', 'management', 'manager']) or (session.get('user_dept') and session.get('user_dept').strip().lower() in ['admin', 'management', 'manager'])) %}
                 <div class="tab-pane" id="tab-excel-export">
                     <div class="row mb-3 align-items-center">
                         <div class="col-md-6 d-flex align-items-center">
@@ -804,6 +807,20 @@ document.addEventListener('DOMContentLoaded', function() {
               {% for sex in ['Male', 'Female'] %}
                 {% if sex in sexes %}
                   {% set stat = sexes[sex] %}
+                  {% set ns = namespace(below=0, in_avg=0, above=0) %}
+                  {% set bins = stat.grading_bins | from_json %}
+                  {% set lower_limit = (stat.average_weight * 0.9) | round | int %}
+                  {% set upper_limit = (stat.average_weight * 1.1) | round | int %}
+                  {% for k, v in bins.items() %}
+                    {% set w_val = k | int %}
+                    {% if w_val < lower_limit %}
+                      {% set ns.below = ns.below + v %}
+                    {% elif w_val > upper_limit %}
+                      {% set ns.above = ns.above + v %}
+                    {% else %}
+                      {% set ns.in_avg = ns.in_avg + v %}
+                    {% endif %}
+                  {% endfor %}
                   <div class="col-md-6">
                     <div class="card">
                       <div class="card-header bg-{{ 'blue' if sex == 'Male' else 'pink' }}-lt">
@@ -811,10 +828,17 @@ document.addEventListener('DOMContentLoaded', function() {
                       </div>
                       <div class="card-body">
                         <div class="row g-3">
-                          <div class="col-6"><strong>Count:</strong> {{ stat.count }}</div>
-                          <div class="col-6"><strong>Average:</strong> {{ stat.average_weight | round | int }}g ({{ (stat.average_weight * 0.9) | round | int }}g - {{ (stat.average_weight * 1.1) | round | int }}g)</div>
-                          <div class="col-6"><strong>Uniformity:</strong> <mark class="fw-bold bg-yellow text-body">{{ stat.uniformity | round | int }}%</mark></div>
-                          <div class="col-6"><strong>Range:</strong> {{ stat.lowest_weight | round | int }}g - {{ stat.highest_weight | round | int }}g</div>
+                          <div class="col-6">
+                            <strong>Count:</strong> {{ stat.count }}
+                            <div class="small text-muted mt-1">
+                              <div>Below Avg (&lt;{{ lower_limit }}g): <strong>{{ ns.below }}</strong></div>
+                              <div>In Avg (&ge;{{ lower_limit }}g - &le;{{ upper_limit }}g): <strong>{{ ns.in_avg }}</strong></div>
+                              <div>Above Avg (&gt;{{ upper_limit }}g): <strong>{{ ns.above }}</strong></div>
+                            </div>
+                          </div>
+                          <div class="col-6"><strong>Average:</strong> {{ stat.average_weight | round | int }}g ({{ lower_limit }}g - {{ upper_limit }}g)</div>
+                          <div class="col-6"><strong>Uniformity:</strong> <mark class="fw-bold bg-yellow text-body">{{ "%.1f" | format(stat.uniformity) }}%</mark></div>
+                          <div class="col-6"><strong>Range:</strong> {{ stat.lowest_weight | round | int }}g (Lowest) - {{ stat.highest_weight | round | int }}g (Highest)</div>
 
                           <div class="col-12 mt-4">
                             <h4>Weight Distribution</h4>
@@ -922,6 +946,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const houseFilter = document.getElementById('houseFilter');
         const chartContainer = document.getElementById('chartContainer');
         const togglePartitions = document.getElementById('togglePartitions');
+        const toggleLabels = document.getElementById('toggleLabels');
         const chartStartWeek = document.getElementById('chartStartWeek');
         const accordionItems = document.querySelectorAll('.bw-log-item');
 
@@ -930,6 +955,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Pass the log data from python to JS
         const logData = {{ bodyweight_logs | tojson | safe }};
+        const allStandards = {{ all_standards | tojson | safe }};
         if (!logData) return;
 
         function renderCharts(selectedHouse) {
@@ -939,12 +965,43 @@ document.addEventListener('DOMContentLoaded', function() {
             // Sort by age week ascending for charts
             filteredLogs.sort((a, b) => a.age_weeks - b.age_weeks);
 
-            // Limit by start week selection
-            const numWeeks = chartStartWeek.value;
-            if (numWeeks !== 'all') {
-                const limit = parseInt(numWeeks);
-                filteredLogs = filteredLogs.slice(-limit);
+            // Fill missing weeks so X-Axis is continuous and Standards don't break
+            let filledLogs = [];
+            if (filteredLogs.length > 0) {
+                let minWeek = filteredLogs[0].age_weeks;
+                let maxWeek = filteredLogs[filteredLogs.length - 1].age_weeks;
+
+                // Limit by start week selection
+                const numWeeks = chartStartWeek.value;
+                if (numWeeks !== 'all') {
+                    const limit = parseInt(numWeeks);
+                    // Adjust minWeek based on the limit if the range is greater
+                    if ((maxWeek - minWeek + 1) > limit) {
+                        minWeek = maxWeek - limit + 1;
+                    }
+                }
+
+                for (let w = minWeek; w <= maxWeek; w++) {
+                    let existingLog = filteredLogs.find(l => l.age_weeks === w);
+                    if (existingLog) {
+                        filledLogs.push(existingLog);
+                    } else {
+                        let stdData = allStandards[w] || {std_m: null, std_f: null};
+                        filledLogs.push({
+                            age_weeks: w,
+                            std_m: stdData.std_m,
+                            std_f: stdData.std_f,
+                            avg_m: null,
+                            avg_f: null,
+                            uni_m: null,
+                            uni_f: null,
+                            m_parts: [],
+                            f_parts: []
+                        });
+                    }
+                }
             }
+            filteredLogs = filledLogs;
 
             const categories = filteredLogs.map(log => 'Week ' + log.age_weeks);
             const showPartitions = togglePartitions.checked;
@@ -960,28 +1017,31 @@ document.addEventListener('DOMContentLoaded', function() {
             let allFemaleUni = [];
 
             function addMainLines(seriesArr, avgData, stdData, unifData, allBwArr, allUniArr) {
-                let bwData = avgData.map(v => v ? parseFloat(v) : null);
-                let stdBwData = stdData.map(v => v ? parseFloat(v) : null);
-                let uData = unifData.map(v => v ? parseFloat(v) : null);
+                let bwData = avgData.map(v => (v !== null && v !== undefined && v !== '') ? parseFloat(v) : null);
+                let stdBwData = stdData.map(v => (v !== null && v !== undefined && v !== '') ? parseFloat(v) : null);
+                let uData = unifData.map(v => (v !== null && v !== undefined && v !== '') ? parseFloat(v) : null);
 
                 seriesArr.push({
                     name: 'Average BW',
                     type: 'line',
-                    data: bwData
+                    data: bwData,
+                    spanGaps: true
                 });
                 allBwArr.push(...bwData.filter(v => v !== null));
 
                 seriesArr.push({
                     name: 'Standard BW',
                     type: 'line',
-                    data: stdBwData
+                    data: stdBwData,
+                    spanGaps: true
                 });
                 allBwArr.push(...stdBwData.filter(v => v !== null));
 
                 seriesArr.push({
                     name: 'Average Uniformity',
                     type: 'line',
-                    data: uData
+                    data: uData,
+                    spanGaps: true
                 });
                 allUniArr.push(...uData.filter(v => v !== null));
             }
@@ -990,53 +1050,73 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Averages only
                 addMainLines(
                     maleSeries,
-                    filteredLogs.map(log => log.avg_m || null),
-                    filteredLogs.map(log => log.std_m || null),
-                    filteredLogs.map(log => log.uni_m || null),
+                    filteredLogs.map(log => (log.avg_m !== null && log.avg_m !== undefined && log.avg_m !== '') ? log.avg_m : null),
+                    filteredLogs.map(log => {
+                        let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_m !== null && allStandards[log.age_weeks].std_m !== undefined && parseFloat(allStandards[log.age_weeks].std_m) > 0) ? parseFloat(allStandards[log.age_weeks].std_m) : null;
+                        if (stdVal !== null) return stdVal;
+                        return (log.std_m !== null && log.std_m !== undefined && log.std_m !== '' && parseFloat(log.std_m) > 0) ? parseFloat(log.std_m) : null;
+                    }),
+                    filteredLogs.map(log => (log.uni_m !== null && log.uni_m !== undefined && log.uni_m !== '') ? log.uni_m : null),
                     allMaleBw,
                     allMaleUni
                 );
 
                 addMainLines(
                     femaleSeries,
-                    filteredLogs.map(log => log.avg_f || null),
-                    filteredLogs.map(log => log.std_f || null),
-                    filteredLogs.map(log => log.uni_f || null),
+                    filteredLogs.map(log => (log.avg_f !== null && log.avg_f !== undefined && log.avg_f !== '') ? log.avg_f : null),
+                    filteredLogs.map(log => {
+                        let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_f !== null && allStandards[log.age_weeks].std_f !== undefined && parseFloat(allStandards[log.age_weeks].std_f) > 0) ? parseFloat(allStandards[log.age_weeks].std_f) : null;
+                        if (stdVal !== null) return stdVal;
+                        return (log.std_f !== null && log.std_f !== undefined && log.std_f !== '' && parseFloat(log.std_f) > 0) ? parseFloat(log.std_f) : null;
+                    }),
+                    filteredLogs.map(log => (log.uni_f !== null && log.uni_f !== undefined && log.uni_f !== '') ? log.uni_f : null),
                     allFemaleBw,
                     allFemaleUni
                 );
             } else {
                 // Show partitions for BW, but only avg for Uniformity and Standard
 
-                let stdMBw = filteredLogs.map(log => log.std_m ? parseFloat(log.std_m) : null);
+                let stdMBw = filteredLogs.map(log => {
+                    let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_m !== null && allStandards[log.age_weeks].std_m !== undefined && parseFloat(allStandards[log.age_weeks].std_m) > 0) ? parseFloat(allStandards[log.age_weeks].std_m) : null;
+                    if (stdVal !== null) return stdVal;
+                    return (log.std_m !== null && log.std_m !== undefined && log.std_m !== '' && parseFloat(log.std_m) > 0) ? parseFloat(log.std_m) : null;
+                });
                 maleSeries.push({
                     name: 'Standard BW',
                     type: 'line',
-                    data: stdMBw
+                    data: stdMBw,
+                    spanGaps: true
                 });
                 allMaleBw.push(...stdMBw.filter(v => v !== null));
 
-                let uniMData = filteredLogs.map(log => log.uni_m ? parseFloat(log.uni_m) : null);
+                let uniMData = filteredLogs.map(log => (log.uni_m !== null && log.uni_m !== undefined && log.uni_m !== '') ? parseFloat(log.uni_m) : null);
                 maleSeries.push({
                     name: 'Average Uniformity',
                     type: 'line',
-                    data: uniMData
+                    data: uniMData,
+                    spanGaps: true
                 });
                 allMaleUni.push(...uniMData.filter(v => v !== null));
 
-                let stdFBw = filteredLogs.map(log => log.std_f ? parseFloat(log.std_f) : null);
+                let stdFBw = filteredLogs.map(log => {
+                    let stdVal = (allStandards[log.age_weeks] && allStandards[log.age_weeks].std_f !== null && allStandards[log.age_weeks].std_f !== undefined && parseFloat(allStandards[log.age_weeks].std_f) > 0) ? parseFloat(allStandards[log.age_weeks].std_f) : null;
+                    if (stdVal !== null) return stdVal;
+                    return (log.std_f !== null && log.std_f !== undefined && log.std_f !== '' && parseFloat(log.std_f) > 0) ? parseFloat(log.std_f) : null;
+                });
                 femaleSeries.push({
                     name: 'Standard BW',
                     type: 'line',
-                    data: stdFBw
+                    data: stdFBw,
+                    spanGaps: true
                 });
                 allFemaleBw.push(...stdFBw.filter(v => v !== null));
 
-                let uniFData = filteredLogs.map(log => log.uni_f ? parseFloat(log.uni_f) : null);
+                let uniFData = filteredLogs.map(log => (log.uni_f !== null && log.uni_f !== undefined && log.uni_f !== '') ? parseFloat(log.uni_f) : null);
                 femaleSeries.push({
                     name: 'Average Uniformity',
                     type: 'line',
-                    data: uniFData
+                    data: uniFData,
+                    spanGaps: true
                 });
                 allFemaleUni.push(...uniFData.filter(v => v !== null));
 
@@ -1057,16 +1137,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         maleSeries.push({
                             name: `P${i+1} BW`,
                             type: 'line',
-                            data: pData
+                            data: pData,
+                    spanGaps: true
                         });
                         allMaleBw.push(...pData.filter(v => v !== null));
                     }
                 } else {
-                    let mAvgData = filteredLogs.map(log => log.avg_m ? parseFloat(log.avg_m) : null);
+                    let mAvgData = filteredLogs.map(log => (log.avg_m !== null && log.avg_m !== undefined && log.avg_m !== '') ? parseFloat(log.avg_m) : null);
                     maleSeries.push({
                         name: 'Average BW',
                         type: 'line',
-                        data: mAvgData
+                        data: mAvgData,
+                    spanGaps: true
                     });
                     allMaleBw.push(...mAvgData.filter(v => v !== null));
                 }
@@ -1088,16 +1170,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         femaleSeries.push({
                             name: `P${i+1} BW`,
                             type: 'line',
-                            data: pData
+                            data: pData,
+                    spanGaps: true
                         });
                         allFemaleBw.push(...pData.filter(v => v !== null));
                     }
                 } else {
-                    let fAvgData = filteredLogs.map(log => log.avg_f ? parseFloat(log.avg_f) : null);
+                    let fAvgData = filteredLogs.map(log => (log.avg_f !== null && log.avg_f !== undefined && log.avg_f !== '') ? parseFloat(log.avg_f) : null);
                     femaleSeries.push({
                         name: 'Average BW',
                         type: 'line',
-                        data: fAvgData
+                        data: fAvgData,
+                    spanGaps: true
                     });
                     allFemaleBw.push(...fAvgData.filter(v => v !== null));
                 }
@@ -1154,6 +1238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     datasets.push({
                         label: s.name,
                         data: s.data,
+                        spanGaps: true,
                         borderColor: color,
                         backgroundColor: color,
                         borderWidth: borderWidth,
@@ -1164,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         pointRadius: 4,
                         pointHoverRadius: 6,
                         datalabels: {
-                            display: true,
+                            display: toggleLabels ? toggleLabels.checked : true,
                             color: '#fff',
                             backgroundColor: color,
                             borderRadius: 4,
@@ -1310,6 +1395,12 @@ document.addEventListener('DOMContentLoaded', function() {
         togglePartitions.addEventListener('change', function() {
             if (houseFilter.value !== 'all') renderCharts(houseFilter.value);
         });
+
+        if (toggleLabels) {
+            toggleLabels.addEventListener('change', function() {
+                if (houseFilter.value !== 'all') renderCharts(houseFilter.value);
+            });
+        }
 
         chartStartWeek.addEventListener('change', function() {
             if (houseFilter.value !== 'all') renderCharts(houseFilter.value);
@@ -1468,7 +1559,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Admin Excel Export data and event handling
-    {% if current_user.is_authenticated and current_user.role and current_user.role.strip().lower() in ['admin', 'management', 'manager'] %}
+{% if session.get('user_id') and ((session.get('user_role') and session.get('user_role').strip().lower() in ['admin', 'management', 'manager']) or (session.get('user_dept') and session.get('user_dept').strip().lower() in ['admin', 'management', 'manager'])) %}
     const allBodyweightLogs = [
         {% for log in bodyweight_logs %}
         {

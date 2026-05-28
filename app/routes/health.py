@@ -198,7 +198,12 @@ def register_health_routes(app):
                 logs_by_house[hid] = []
             logs_by_house[hid].append(log)
 
+
+        all_standards_records = Standard.query.all()
+        all_standards = {s.week: {'std_m': s.std_bw_male if s.std_bw_male is not None else None, 'std_f': s.std_bw_female if s.std_bw_female is not None else None} for s in all_standards_records}
+
         bodyweight_logs = []
+
 
         for log in logs:
             age_weeks = log.age_week if log.age_week else calculate_bio_week(log.flock.intake_date, log.date)
@@ -222,15 +227,17 @@ def register_health_routes(app):
             m_parts = []
             f_parts = []
 
-            std_m = log.standard_bw_male
-            std_f = log.standard_bw_female
+            # Fallback/Override Standard model to ensure it is always fetched from the Standard table (configured under Admin panel)
+            std_record = Standard.query.filter_by(week=age_weeks).first()
+            if std_record and std_record.std_bw_male is not None and std_record.std_bw_male > 0:
+                std_m = std_record.std_bw_male
+            else:
+                std_m = log.standard_bw_male
 
-            # Fallback to Standard model if not saved in log or is 0
-            if not std_m or not std_f:
-                std_record = Standard.query.filter_by(week=age_weeks).first()
-                if std_record:
-                    if not std_m: std_m = std_record.std_bw_male
-                    if not std_f: std_f = std_record.std_bw_female
+            if std_record and std_record.std_bw_female is not None and std_record.std_bw_female > 0:
+                std_f = std_record.std_bw_female
+            else:
+                std_f = log.standard_bw_female
 
             avg_m_diff = "N/A"
             if prev_log and log.body_weight_male is not None and prev_log.body_weight_male is not None:
@@ -316,8 +323,8 @@ def register_health_routes(app):
                 'house_id': log.flock.house_id,
                 'age_weeks': age_weeks,
                 'date': log.date,
-                'std_m': std_m or 0,
-                'std_f': std_f or 0,
+                'std_m': std_m if std_m is not None else None,
+                'std_f': std_f if std_f is not None else None,
                 'avg_m': log.body_weight_male or 0,
                 'avg_f': log.body_weight_female or 0,
                 'avg_m_diff': avg_m_diff,
@@ -331,7 +338,7 @@ def register_health_routes(app):
                 'uni_f': (log.uniformity_female * 100) if (log.uniformity_female and log.uniformity_female <= 1.0) else (log.uniformity_female or 0)
             })
 
-        return render_template('bodyweight.html', houses=houses, active_flocks=active_flocks, bodyweight_logs=bodyweight_logs, grouped_data=grouped_data, today=date.today())
+        return render_template('bodyweight.html', houses=houses, active_flocks=active_flocks, bodyweight_logs=bodyweight_logs, all_standards=all_standards, grouped_data=grouped_data, today=date.today())
 
     @app.route('/upload_weights', methods=['POST'])
     @login_required

@@ -254,8 +254,8 @@ def register_api_routes(app):
             # Add std using map
             std_w = std_map_by_week.get(week_num)
             if std_w:
-                w_item['std_bw_male'] = std_w.std_bw_male or None
-                w_item['std_bw_female'] = std_w.std_bw_female or None
+                w_item['std_bw_male'] = std_w.std_bw_male if std_w.std_bw_male is not None else None
+                w_item['std_bw_female'] = std_w.std_bw_female if std_w.std_bw_female is not None else None
             weekly_trend.append(w_item)
 
         # If no data for the exact target date, we return empty data flag but not an error
@@ -1339,8 +1339,8 @@ def register_api_routes(app):
 
         response_data = {
             'week': weeks,
-            'std_bw_male': std.std_bw_male if std else '',
-            'std_bw_female': std.std_bw_female if std else '',
+            'std_bw_male': std.std_bw_male if (std and std.std_bw_male is not None) else '',
+            'std_bw_female': std.std_bw_female if (std and std.std_bw_female is not None) else '',
             'last_weighing_date': last_weighing_date,
             'last_weighing_week': last_weighing_week
         }
