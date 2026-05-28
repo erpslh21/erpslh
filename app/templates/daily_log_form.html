@@ -2029,32 +2029,46 @@
             .then(res => res.json())
             .then(res => {
                 loading.classList.add('d-none');
-                if (res.success && res.data && res.data.length > 0) {
-                    tableWrapper.classList.remove('d-none');
-                    saveBtn.disabled = false;
+                if (res.success) {
+                    if (res.data && res.data.length > 0) {
+                        tableWrapper.classList.remove('d-none');
+                        saveBtn.disabled = false;
 
-                    res.data.forEach(row => {
-                        let tr = document.createElement('tr');
-                        tr.setAttribute('data-log-id', row.id);
-                        tr.innerHTML = `
-                            <td class="fw-bold">${row.date}</td>
-                            <td>
-                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="jumbo" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="small" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="abnormal" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
-                            </td>
-                            <td>
-                                <input type="number" class="form-control text-center cull-input font-monospace" data-field="crack" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                        res.data.forEach(row => {
+                            let tr = document.createElement('tr');
+                            tr.setAttribute('data-log-id', row.id);
+                            tr.innerHTML = `
+                                <td class="fw-bold">${row.date}</td>
+                                <td>
+                                    <input type="number" class="form-control text-center cull-input font-monospace" data-field="jumbo" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control text-center cull-input font-monospace" data-field="small" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control text-center cull-input font-monospace" data-field="abnormal" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control text-center cull-input font-monospace" data-field="crack" min="0" placeholder="-" style="max-width: 100px; margin: 0 auto;">
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    } else {
+                        emptyState.classList.remove('d-none');
+                        // Reset empty state text to default
+                        let emptyTitle = emptyState.querySelector('h4');
+                        let emptyText = emptyState.querySelector('p');
+                        if (emptyTitle) emptyTitle.textContent = 'All caught up!';
+                        if (emptyText) emptyText.textContent = 'No unfilled cull egg dates found for this house.';
+                    }
                 } else {
+                    // Show error message in empty state
                     emptyState.classList.remove('d-none');
+                    let emptyTitle = emptyState.querySelector('h4');
+                    let emptyText = emptyState.querySelector('p');
+                    if (emptyTitle) emptyTitle.textContent = 'Validation Notice';
+                    if (emptyText) emptyText.textContent = res.error || 'This house is not eligible for bulk cull eggs entry.';
                 }
             })
             .catch(err => {

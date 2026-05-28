@@ -1358,6 +1358,28 @@ def register_api_routes(app):
         if not flock:
             return jsonify({'error': 'No active flock found for this house.'}), 404
 
+        # 1. Validation: Check if the flock is in the Production phase
+        if flock.phase != 'Production':
+            return jsonify({
+                'success': False,
+                'error': 'This house is not in the Production phase.'
+            }), 200
+
+        # 2. Validation: Check if any cull eggs have been keyed in previously for this flock
+        has_previous_culls = DailyLog.query.filter(
+            DailyLog.flock_id == flock.id,
+            (DailyLog.cull_eggs_jumbo > 0) |
+            (DailyLog.cull_eggs_small > 0) |
+            (DailyLog.cull_eggs_abnormal > 0) |
+            (DailyLog.cull_eggs_crack > 0)
+        ).first() is not None
+
+        if not has_previous_culls:
+            return jsonify({
+                'success': False,
+                'error': 'No cull eggs have been keyed in previously for this flock.'
+            }), 200
+
         # Find the last keyed-in date (the maximum log date in the database for this flock)
         last_log = DailyLog.query.filter_by(flock_id=flock.id).order_by(DailyLog.date.desc()).first()
         if not last_log:
