@@ -369,6 +369,14 @@
                 </div>
               </div>
             </div>
+            <div class="row mb-3">
+              <div class="col-12">
+                  <div class="form-check form-switch form-switch-lg mt-2">
+                      <input class="form-check-input" type="checkbox" role="switch" id="no_feed_given" name="no_feed_given">
+                      <label class="form-check-label fw-bold text-danger" for="no_feed_given">No Feed Given Today (Fasting Day)</label>
+                  </div>
+              </div>
+            </div>
             <div class="row">
               <div class="col-12 col-md-6 mb-2">
                 <div class="form-floating">
@@ -1361,12 +1369,14 @@
     }
 
     function calculateLiveFeed() {
+        let noFeedGiven = document.getElementById('no_feed_given') && document.getElementById('no_feed_given').checked;
+
         let maleGpBird = parseFloat(document.getElementById('feed_male_gp_bird') ? document.getElementById('feed_male_gp_bird').value : 0) || 0;
         let femaleGpBird = parseFloat(document.getElementById('feed_female_gp_bird') ? document.getElementById('feed_female_gp_bird').value : 0) || 0;
         let multiplier = getMultiplier();
 
-        let maleTotalKg = (maleGpBird * multiplier * currentStockM) / 1000.0;
-        let femaleTotalKg = (femaleGpBird * multiplier * currentStockF) / 1000.0;
+        let maleTotalKg = noFeedGiven ? 0 : (maleGpBird * multiplier * currentStockM) / 1000.0;
+        let femaleTotalKg = noFeedGiven ? 0 : (femaleGpBird * multiplier * currentStockF) / 1000.0;
 
         document.getElementById('live-feed-calc-male').innerText = maleTotalKg.toFixed(2) + ' kg';
         document.getElementById('live-feed-calc-female').innerText = femaleTotalKg.toFixed(2) + ' kg';
@@ -1593,6 +1603,10 @@
         document.getElementById('feed_male_gp_bird').addEventListener('input', calculateLiveFeed);
         document.getElementById('feed_female_gp_bird').addEventListener('input', calculateLiveFeed);
         document.querySelector('[name="feed_program"]').addEventListener('change', calculateLiveFeed);
+        let noFeedCheckbox = document.getElementById('no_feed_given');
+        if (noFeedCheckbox) {
+            noFeedCheckbox.addEventListener('change', calculateLiveFeed);
+        }
         
         // Step 4 Listeners
         document.getElementsByName('water_reading_1')[0].addEventListener('input', calculateWater);
@@ -1705,9 +1719,10 @@
     window.checkFastingDay = function() {
         let progElem = document.querySelector('[name="feed_program"]');
         let program = progElem ? progElem.value : '';
+        let noFeedGiven = document.getElementById('no_feed_given') && document.getElementById('no_feed_given').checked;
         let maleGpBird = parseFloat(document.getElementById('feed_male_gp_bird') ? document.getElementById('feed_male_gp_bird').value : 0) || 0;
         let femaleGpBird = parseFloat(document.getElementById('feed_female_gp_bird') ? document.getElementById('feed_female_gp_bird').value : 0) || 0;
-        let isFeedingAttempt = (maleGpBird > 0 || femaleGpBird > 0);
+        let isFeedingAttempt = !noFeedGiven && (maleGpBird > 0 || femaleGpBird > 0);
 
         if (!isFeedingAttempt) return false;
 
