@@ -31,7 +31,10 @@ def register_production_routes(app):
             flash("Access Denied: Executive View Only.", "danger")
             return redirect(get_dashboard_url(current_user))
 
-        active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
+        if current_user.farm_id:
+            active_flocks = Flock.query.join(House).filter(Flock.status=='Active', House.farm_id==current_user.farm_id).options(joinedload(Flock.house)).all()
+        else:
+            active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))
@@ -427,7 +430,10 @@ def register_production_routes(app):
             flash("Access Denied: Executive View Only.", "danger")
             return redirect(get_dashboard_url(current_user))
 
-        active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
+        if current_user.farm_id:
+            active_flocks = Flock.query.join(House).filter(Flock.status=='Active', House.farm_id==current_user.farm_id).options(joinedload(Flock.house)).all()
+        else:
+            active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))
@@ -447,7 +453,10 @@ def register_production_routes(app):
             return redirect(get_dashboard_url(current_user))
 
         # --- Farm Data ---
-        active_flocks = Flock.query.options(joinedload(Flock.logs).joinedload(DailyLog.partition_weights), joinedload(Flock.logs).joinedload(DailyLog.photos), joinedload(Flock.logs).joinedload(DailyLog.clinical_notes_list), joinedload(Flock.house)).filter_by(status='Active').all()
+        if current_user.farm_id:
+            active_flocks = Flock.query.join(House).filter(Flock.status=='Active', House.farm_id==current_user.farm_id).options(joinedload(Flock.logs).joinedload(DailyLog.partition_weights), joinedload(Flock.logs).joinedload(DailyLog.photos), joinedload(Flock.logs).joinedload(DailyLog.clinical_notes_list), joinedload(Flock.house)).all()
+        else:
+            active_flocks = Flock.query.options(joinedload(Flock.logs).joinedload(DailyLog.partition_weights), joinedload(Flock.logs).joinedload(DailyLog.photos), joinedload(Flock.logs).joinedload(DailyLog.clinical_notes_list), joinedload(Flock.house)).filter_by(status='Active').all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))
@@ -746,7 +755,10 @@ def register_production_routes(app):
             return redirect(get_dashboard_url(current_user))
 
         # Active Flocks
-        active_flocks = Flock.query.filter_by(status='Active').options(joinedload(Flock.house)).all()
+        if current_user.farm_id:
+            active_flocks = Flock.query.join(House).filter(Flock.status=='Active', House.farm_id==current_user.farm_id).options(joinedload(Flock.house)).all()
+        else:
+            active_flocks = Flock.query.filter_by(status='Active').options(joinedload(Flock.house)).all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))
@@ -1282,7 +1294,7 @@ def register_production_routes(app):
                 safe_commit()
                 recalculate_flock_inventory(log.flock_id)
                 if request.headers.get('Accept') == 'application/json':
-                    house_status = check_daily_log_completion(log.flock.farm_id, log.date)
+                    house_status = check_daily_log_completion(current_user.farm_id, log.date)
                     return jsonify({
                         'success': True,
                         'message': 'Log updated successfully.',
@@ -1524,7 +1536,7 @@ def register_production_routes(app):
                     )
 
                 if request.headers.get('Accept') == 'application/json':
-                    house_status = check_daily_log_completion(flock.farm_id, log_date)
+                    house_status = check_daily_log_completion(current_user.farm_id, log_date)
                     return jsonify({
                         'success': True,
                         'message': flash_msg,
@@ -1540,7 +1552,10 @@ def register_production_routes(app):
                 flash(f"Database Error: {str(e)}", 'danger')
                 return redirect(url_for('daily_log', house_id=house_id, date=date_str))
 
-        active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
+        if current_user.farm_id:
+            active_flocks = Flock.query.join(House).filter(Flock.status=='Active', House.farm_id==current_user.farm_id).options(joinedload(Flock.house)).all()
+        else:
+            active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
         active_houses = [f.house for f in active_flocks]
 
         flock_phases = {}
@@ -1654,7 +1669,10 @@ def register_production_routes(app):
     @login_required
     @dept_required('Breeder')
     def view_flock(id):
-        active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
+        if current_user.farm_id:
+            active_flocks = Flock.query.join(House).filter(Flock.status=='Active', House.farm_id==current_user.farm_id).options(joinedload(Flock.house)).all()
+        else:
+            active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))
@@ -2339,7 +2357,10 @@ def register_production_routes(app):
     @login_required
     @dept_required('Breeder')
     def flock_select():
-        active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
+        if current_user.farm_id:
+            active_flocks = Flock.query.join(House).filter(Flock.status=='Active', House.farm_id==current_user.farm_id).options(joinedload(Flock.house)).all()
+        else:
+            active_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Active').all()
 
         if active_flocks:
                 active_flocks.sort(key=lambda x: natural_sort_key(x.house.name if x.house else ''))
@@ -2435,5 +2456,8 @@ def register_production_routes(app):
     @login_required
     @dept_required('Breeder')
     def history():
-        inactive_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Inactive').order_by(Flock.intake_date.desc()).all()
+        if current_user.farm_id:
+            inactive_flocks = Flock.query.join(House).filter(Flock.status=='Inactive', House.farm_id==current_user.farm_id).options(joinedload(Flock.house)).order_by(Flock.intake_date.desc()).all()
+        else:
+            inactive_flocks = Flock.query.options(joinedload(Flock.house)).filter_by(status='Inactive').order_by(Flock.intake_date.desc()).all()
         return render_template('flock_history.html', inactive_flocks=inactive_flocks)

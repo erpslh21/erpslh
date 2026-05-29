@@ -1138,10 +1138,10 @@ def check_daily_log_completion(farm_id, selected_date):
     # Get active flocks for the given farm
     query = Flock.query.join(House).filter(Flock.status == 'Active')
     if farm_id is not None:
-        query = query.filter(Flock.farm_id == farm_id)
+        query = query.filter(House.farm_id == farm_id)
     else:
         # If farm_id is None, explicitly filter for None to prevent showing all houses across all farms
-        query = query.filter(Flock.farm_id == None)
+        query = query.filter(House.farm_id == None)
 
     active_flocks = query.order_by(House.name).all()
 
