@@ -1217,6 +1217,11 @@ def update_log_from_request(log, req):
     log.feed_male_gp_bird = float(req.form.get('feed_male_gp_bird') or 0)
     log.feed_female_gp_bird = float(req.form.get('feed_female_gp_bird') or 0)
 
+    # Process no_feed_given checkbox
+    if req.form.get('no_feed_given') == 'on':
+        log.feed_male_gp_bird = 0.0
+        log.feed_female_gp_bird = 0.0
+
     # Fetch logs before today to sum mortality
     # We query once and sum in Python to avoid N+1 and slow sum queries
     previous_logs = DailyLog.query.filter(
@@ -1351,6 +1356,12 @@ def update_log_from_request(log, req):
     # Feed Guardian Validation
     override = req.form.get('override_validation') == 'true'
     is_feeding_attempt = log.feed_male_gp_bird > 0 or log.feed_female_gp_bird > 0
+
+    if log.feed_male_gp_bird == 0 and log.feed_female_gp_bird == 0:
+        from datetime import timedelta
+        yesterday_log_check = DailyLog.query.filter_by(flock_id=log.flock_id, date=log.date - timedelta(days=1)).first()
+        if yesterday_log_check and yesterday_log_check.feed_male_gp_bird == 0 and yesterday_log_check.feed_female_gp_bird == 0:
+            raise ValueError("Invalid Entry: Cannot have 0g feed for two or more consecutive days.")
 
     if log.feed_program == 'Full Feed':
         if log.feed_male_gp_bird <= 0 or log.feed_female_gp_bird <= 0:
