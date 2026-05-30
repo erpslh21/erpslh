@@ -1,39 +1,60 @@
 {% extends "base_tabler.html" %}
 
 {% block content %}
-<div class="container">
+<div class="container-xl py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>User Management</h1>
+        <div>
+            <h2 class="page-title fw-bold text-body"><i class="fas fa-users-cog text-primary me-2"></i>User Management</h2>
+            <div class="text-muted small">Establish roles, departmental scopes, and farm assignments.</div>
+        </div>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            Add New User
+            <i class="fas fa-user-plus me-2"></i>Add New User
         </button>
     </div>
 
-    <div class="card shadow">
-        <div class="card-body">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle">
+                <table class="table table-striped table-hover align-middle mb-0">
                     <thead class="table-dark">
                         <tr>
-                            <th>Username</th>
+                            <th class="ps-3">Username</th>
                             <th>Name</th>
                             <th>Department</th>
                             <th>Role</th>
+                            <th>Assigned Farm</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
                         <tr>
-                            <td>{{ user.username }}</td>
+                            <td class="ps-3 fw-bold">{{ user.username }}</td>
                             <td>{{ user.name or '' }}</td>
                             <td>
                                 <span class="badge
-                                   {% if user.dept == 'Admin' %}bg-danger{% elif user.dept == 'Breeder' %}bg-success{% else %}bg-warning text-body{% endif %}">
+                                   {% if user.dept == 'Admin' %}bg-danger{% elif user.dept == 'Breeder' %}bg-success{% elif user.dept == 'Broiler' %}bg-azure{% else %}bg-warning text-body{% endif %}">
                                     {{ user.dept }}
                                 </span>
                             </td>
                             <td>{{ user.role }}</td>
+                            <td>
+                                {% if user.farm_id %}
+                                    {% set ns = namespace(found=None) %}
+                                    {% for f in farms %}
+                                        {% if f.id == user.farm_id %}
+                                            {% set ns.found = f %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if ns.found %}
+                                        <span class="badge bg-purple-lite text-purple fw-bold"><i class="fas fa-warehouse me-1"></i>{{ ns.found.name }}</span>
+                                    {% else %}
+                                        <span class="text-muted small">ID: {{ user.farm_id }}</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary-lite text-secondary fw-semibold">Global / All</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editUserModal{{ user.id }}">
                                     Edit
@@ -49,9 +70,10 @@
 
                                 <!-- Edit Modal -->
                                 <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1">
-                                    <div class="modal-dialog">                                        <div class="modal-content">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
                                             <form action="{{ url_for('admin_user_edit', user_id=user.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Edit User: {{ user.username }}</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -67,12 +89,26 @@
                                                             <option value="Admin" {% if user.dept == 'Admin' %}selected{% endif %}>Admin</option>
                                                             <option value="Breeder" {% if user.dept == 'Breeder' %}selected{% endif %}>Breeder</option>
                                                             <option value="Hatchery" {% if user.dept == 'Hatchery' %}selected{% endif %}>Hatchery</option>
+                                                            <option value="Broiler" {% if user.dept == 'Broiler' %}selected{% endif %}>Broiler</option>
                                                             <option value="Management" {% if user.dept == 'Management' %}selected{% endif %}>Management</option>
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label">Role</label>
                                                         <select class="form-select role-select" name="role" data-current-role="{{ user.role }}" required></select>
+                                                    </div>
+                                                    <!-- Assigned Farm Selector -->
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Assigned Farm</label>
+                                                        <select class="form-select farm-select" name="farm_id">
+                                                            <option value="None">-- None / Select Farm --</option>
+                                                            {% for f in farms %}
+                                                                <option value="{{ f.id }}" data-department="{{ f.department }}" {% if user.farm_id == f.id %}selected{% endif %}>
+                                                                    {{ f.name }} ({{ f.department }})
+                                                                </option>
+                                                            {% endfor %}
+                                                        </select>
+                                                        <div class="text-muted small mt-1">Filters dynamically by chosen Department. Global/All users see all facilities.</div>
                                                     </div>
                                                 </div>
                                                 <div class="modal-footer">
@@ -86,9 +122,10 @@
 
                                 <!-- Reset Password Modal -->
                                 <div class="modal fade" id="resetPassModal{{ user.id }}" tabindex="-1">
-                                    <div class="modal-dialog">                                        <div class="modal-content">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
                                             <form action="{{ url_for('admin_user_reset_password', user_id=user.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Reset Password: {{ user.username }}</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -110,9 +147,10 @@
 
                                 <!-- Delete Modal -->
                                 <div class="modal fade" id="deleteUserModal{{ user.id }}" tabindex="-1">
-                                    <div class="modal-dialog">                                        <div class="modal-content">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
                                             <form action="{{ url_for('admin_user_delete', user_id=user.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Delete User: {{ user.username }}</h5>
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -130,7 +168,6 @@
                                 </div>
                             </td>
                         </tr>
-
                         {% endfor %}
                     </tbody>
                 </table>
@@ -141,9 +178,10 @@
 
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog">        <div class="modal-content">
+    <div class="modal-dialog">
+        <div class="modal-content">
             <form action="{{ url_for('admin_user_add') }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-header">
                     <h5 class="modal-title">Add New User</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -166,6 +204,7 @@
                         <select class="form-select dept-select" name="dept">
                             <option value="Breeder">Breeder</option>
                             <option value="Hatchery">Hatchery</option>
+                            <option value="Broiler">Broiler</option>
                             <option value="Admin">Admin</option>
                             <option value="Management">Management</option>
                         </select>
@@ -173,6 +212,19 @@
                     <div class="mb-3">
                         <label class="form-label">Role</label>
                         <select class="form-select role-select" name="role" required></select>
+                    </div>
+                    <!-- Assigned Farm Selector -->
+                    <div class="mb-3">
+                        <label class="form-label">Assigned Farm</label>
+                        <select class="form-select farm-select" name="farm_id">
+                            <option value="None">-- None / Select Farm --</option>
+                            {% for f in farms %}
+                                <option value="{{ f.id }}" data-department="{{ f.department }}">
+                                    {{ f.name }} ({{ f.department }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="text-muted small mt-1">Filters dynamically by chosen Department. Global/All users see all facilities.</div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -183,7 +235,6 @@
         </div>
     </div>
 </div>
-
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
@@ -210,18 +261,50 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
+    function updateFarmDropdown(deptSelect, farmSelect) {
+        if (!farmSelect) return;
+        const dept = deptSelect.value;
+        const options = farmSelect.querySelectorAll('option');
+        
+        options.forEach(opt => {
+            if (opt.value === 'None') {
+                opt.style.display = 'block';
+                return;
+            }
+            const farmDept = opt.getAttribute('data-department');
+            if (dept === 'Admin' || dept === 'Management') {
+                // Admins & Management can assign to any farm
+                opt.style.display = 'block';
+                opt.disabled = false;
+            } else if (farmDept === dept) {
+                opt.style.display = 'block';
+                opt.disabled = false;
+            } else {
+                opt.style.display = 'none';
+                opt.disabled = true;
+                if (opt.selected) {
+                    opt.selected = false;
+                    farmSelect.value = 'None';
+                }
+            }
+        });
+    }
+
     // Attach to all department selects (add and edit modals)
     document.querySelectorAll('.dept-select').forEach(deptSelect => {
         const form = deptSelect.closest('form');
         const roleSelect = form.querySelector('.role-select');
-        const currentRole = roleSelect.getAttribute('data-current-role');
+        const currentRole = roleSelect ? roleSelect.getAttribute('data-current-role') : null;
+        const farmSelect = form.querySelector('.farm-select');
 
         // Initial population
         updateRoleDropdown(deptSelect, roleSelect, currentRole);
+        updateFarmDropdown(deptSelect, farmSelect);
 
         // Change listener
         deptSelect.addEventListener('change', function() {
             updateRoleDropdown(deptSelect, roleSelect, null);
+            updateFarmDropdown(deptSelect, farmSelect);
         });
     });
 });

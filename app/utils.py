@@ -69,9 +69,10 @@ def dept_required(required_dept):
                 return redirect(url_for('login'))
 
             user_dept = str(current_user.dept).strip().lower()
+            user_role = str(current_user.role).strip().lower()
 
             # Super Admin can access everything
-            if user_dept == 'admin':
+            if user_dept == 'admin' or user_role == 'admin':
                 return f(*args, **kwargs)
 
             # Check if required_dept is a list/tuple

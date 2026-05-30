@@ -193,14 +193,15 @@ def register_admin_routes(app):
         if not current_user.role == 'Admin': return redirect(get_dashboard_url(current_user))
 
         name = request.form.get('name').strip()
+        department = request.form.get('department', 'Breeder').strip()
         if not name:
             flash("Farm name is required.", "danger")
         elif Farm.query.filter_by(name=name).first():
             flash(f"Farm '{name}' already exists.", "warning")
         else:
-            db.session.add(Farm(name=name))
+            db.session.add(Farm(name=name, department=department))
             safe_commit()
-            flash(f"Farm '{name}' added.", "success")
+            flash(f"Farm '{name}' (Department: {department}) added.", "success")
 
         return redirect(url_for('admin_facilities'))
 
@@ -211,6 +212,7 @@ def register_admin_routes(app):
 
         farm = Farm.query.get_or_404(id)
         new_name = request.form.get('name').strip()
+        new_dept = request.form.get('department', 'Breeder').strip()
 
         if not new_name:
             flash("New name is required.", "danger")
@@ -218,9 +220,11 @@ def register_admin_routes(app):
             flash(f"Farm '{new_name}' already exists.", "warning")
         else:
             old_name = farm.name
+            old_dept = farm.department
             farm.name = new_name
+            farm.department = new_dept
             safe_commit()
-            flash(f"Renamed Farm '{old_name}' to '{new_name}'.", "success")
+            flash(f"Updated Farm '{old_name}' to '{new_name}' (Department: {new_dept}).", "success")
 
         return redirect(url_for('admin_facilities'))
 
@@ -715,10 +719,17 @@ def register_admin_routes(app):
         name = request.form.get('name')
         dept = request.form.get('dept')
         role = request.form.get('role')
+        farm_id = request.form.get('farm_id')
 
         user.name = name
         user.dept = dept
         user.role = role
+
+        if farm_id == '' or farm_id == 'None' or farm_id is None:
+            user.farm_id = None
+        else:
+            user.farm_id = int(farm_id)
+
         safe_commit()
 
         if user.id == current_user.id:
@@ -739,13 +750,15 @@ def register_admin_routes(app):
         role = request.form.get('role')
         farm_id = request.form.get('farm_id')
 
-        if farm_id == '':
-            farm_id = None
+        if farm_id == '' or farm_id == 'None' or farm_id is None:
+            farm_id_val = None
+        else:
+            farm_id_val = int(farm_id)
 
         if User.query.filter_by(username=username).first():
             flash(f"User {username} already exists.", "warning")
         else:
-            u = User(username=username, name=name, dept=dept, role=role, farm_id=farm_id)
+            u = User(username=username, name=name, dept=dept, role=role, farm_id=farm_id_val)
             u.set_password(password)
             db.session.add(u)
             safe_commit()
@@ -786,7 +799,10 @@ def register_admin_routes(app):
         departments = [d[0] for d in db.session.query(User.dept).filter(User.dept.isnot(None)).distinct().all()]
         departments.sort()
 
-        return render_template('admin/users.html', users=users, departments=departments, current_filter=dept_filter)
+        # Get all farms for user assignment
+        farms = Farm.query.order_by(Farm.name).all()
+
+        return render_template('admin/users.html', users=users, departments=departments, current_filter=dept_filter, farms=farms)
 
     @app.route('/admin/rules/delete/<int:id>', methods=['POST'])
     def delete_notification_rule(id):

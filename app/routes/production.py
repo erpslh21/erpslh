@@ -1442,6 +1442,23 @@ def register_production_routes(app):
                             vac.actual_date = None
 
             # Handle Multiple Medications
+            # Delete previous medications for this flock and date to avoid duplication and revert their inventory usages
+            old_meds = Medication.query.filter_by(flock_id=flock.id, start_date=log_date).all()
+            for old_med in old_meds:
+                if old_med.inventory_item_id and old_med.amount_used_qty:
+                    # Find corresponding transaction
+                    old_txs = InventoryTransaction.query.filter_by(
+                        inventory_item_id=old_med.inventory_item_id,
+                        transaction_type='Usage',
+                        transaction_date=log_date,
+                        notes=f'Used in Daily Log: {flock.flock_id}'
+                    ).all()
+                    for old_tx in old_txs:
+                        # Revert stock change
+                        old_med.inventory_item.current_stock += old_tx.quantity
+                        db.session.delete(old_tx)
+                db.session.delete(old_med)
+
             med_names = request.form.getlist('med_drug_name[]')
             med_inventory_ids = request.form.getlist('med_inventory_id[]')
             med_dosages = request.form.getlist('med_dosage[]')
@@ -1480,7 +1497,7 @@ def register_production_routes(app):
                         s_date = datetime.strptime(s_date_val, '%Y-%m-%d').date()
                     except: pass
 
-                e_date = None
+                e_date = s_date
                 e_date_val = med_end_dates[i] if i < len(med_end_dates) else None
                 if e_date_val:
                     try:

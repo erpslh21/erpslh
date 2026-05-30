@@ -70,6 +70,7 @@ class FeedCode(db.Model):
 class Farm(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
+    department = db.Column(db.String(50), nullable=False, default='Breeder', server_default='Breeder')
     flocks = db.relationship('Flock', backref='farm', lazy=True)
     house_assignments = db.relationship('HouseFlockMapping', backref='farm', lazy=True, cascade="all, delete-orphan")
 

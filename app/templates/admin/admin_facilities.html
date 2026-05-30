@@ -14,13 +14,20 @@
                 <div class="card-header">Add New Farm</div>
                 <div class="card-body">
                     <form action="{{ url_for('admin_farm_add') }}" method="POST" class="row g-3 align-items-center">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <div class="col-auto flex-grow-1">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="col-md-5">
                             <label for="farm_name" class="visually-hidden">Farm Name</label>
                             <input type="text" class="form-control" id="farm_name" name="name" placeholder="Enter Farm Name" required>
                         </div>
-                        <div class="col-auto">
-                            <button type="submit" class="btn btn-primary">Add Farm</button>
+                        <div class="col-md-4">
+                            <label for="farm_dept" class="visually-hidden">Department</label>
+                            <select class="form-select" id="farm_dept" name="department" required>
+                                <option value="Breeder">Breeder</option>
+                                <option value="Broiler">Broiler</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary w-100">Add Farm</button>
                         </div>
                     </form>
                 </div>
@@ -33,6 +40,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
+                                <th>Department</th>
                                 <th>Can Delete?</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -42,6 +50,11 @@
                             <tr>
                                 <td>{{ farm.name }}</td>
                                 <td>
+                                    <span class="badge {% if farm.department == 'Breeder' %}bg-success text-white{% else %}bg-azure text-white{% endif %}">
+                                        {{ farm.department or 'Breeder' }}
+                                    </span>
+                                </td>
+                                <td>
                                     {% if farm.can_delete %}
                                         <span class="badge bg-success text-white">Yes</span>
                                     {% else %}
@@ -49,10 +62,10 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#renameFarmModal{{ farm.id }}">Rename</button>
+                                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#renameFarmModal{{ farm.id }}">Edit</button>
                                     {% if farm.can_delete %}
                                     <form action="{{ url_for('admin_farm_delete', id=farm.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete {{ farm.name }}?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                     {% else %}
@@ -61,7 +74,7 @@
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="3" class="text-center text-muted">No farms found.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted">No farms found.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -75,17 +88,17 @@
                 <div class="card-header">Add New House</div>
                 <div class="card-body">
                     <form action="{{ url_for('admin_house_add') }}" method="POST" class="row g-3 align-items-center">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="col-auto flex-grow-1">
                             <label for="house_name" class="visually-hidden">House Name</label>
                             <input type="text" class="form-control" id="house_name" name="name" placeholder="Enter House Name (e.g. VA1)" required>
                         </div>
                         <div class="col-auto">
-                            <label for="farm_id" class="visually-hidden">Breeder</label>
+                            <label for="farm_id" class="visually-hidden">Farm</label>
                             <select class="form-select" id="farm_id" name="farm_id">
                                 <option value="">No Farm</option>
                                 {% for farm in farms %}
-                                    <option value="{{ farm.id }}">{{ farm.name }}</option>
+                                    <option value="{{ farm.id }}">{{ farm.name }} ({{ farm.department or 'Breeder' }})</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -103,7 +116,7 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Breeder</th>
+                                <th>Farm (Dept)</th>
                                 <th>Can Delete?</th>
                                 <th class="text-end">Actions</th>
                             </tr>
@@ -112,7 +125,13 @@
                             {% for house in houses %}
                             <tr>
                                 <td>{{ house.name }}</td>
-                                <td>{{ house.farm.name if house.farm else 'None' }}</td>
+                                <td>
+                                    {% if house.farm %}
+                                        {{ house.farm.name }} <span class="badge {% if house.farm.department == 'Breeder' %}bg-success text-white{% else %}bg-azure text-white{% endif %} small ms-1">{{ house.farm.department or 'Breeder' }}</span>
+                                    {% else %}
+                                        None
+                                    {% endif %}
+                                </td>
                                 <td>
                                     {% if house.can_delete %}
                                         <span class="badge bg-success text-white">Yes</span>
@@ -124,7 +143,7 @@
                                     <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#renameHouseModal{{ house.id }}">Edit</button>
                                     {% if house.can_delete %}
                                     <form action="{{ url_for('admin_house_delete', id=house.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete {{ house.name }}?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                         <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                     </form>
                                     {% else %}
@@ -133,7 +152,7 @@
                                 </td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="3" class="text-center text-muted">No houses found.</td></tr>
+                            <tr><td colspan="4" class="text-center text-muted">No houses found.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -149,15 +168,22 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form action="{{ url_for('admin_farm_edit', id=farm.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-header">
-                    <h5 class="modal-title">Rename Farm {{ farm.name }}</h5>
+                    <h5 class="modal-title">Edit Farm: {{ farm.name }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-start">
                     <div class="mb-3">
-                        <label for="renameFarm{{ farm.id }}" class="form-label">New Name</label>
+                        <label for="renameFarm{{ farm.id }}" class="form-label">Farm Name</label>
                         <input type="text" class="form-control" id="renameFarm{{ farm.id }}" name="name" value="{{ farm.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="farmDept{{ farm.id }}" class="form-label">Department</label>
+                        <select class="form-select" id="farmDept{{ farm.id }}" name="department" required>
+                            <option value="Breeder" {% if farm.department == 'Breeder' %}selected{% endif %}>Breeder</option>
+                            <option value="Broiler" {% if farm.department == 'Broiler' %}selected{% endif %}>Broiler</option>
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -176,22 +202,22 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form action="{{ url_for('admin_house_edit', id=house.id) }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="modal-header">
-                    <h5 class="modal-title">Edit House {{ house.name }}</h5>
+                    <h5 class="modal-title">Edit House: {{ house.name }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body text-start">
                     <div class="mb-3">
-                        <label for="renameHouse{{ house.id }}" class="form-label">New Name</label>
+                        <label for="renameHouse{{ house.id }}" class="form-label">House Name</label>
                         <input type="text" class="form-control" id="renameHouse{{ house.id }}" name="name" value="{{ house.name }}" required>
                     </div>
                     <div class="mb-3">
-                        <label for="editFarm{{ house.id }}" class="form-label">Breeder</label>
+                        <label for="editFarm{{ house.id }}" class="form-label">Farm</label>
                         <select class="form-select" id="editFarm{{ house.id }}" name="farm_id">
                             <option value="">No Farm</option>
                             {% for farm in farms %}
-                                <option value="{{ farm.id }}" {% if house.farm_id == farm.id %}selected{% endif %}>{{ farm.name }}</option>
+                                <option value="{{ farm.id }}" {% if house.farm_id == farm.id %}selected{% endif %}>{{ farm.name }} ({{ farm.department or 'Breeder' }})</option>
                             {% endfor %}
                         </select>
                     </div>
