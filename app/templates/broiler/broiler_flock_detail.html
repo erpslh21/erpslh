@@ -179,29 +179,14 @@
         <div class="tab-pane" id="tabs-performance-charts">
           <!-- Day Picker -->
           <div class="d-flex align-items-center mb-3">
-            <label class="me-2">Start Day:</label>
-            <input
-              type="number"
-              id="startDay"
-              class="form-control form-control-sm w-auto d-inline-block"
-              min="1"
-              value="1"
-            />
-            <label class="ms-3 me-2">End Day:</label>
-            <input
-              type="number"
-              id="endDay"
-              class="form-control form-control-sm w-auto d-inline-block"
-              min="1"
-            />
+            <label class="me-2 fw-bold small text-secondary">Start Day:</label>
+            <select id="startDay" class="form-select form-select-sm w-auto d-inline-block border-2"></select>
+            
+            <label class="ms-3 me-2 fw-bold small text-secondary">End Day:</label>
+            <select id="endDay" class="form-select form-select-sm w-auto d-inline-block border-2"></select>
+            
             <button
-              class="btn btn-sm btn-outline-primary ms-3"
-              onclick="filterCharts()"
-            >
-              Apply Filter
-            </button>
-            <button
-              class="btn btn-sm btn-outline-secondary ms-2"
+              class="btn btn-sm btn-outline-secondary ms-3"
               onclick="resetCharts()"
             >
               Reset
@@ -495,7 +480,7 @@
                     display: true,
                     align: "top",
                     anchor: "end",
-                    formatter: (value) => value !== null ? value.toFixed(2) + "%" : "",
+                    formatter: function(value) { return value !== null ? value.toFixed(2) + "%" : ""; },
                   },
                 },
                 {
@@ -510,7 +495,7 @@
                     align: "top",
                     anchor: "end",
                     color: "#18496A",
-                    formatter: (value) => value !== null ? value.toFixed(2) + "%" : "",
+                    formatter: function(value) { return value !== null ? value.toFixed(2) + "%" : ""; },
                   },
                 },
               ],
@@ -562,7 +547,7 @@
                     display: true,
                     align: "top",
                     anchor: "end",
-                    formatter: (value) => value !== null ? value.toFixed(1) : "",
+                    formatter: function(value) { return value !== null ? value.toFixed(1) : ""; },
                   },
                 },
                 {
@@ -574,7 +559,7 @@
                     display: true,
                     align: "top",
                     anchor: "end",
-                    formatter: (value) => value !== null ? value.toFixed(1) : "",
+                    formatter: function(value) { return value !== null ? value.toFixed(1) : ""; },
                   },
                 },
                 {
@@ -586,7 +571,7 @@
                     display: true,
                     align: "top",
                     anchor: "end",
-                    formatter: (value) => value !== null ? value.toFixed(1) : "",
+                    formatter: function(value) { return value !== null ? value.toFixed(1) : ""; },
                   },
                 },
               ],
@@ -617,20 +602,43 @@
           });
       }
 
-      // Setup filter defaults
-      if (labels.length > 0) {
-          document.getElementById('endDay').value = labels[labels.length - 1];
+      // Setup filter select dropdowns dynamically
+      const startSelect = document.getElementById("startDay");
+      const endSelect = document.getElementById("endDay");
+
+      if (startSelect && endSelect) {
+          startSelect.innerHTML = "";
+          endSelect.innerHTML = "";
+          labels.forEach(function (day) {
+              const optStart = document.createElement("option");
+              optStart.value = day;
+              optStart.textContent = "Day " + day;
+              startSelect.appendChild(optStart);
+
+              const optEnd = document.createElement("option");
+              optEnd.value = day;
+              optEnd.textContent = "Day " + day;
+              endSelect.appendChild(optEnd);
+          });
+
+          if (labels.length > 0) {
+              startSelect.value = labels[0];
+              endSelect.value = labels[labels.length - 1];
+          }
+
+          startSelect.addEventListener("change", filterCharts);
+          endSelect.addEventListener("change", filterCharts);
       }
 
       window.filterCharts = function() {
-          let start = parseInt(document.getElementById('startDay').value);
-          let end = parseInt(document.getElementById('endDay').value);
+          let start = parseInt(startSelect.value);
+          let end = parseInt(endSelect.value);
 
           if (isNaN(start)) start = 1;
           if (isNaN(end)) end = labels[labels.length - 1] || 1;
 
-          let startIndex = labels.findIndex(day => day >= start);
-          let endIndex = labels.findIndex(day => day > end);
+          let startIndex = labels.findIndex(function (day) { return day >= start; });
+          let endIndex = labels.findIndex(function (day) { return day > end; });
           if (startIndex === -1) startIndex = 0;
           if (endIndex === -1) endIndex = labels.length;
 
@@ -662,30 +670,11 @@
       };
 
       window.resetCharts = function() {
-          document.getElementById('startDay').value = 1;
-          document.getElementById('endDay').value = labels.length > 0 ? labels[labels.length - 1] : '';
-
-          if (chartFCR) {
-              chartFCR.data.labels = labels;
-              chartFCR.data.datasets[0].data = chartData.actual_fcr;
-              chartFCR.data.datasets[1].data = chartData.standard_fcr;
-              chartFCR.update();
+          if (labels.length > 0) {
+              startSelect.value = labels[0];
+              endSelect.value = labels[labels.length - 1];
           }
-
-          if (chartMortality) {
-              chartMortality.data.labels = labels;
-              chartMortality.data.datasets[0].data = chartData.mortality_standard;
-              chartMortality.data.datasets[1].data = chartData.mortality_pct;
-              chartMortality.update();
-          }
-          if (chartBodyweight) {
-              chartBodyweight.data.labels = labels;
-              chartBodyweight.data.datasets[0].data = chartData.bodyweight_standard;
-              chartBodyweight.data.datasets[1].data = chartData.body_weights;
-              chartBodyweight.data.datasets[2].data = chartData.weight_gain_standard;
-              chartBodyweight.data.datasets[3].data = chartData.weight_gains;
-              chartBodyweight.update();
-          }
+          filterCharts();
       };
   });
 </script>
