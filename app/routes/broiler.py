@@ -175,6 +175,59 @@ def delete_daily_log(log_id):
     return redirect(url_for('broiler.flock_detail', flock_id=flock_id))
 
 
+@broiler_bp.route('/flock/<int:flock_id>/daily_logs/bulk_delete', methods=['POST'])
+@login_required
+@dept_required('Breeder')
+def bulk_delete_daily_logs(flock_id):
+    if not current_user.role == 'Admin':
+        flash('Access Denied: Admins only.', 'danger')
+        return redirect(url_for('broiler.flock_detail', flock_id=flock_id))
+
+    flock = BroilerFlock.query.get_or_404(flock_id)
+    log_ids = request.form.getlist('log_ids')
+
+    if not log_ids:
+        flash("No daily logs selected for deletion.", "warning")
+        return redirect(url_for('broiler.flock_detail', flock_id=flock_id))
+
+    try:
+        ids_to_delete = [int(lid) for lid in log_ids]
+    except ValueError:
+        flash("Invalid daily log IDs provided.", "danger")
+        return redirect(url_for('broiler.flock_detail', flock_id=flock_id))
+
+    logs_to_delete = BroilerDailyLog.query.filter(
+        BroilerDailyLog.id.in_(ids_to_delete),
+        BroilerDailyLog.flock_id == flock.id
+    ).all()
+
+    if not logs_to_delete:
+        flash("No matching daily logs found to delete.", "warning")
+        return redirect(url_for('broiler.flock_detail', flock_id=flock_id))
+
+    deleted_count = len(logs_to_delete)
+
+    # Log user activity
+    log_user_activity(
+        current_user.id,
+        'Delete',
+        'BroilerDailyLog',
+        flock.id,
+        details={
+            'action': 'bulk_delete',
+            'deleted_count': deleted_count,
+            'log_ids': ids_to_delete
+        }
+    )
+
+    for l in logs_to_delete:
+        db.session.delete(l)
+    db.session.commit()
+
+    flash(f"Successfully deleted {deleted_count} daily logs.", "success")
+    return redirect(url_for('broiler.flock_detail', flock_id=flock_id))
+
+
 @broiler_bp.route('/daily_entry/<int:flock_id>', methods=['GET', 'POST'])
 def daily_entry(flock_id):
     flock = BroilerFlock.query.get_or_404(flock_id)

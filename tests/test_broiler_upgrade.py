@@ -155,5 +155,42 @@ class BroilerUpgradeTestCase(unittest.TestCase):
         self.assertEqual(updated_flock.harvest_fcr, 1.62)
         self.assertEqual(updated_flock.harvest_avg_weight, 1850.0)
 
+    def test_bulk_delete_daily_logs_action(self):
+        # Fetch log IDs of daily logs
+        logs = BroilerDailyLog.query.filter_by(flock_id=self.flock1.id).all()
+        self.assertEqual(len(logs), 2)
+        log_ids = [l.id for l in logs]
+
+        # 1. Access Denial for non-Admin
+        u_worker = User(username='worker_test', dept='Broiler', role='Worker')
+        u_worker.set_password('pass')
+        db.session.add(u_worker)
+        db.session.commit()
+
+        # Log out current user (admin_test) first
+        self.app.get('/logout')
+        # Login as non-admin worker
+        self.app.post('/login', data={'username': 'worker_test', 'password': 'pass'})
+        # Try to bulk delete
+        response = self.app.post(f'/broiler/flock/{self.flock1.id}/daily_logs/bulk_delete', data={'log_ids': log_ids})
+        self.assertEqual(response.status_code, 403) # Forbidden department access
+
+        # Verify logs were not deleted
+        logs_after_failed_attempt = BroilerDailyLog.query.filter_by(flock_id=self.flock1.id).all()
+        self.assertEqual(len(logs_after_failed_attempt), 2)
+
+        # Log out worker first
+        self.app.get('/logout')
+        # Login back as Admin
+        self.app.post('/login', data={'username': 'admin_test', 'password': 'pass'})
+
+        # 2. Successful Bulk Delete as Admin
+        response = self.app.post(f'/broiler/flock/{self.flock1.id}/daily_logs/bulk_delete', data={'log_ids': log_ids})
+        self.assertEqual(response.status_code, 302) # Redirects back to detail page
+
+        # Verify both logs are deleted
+        remaining_logs = BroilerDailyLog.query.filter_by(flock_id=self.flock1.id).all()
+        self.assertEqual(len(remaining_logs), 0)
+
 if __name__ == '__main__':
     unittest.main()
