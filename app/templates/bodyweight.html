@@ -312,7 +312,7 @@
                                         <div class="row bw-view-fields">
                                             <!-- Male Section -->
                                             <div class="col-md-12 mb-3">
-                                                <strong>Male:</strong> (Std: {{ log.std_m }}g | Avg: {{ "%.0f"|format(log.avg_m_bw) if log.avg_m_bw else '-' }}{% if log.avg_m_bw %}g{% endif %} | Unif: {{ "%.1f"|format(log.avg_m_unif) if log.avg_m_unif else '-' }}{% if log.avg_m_unif %}%{% endif %})
+                                                <strong>Male:</strong> (Std: {{ log.std_m }}g | Avg: {{ "%.0f"|format(log.avg_m) if log.avg_m else '-' }}{% if log.avg_m %}g{% endif %} | Unif: {{ "%.1f"|format(log.uni_m) if log.uni_m else '-' }}{% if log.uni_m %}%{% endif %})
                                                 <div class="mt-2">
                                                     {% if log.m_parts %}
                                                         {% for p in log.m_parts %}
@@ -333,7 +333,7 @@
 
                                             <!-- Female Section -->
                                             <div class="col-md-12">
-                                                <strong>Female:</strong> (Std: {{ log.std_f }}g | Avg: {{ "%.0f"|format(log.avg_f_bw) if log.avg_f_bw else '-' }}{% if log.avg_f_bw %}g{% endif %} | Unif: {{ "%.1f"|format(log.avg_f_unif) if log.avg_f_unif else '-' }}{% if log.avg_f_unif %}%{% endif %})
+                                                <strong>Female:</strong> (Std: {{ log.std_f }}g | Avg: {{ "%.0f"|format(log.avg_f) if log.avg_f else '-' }}{% if log.avg_f %}g{% endif %} | Unif: {{ "%.1f"|format(log.uni_f) if log.uni_f else '-' }}{% if log.uni_f %}%{% endif %})
                                                 <div class="mt-2">
                                                     {% if log.f_parts %}
                                                         {% for p in log.f_parts %}
