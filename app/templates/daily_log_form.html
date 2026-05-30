@@ -842,6 +842,7 @@
     const isExistingLog = {{ 'true' if log else 'false' }};
     let isUserModified = false;
     let modifiedSteps = {};
+    let isSubmitting = false;
 
     let miniChart = null;
     let autoSaveTimeout = null;
@@ -853,11 +854,13 @@
     }
 
     function triggerAutoSave() {
+        if (isSubmitting) return;
         if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(saveLocalDraft, 500);
     }
 
     function saveLocalDraft() {
+        if (isSubmitting) return;
         if (!isUserModified) return;
         let key = getDraftKey();
         if (!key) return;
@@ -1521,6 +1524,8 @@
         let form = document.querySelector('form');
         if (form) {
             form.addEventListener('submit', function() {
+                isSubmitting = true;
+                if (autoSaveTimeout) clearTimeout(autoSaveTimeout);
                 let key = getDraftKey();
                 if (key) localStorage.removeItem(key);
             });
