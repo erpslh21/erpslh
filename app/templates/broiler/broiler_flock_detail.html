@@ -184,13 +184,6 @@
             
             <label class="ms-3 me-2 fw-bold small text-secondary">End Day:</label>
             <select id="endDay" class="form-select form-select-sm w-auto d-inline-block border-2"></select>
-            
-            <button
-              class="btn btn-sm btn-outline-secondary ms-3"
-              onclick="resetCharts()"
-            >
-              Reset
-            </button>
           </div>
 
           <div class="row row-cards">
@@ -626,7 +619,7 @@
           endSelect.addEventListener("change", filterCharts);
       }
 
-      window.filterCharts = function() {
+      function filterCharts() {
           let start = parseInt(startSelect.value);
           let end = parseInt(endSelect.value);
 
@@ -663,15 +656,19 @@
               chartBodyweight.data.datasets[3].data = chartData.weight_gains.slice(startIndex, endIndex);
               chartBodyweight.update();
           }
-      };
+      }
 
-      window.resetCharts = function() {
+      window.filterCharts = filterCharts;
+
+      function resetCharts() {
           if (labels.length > 0) {
               startSelect.value = labels[0];
               endSelect.value = labels[labels.length - 1];
           }
           filterCharts();
-      };
+      }
+
+      window.resetCharts = resetCharts;
   });
 </script>
 
