@@ -21,7 +21,8 @@ def dashboard():
         'broiler/broiler_dashboard.html',
         active_flocks=active_flocks,
         harvested_flocks=harvested_flocks,
-        farms=farms
+        farms=farms,
+        today=datetime.utcnow().date()
     )
 
 @broiler_bp.route('/new_flock', methods=['GET', 'POST'])
