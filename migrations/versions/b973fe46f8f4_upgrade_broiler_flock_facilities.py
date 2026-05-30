@@ -19,6 +19,10 @@ def upgrade():
     bind = op.get_bind()
     inspector = Inspector.from_engine(bind)
     
+    # Stale temporary table cleanup for SQLite batch issues
+    bind.execute(sa.text("DROP TABLE IF EXISTS _alembic_tmp_broiler_daily_log"))
+    bind.execute(sa.text("DROP TABLE IF EXISTS _alembic_tmp_broiler_flock"))
+    
     # 1. Defensively check and build the farm table if not exists (safeguard)
     if not inspector.has_table('farm'):
         op.create_table('farm',
@@ -90,14 +94,6 @@ def upgrade():
 
         # Data sync mapping legacy name strings to database facility primary keys
         sync_and_enforce_nullable(bind, inspector)
-
-    # 4. Handle broiler_daily_log table constraints defensively
-    if inspector.has_table('broiler_daily_log'):
-        # Ensure standard foreign key exists
-        fk_names = [fk['name'] for fk in inspector.get_foreign_keys('broiler_daily_log')]
-        if not any(name and 'broiler_flock' in name.lower() for name in fk_names):
-            with op.batch_alter_table('broiler_daily_log', schema=None) as batch_op:
-                batch_op.create_foreign_key('fk_broiler_daily_log_flock_id_broiler_flock', 'broiler_flock', ['flock_id'], ['id'])
 
 def sync_and_enforce_nullable(bind, inspector):
     # 1. Fetch active farms to look up existing mapping
