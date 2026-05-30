@@ -2,74 +2,543 @@
 
 {% block content %}
 <div class="container-xl">
-    <div class="row align-items-center mb-3">
+    <!-- Page Header -->
+    <div class="row align-items-center mb-4">
         <div class="col">
-            <h2 class="page-title">Broiler Dashboard</h2>
+            <div class="page-pretitle">Operational Department</div>
+            <h2 class="page-title text-primary">Broiler Management Dashboard</h2>
         </div>
         {% if current_user.role != 'Worker' %}
         <div class="col-auto ms-auto d-print-none">
             <div class="btn-list">
-
-                <a href="{{ url_for('broiler.import_data') }}" class="btn btn-outline-success d-none d-sm-inline-block">
+                <a href="{{ url_for('broiler.import_data') }}" class="btn btn-outline-success">
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14 3v4a1 1 0 0 0 1 1h4" /><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" /><path d="M12 11v6" /><path d="M9.5 13.5l2.5 -2.5l2.5 2.5" /></svg>
-                    Import Data
+                    Import excel
                 </a>
                 <a href="{{ url_for('broiler.new_flock') }}" class="btn btn-primary d-none d-sm-inline-block">
-
                     <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                     Create new flock
-                </a>
-                <a href="{{ url_for('broiler.new_flock') }}" class="btn btn-primary d-sm-none btn-icon" aria-label="Create new flock">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" /></svg>
                 </a>
             </div>
         </div>
         {% endif %}
     </div>
 
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-vcenter card-table">
-                <thead>
-                    <tr>
-                        <th>Farm - House</th>
-                        <th>Breed</th>
-                        <th>Intake Date</th>
-                        <th>Intake Birds</th>
-                        <th>Arrival Weight (g)</th>
-                        <th class="w-1"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for flock in flocks %}
-                    <tr>
-                        <td>
-                            {% if current_user.role != 'Worker' %}
-                            <a href="{{ url_for('broiler.flock_detail', flock_id=flock.id) }}">
-                                {{ flock.farm_name }} - {{ flock.house_name }}
-                            </a>
+    <!-- Dual Tab Navigation -->
+    <div class="card mb-3 shadow-sm border-0">
+        <ul class="nav nav-tabs" data-bs-toggle="tabs">
+            <li class="nav-item">
+                <a href="#active-ops" class="nav-link active" data-bs-toggle="tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 13a3 3 0 1 0 0 -6a3 3 0 0 0 0 6z" /><path d="M12 21a9 9 0 0 0 9 -9a9 9 0 0 0 -9 -9a9 9 0 0 0 -9 9a9 9 0 0 0 9 9z" /></svg>
+                    Active Operations
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="#history-archives" class="nav-link" data-bs-toggle="tab">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon me-2" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 8l0 4l2 2" /><path d="M3.05 11a9 9 0 1 1 .5 4m-.5 5v-5h5" /></svg>
+                    Harvest History
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content">
+        <!-- Tab 1: Active Operations -->
+        <div class="tab-pane fade show active" id="active-ops">
+            
+            <!-- Filters & Interactive Compare Row -->
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 col-sm-6 mb-3 mb-md-0">
+                            <label class="form-label text-muted small fw-bold uppercase">Select Farm Setup</label>
+                            <select id="farmFilter" class="form-select border-2">
+                                {% for farm in farms %}
+                                <option value="{{ farm.id }}">{{ farm.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-8 col-sm-6 text-md-end">
+                            <label class="form-label text-muted small d-block d-md-none">&nbsp;</label>
+                            <div class="btn-group border-2 rounded">
+                                <button type="button" class="btn btn-outline-primary metric-toggle active" data-metric="body_weight_g">Bodyweight Compare</button>
+                                <button type="button" class="btn btn-outline-primary metric-toggle" data-metric="fcr">Cumulative FCR</button>
+                                <button type="button" class="btn btn-outline-primary metric-toggle" data-metric="mortality_pct">Mortality Compare</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Multi-House Performance Comparison Chart -->
+            <div class="card mb-4 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h4 class="card-title fw-bold text-secondary mb-0">All-In All-Out Performance Comparison</h4>
+                        <span class="badge bg-blue-lite text-blue px-2 py-1">Cross-House Standard Plot</span>
+                    </div>
+                    <div class="chart-container" style="position: relative; height: 350px;">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active KPI Indicators -->
+            <div class="row row-cards mb-4">
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-blue text-white avatar" style="border-radius: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M12 9l0 3" /><path d="M12 15l.01 0" /></svg>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">Total Active Birds</div>
+                                    <div class="text-secondary" id="activeBirdsCounter">
+                                        {% set active_birds = active_flocks | map(attribute='intake_birds') | sum %}
+                                        {{ active_birds }} birds
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-green text-white avatar" style="border-radius: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">Active Houses</div>
+                                    <div class="text-secondary">{{ active_flocks | length }} active houses</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-4">
+                    <div class="card card-sm border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <span class="bg-yellow text-white avatar" style="border-radius: 8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+                                    </span>
+                                </div>
+                                <div class="col">
+                                    <div class="font-weight-medium">Average Age</div>
+                                    <div class="text-secondary">
+                                        {% if active_flocks %}
+                                            {% set total_days = namespace(val=0) %}
+                                            {% for flock in active_flocks %}
+                                                {% set last_log = flock.logs | sort(attribute='date') | last %}
+                                                {% if last_log %}
+                                                    {% set total_days.val = total_days.val + last_log.day_number %}
+                                                {% else %}
+                                                    {% set total_days.val = total_days.val + (today - flock.intake_date).days %}
+                                                {% endif %}
+                                            {% endfor %}
+                                            {{ (total_days.val / active_flocks | length) | round(1) }} days
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Operational Grid -->
+            <div class="card shadow-sm border-0">
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table table-hover table-striped">
+                        <thead>
+                            <tr class="table-light">
+                                <th>Farm - House</th>
+                                <th>Breed</th>
+                                <th>Intake Setup</th>
+                                <th>Live Balance / Intake</th>
+                                <th>Current Age</th>
+                                <th>Metrics</th>
+                                <th class="w-1 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for flock in active_flocks %}
+                            <!-- Local Live Calculations -->
+                            {% set last_log = flock.logs | sort(attribute='date') | last %}
+                            {% set total_deaths = flock.logs | map(attribute='death_count') | sum %}
+                            {% set total_culls = flock.logs | map(attribute='cull_count') | sum %}
+                            {% set balance = flock.intake_birds - total_deaths - total_culls %}
+                            {% set total_feed_kg = flock.logs | map(attribute='feed_daily_use_kg') | sum %}
+                            
+                            {% if last_log and last_log.body_weight_g > 0 and balance > 0 %}
+                                {% set final_wt_kg = balance * (last_log.body_weight_g / 1000.0) %}
+                                {% set calculated_fcr = (total_feed_kg / final_wt_kg) | round(2) %}
                             {% else %}
-                            <a href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}">
-                                {{ flock.farm_name }} - {{ flock.house_name }}
-                            </a>
+                                {% set calculated_fcr = "N/A" %}
                             {% endif %}
-                        </td>
-                        <td class="text-muted">{{ flock.breed }}</td>
-                        <td class="text-muted">{{ flock.intake_date.strftime('%Y-%m-%d') if flock.intake_date else '' }}</td>
-                        <td class="text-muted">{{ flock.intake_birds }}</td>
-                        <td class="text-muted">{{ flock.arrival_weight_g }}</td>
-                        <td>
-                            <a href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}" class="btn btn-sm btn-outline-primary">Add Daily Log</a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="text-center">No active broiler flocks found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                            
+                            <tr class="flock-row" data-farm-id="{{ flock.farm_id }}">
+                                <td>
+                                    <div class="fw-bold">
+                                        {% if current_user.role != 'Worker' %}
+                                        <a href="{{ url_for('broiler.flock_detail', flock_id=flock.id) }}">
+                                            {{ flock.farm_name }} — {{ flock.house_name }}
+                                        </a>
+                                        {% else %}
+                                        <a href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}">
+                                            {{ flock.farm_name }} — {{ flock.house_name }}
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">ID: {{ flock.id }}</small>
+                                </td>
+                                <td><span class="badge bg-secondary-lite text-secondary px-2 py-1">{{ flock.breed }}</span></td>
+                                <td>
+                                    <div class="small">
+                                        <span class="text-muted">Date:</span> {{ flock.intake_date.strftime('%Y-%m-%d') if flock.intake_date else '' }}<br>
+                                        <span class="text-muted">Weight:</span> {{ flock.arrival_weight_g }}g
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-success">{{ balance }}</div>
+                                    <div class="small text-muted">Intake: {{ flock.intake_birds }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">
+                                        {% if last_log %}
+                                            Day {{ last_log.day_number }}
+                                        {% else %}
+                                            Day 1 (Intake)
+                                        {% endif %}
+                                    </div>
+                                    {% if flock.has_log_today %}
+                                        <span class="badge bg-success text-white px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;">Submitted</span>
+                                    {% else %}
+                                        <span class="badge bg-danger-lite text-danger px-2 py-0.5 rounded-pill" style="font-size: 0.7rem;">Missing Log</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        <span class="text-muted">Weight:</span> {{ last_log.body_weight_g if last_log else 'N/A' }}g<br>
+                                        <span class="text-muted">FCR:</span> {{ calculated_fcr }}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-list justify-content-end">
+                                        <a href="{{ url_for('broiler.daily_entry', flock_id=flock.id) }}" class="btn btn-sm btn-outline-primary px-2">Log Daily</a>
+                                        <button type="button" class="btn btn-sm btn-success px-2 btn-harvest" 
+                                                data-id="{{ flock.id }}"
+                                                data-name="{{ flock.farm_name }} - {{ flock.house_name }}"
+                                                data-birds="{{ balance }}"
+                                                data-fcr="{{ calculated_fcr if calculated_fcr != 'N/A' else '0.0' }}"
+                                                data-weight="{{ last_log.body_weight_g if last_log else '0.0' }}">
+                                            Harvest
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="text-muted">No active broiler flocks found in the department.</div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Harvest History Archives -->
+        <div class="tab-pane fade" id="history-archives">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h3 class="card-title fw-bold text-secondary">Historical Depletion & Harvest Records</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table table-hover table-striped">
+                        <thead>
+                            <tr class="table-light">
+                                <th>Farm - House</th>
+                                <th>Breed</th>
+                                <th>Intake birds</th>
+                                <th>Harvest birds</th>
+                                <th>Depletion Rate</th>
+                                <th>Final FCR</th>
+                                <th>Avg Weight (g)</th>
+                                <th>Harvest Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for flock in harvested_flocks %}
+                            {% set depletion_rate = ((flock.intake_birds - flock.harvested_birds) / flock.intake_birds * 100) if flock.intake_birds > 0 else 0.0 %}
+                            <tr>
+                                <td class="fw-bold text-dark">{{ flock.farm_name }} — {{ flock.house_name }}</td>
+                                <td><span class="badge bg-secondary-lite text-secondary px-2 py-1">{{ flock.breed }}</span></td>
+                                <td>{{ flock.intake_birds }}</td>
+                                <td class="text-success fw-bold">{{ flock.harvested_birds }}</td>
+                                <td class="text-danger fw-bold">{{ depletion_rate | round(2) }}%</td>
+                                <td>{{ flock.harvest_fcr if flock.harvest_fcr else 'N/A' }}</td>
+                                <td>{{ flock.harvest_avg_weight if flock.harvest_avg_weight else 'N/A' }}g</td>
+                                <td class="text-muted small">{{ flock.harvest_date.strftime('%Y-%m-%d') if flock.harvest_date else '' }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-muted">No harvested broiler history available in the system.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- Harvest Flock Modal Dialog -->
+<div class="modal modal-blur fade" id="harvestFlockModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <form id="harvestForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title fw-bold">Complete Harvest: <span id="modalHouseName"></span></h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">Marking a flock as harvested moves it out of active monitoring into historical records. Prefilled metrics are estimated from active daily log averages.</p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label required">Harvest Date</label>
+                        <input type="date" class="form-control" name="harvest_date" id="harvestDate" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Harvested Birds Count</label>
+                            <input type="number" class="form-control" name="harvested_birds" id="harvestedBirds" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Final Avg Weight (grams)</label>
+                            <input type="number" step="0.1" class="form-control" name="harvest_avg_weight" id="harvestWeight" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label required">Final Cumulative FCR</label>
+                        <input type="number" step="0.01" class="form-control" name="harvest_fcr" id="harvestFcr" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link link-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Archive & Harvest Flock</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Chart JS Import and Script Logic -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const farmSelect = document.getElementById("farmFilter");
+    const metricButtons = document.querySelectorAll(".metric-toggle");
+    
+    let currentMetric = "body_weight_g";
+    let chartInstance = null;
+
+    // Harvest Modal dynamic pre-filling
+    const harvestButtons = document.querySelectorAll(".btn-harvest");
+    const harvestModal = new bootstrap.Modal(document.getElementById("harvestFlockModal"));
+    const harvestForm = document.getElementById("harvestForm");
+    const modalHouseName = document.getElementById("modalHouseName");
+    
+    harvestButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            const flockId = this.getAttribute("data-id");
+            const houseName = this.getAttribute("data-name");
+            const birds = this.getAttribute("data-birds");
+            const fcr = this.getAttribute("data-fcr");
+            const weight = this.getAttribute("data-weight");
+            
+            modalHouseName.textContent = houseName;
+            harvestForm.action = `/broiler/flock/${flockId}/harvest`;
+            
+            // Prefill values
+            document.getElementById("harvestDate").value = new Date().toISOString().substring(0, 10);
+            document.getElementById("harvestedBirds").value = birds;
+            document.getElementById("harvestWeight").value = weight;
+            document.getElementById("harvestFcr").value = fcr;
+            
+            harvestModal.show();
+        });
+    });
+
+    // Chart logic
+    function getThemeColors() {
+        const theme = document.documentElement.getAttribute("data-bs-theme") || "light";
+        const gridColor = theme === "dark" ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.05)";
+        const textColor = theme === "dark" ? "#f4f6f8" : "#232e3c";
+        return { gridColor, textColor };
+    }
+
+    function fetchAndRenderChart() {
+        const farmId = farmSelect.value;
+        if (!farmId) return;
+
+        // Visual row filtering based on selected farm
+        const rows = document.querySelectorAll(".flock-row");
+        let activeCount = 0;
+        rows.forEach(row => {
+            if (row.getAttribute("data-farm-id") === farmId) {
+                row.style.display = "";
+                activeCount++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+
+        // Trigger dynamic API fetch
+        fetch(`/api/broiler/compare_metrics?farm_id=${farmId}&metric=${currentMetric}`)
+            .then(res => res.json())
+            .then(data => {
+                renderChart(data);
+            })
+            .catch(err => console.error("Error loading comparison series: ", err));
+    }
+
+    function renderChart(data) {
+        const canvas = document.getElementById("comparisonChart");
+        if (!canvas) return;
+
+        const ctx = canvas.getContext("2d");
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        const { gridColor, textColor } = getThemeColors();
+        const datasets = [];
+
+        // 1. Draw solid lines for each active house
+        const colors = [
+            "#206bc4", "#2ecc71", "#e67e22", "#9b59b6", "#f1c40f", "#34495e"
+        ];
+        let colorIdx = 0;
+
+        for (const [houseLabel, points] of Object.entries(data.series)) {
+            const color = colors[colorIdx % colors.length];
+            datasets.push({
+                label: houseLabel,
+                data: points,
+                borderColor: color,
+                backgroundColor: color + "1a",
+                borderWidth: 3,
+                tension: 0.3,
+                fill: false
+            });
+            colorIdx++;
+        }
+
+        // 2. Draw standard reference line (Dashed)
+        if (data.standards && data.standards.length > 0) {
+            datasets.push({
+                label: "Standard Standard Plot",
+                data: data.standards,
+                borderColor: "#656d77",
+                borderDash: [5, 5],
+                borderWidth: 2,
+                pointRadius: 0,
+                tension: 0.1,
+                fill: false
+            });
+        }
+
+        // Calculate max Y value for buffering Y-axis padding
+        let maxVal = 0;
+        datasets.forEach(d => {
+            d.data.forEach(val => {
+                if (val !== null && val > maxVal) maxVal = val;
+            });
+        });
+        const yMaxBuffer = maxVal > 0 ? maxVal * 1.1 : undefined;
+
+        chartInstance = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: data.days.map(d => `Day ${d}`),
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: "top",
+                        labels: {
+                            color: textColor,
+                            font: { family: "Inter, Roboto, sans-serif", weight: "bold" }
+                        }
+                    },
+                    tooltip: {
+                        mode: "index",
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: gridColor },
+                        ticks: { color: textColor }
+                    },
+                    y: {
+                        grid: { color: gridColor },
+                        ticks: { color: textColor },
+                        max: yMaxBuffer
+                    }
+                }
+            }
+        });
+    }
+
+    // Toggle Metric listeners
+    metricButtons.forEach(btn => {
+        btn.addEventListener("click", function () {
+            metricButtons.forEach(b => b.classList.remove("active"));
+            this.classList.add("active");
+            currentMetric = this.getAttribute("data-metric");
+            fetchAndRenderChart();
+        });
+    });
+
+    // Farm change listener
+    farmSelect.addEventListener("change", fetchAndRenderChart);
+
+    // Initial Trigger
+    fetchAndRenderChart();
+
+    // Theme Switch Event Listener
+    window.addEventListener("themeChanged", function () {
+        if (chartInstance) {
+            const { gridColor, textColor } = getThemeColors();
+            chartInstance.options.scales.x.grid.color = gridColor;
+            chartInstance.options.scales.x.ticks.color = textColor;
+            chartInstance.options.scales.y.grid.color = gridColor;
+            chartInstance.options.scales.y.ticks.color = textColor;
+            chartInstance.options.plugins.legend.labels.color = textColor;
+            chartInstance.update();
+        }
+    });
+});
+</script>
 {% endblock %}

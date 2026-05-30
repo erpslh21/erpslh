@@ -8,14 +8,28 @@ broiler_bp = Blueprint('broiler', __name__, url_prefix='/broiler')
 
 @broiler_bp.route('/dashboard')
 def dashboard():
-    flocks = BroilerFlock.query.filter_by(is_active=True).all()
-    return render_template('broiler/broiler_dashboard.html', flocks=flocks)
+    from app.models.models import Farm
+    active_flocks = BroilerFlock.query.filter_by(is_active=True).all()
+    harvested_flocks = BroilerFlock.query.filter_by(is_active=False).order_by(BroilerFlock.harvest_date.desc()).all()
+    
+    # Retrieve all farms with department='Broiler' (or all as fallback)
+    farms = Farm.query.filter(Farm.department.ilike('broiler')).all()
+    if not farms:
+        farms = Farm.query.all()
+        
+    return render_template(
+        'broiler/broiler_dashboard.html',
+        active_flocks=active_flocks,
+        harvested_flocks=harvested_flocks,
+        farms=farms
+    )
 
 @broiler_bp.route('/new_flock', methods=['GET', 'POST'])
 def new_flock():
+    from app.models.models import Farm, House
     if request.method == 'POST':
-        farm_name = request.form.get('farm_name')
-        house_name = request.form.get('house_name')
+        farm_id = request.form.get('farm_id')
+        house_id = request.form.get('house_id')
         source = request.form.get('source')
         breed = request.form.get('breed')
         intake_birds = int(request.form.get('intake_birds', 0))
@@ -24,21 +38,62 @@ def new_flock():
 
         intake_date = datetime.strptime(intake_date_str, '%Y-%m-%d').date() if intake_date_str else datetime.utcnow().date()
 
+        farm = Farm.query.get_or_404(farm_id)
+        house = House.query.get_or_404(house_id)
+
         flock = BroilerFlock(
-            farm_name=farm_name,
-            house_name=house_name,
+            farm_id=farm.id,
+            house_id=house.id,
+            farm_name=farm.name,
+            house_name=house.name,
             source=source,
             breed=breed,
             intake_birds=intake_birds,
             intake_date=intake_date,
-            arrival_weight_g=arrival_weight_g
+            arrival_weight_g=arrival_weight_g,
+            is_active=True
         )
         db.session.add(flock)
         db.session.commit()
         flash('Broiler flock created successfully.', 'success')
         return redirect(url_for('broiler.dashboard'))
 
-    return render_template('broiler/broiler_new_flock.html')
+    farms = Farm.query.filter(Farm.department.ilike('broiler')).all()
+    if not farms:
+        farms = Farm.query.all()
+    return render_template('broiler/broiler_new_flock.html', farms=farms)
+
+@broiler_bp.route('/flock/<int:flock_id>/harvest', methods=['POST'])
+def harvest_flock(flock_id):
+    flock = BroilerFlock.query.get_or_404(flock_id)
+    
+    harvest_date_str = request.form.get('harvest_date')
+    try:
+        harvested_birds = int(request.form.get('harvested_birds', 0))
+    except (ValueError, TypeError):
+        harvested_birds = 0
+        
+    try:
+        harvest_fcr = float(request.form.get('harvest_fcr', 0.0))
+    except (ValueError, TypeError):
+        harvest_fcr = 0.0
+        
+    try:
+        harvest_avg_weight = float(request.form.get('harvest_avg_weight', 0.0))
+    except (ValueError, TypeError):
+        harvest_avg_weight = 0.0
+
+    harvest_date = datetime.strptime(harvest_date_str, '%Y-%m-%d').date() if harvest_date_str else datetime.utcnow().date()
+
+    flock.is_active = False
+    flock.harvest_date = harvest_date
+    flock.harvested_birds = harvested_birds
+    flock.harvest_fcr = harvest_fcr
+    flock.harvest_avg_weight = harvest_avg_weight
+
+    db.session.commit()
+    flash(f"Broiler flock {flock.farm_name} - {flock.house_name} harvested successfully.", "success")
+    return redirect(url_for('broiler.dashboard'))
 
 @broiler_bp.route('/flock/<int:flock_id>')
 def flock_detail(flock_id):
@@ -217,22 +272,43 @@ def import_data():
                 farm_str = str(farm_name) if pd.notna(farm_name) else ""
                 house_str = str(house_name) if pd.notna(house_name) else ""
 
+                from app.models.models import Farm, House
+                farm_str_clean = farm_str.strip() if farm_str else "Default Farm"
+                house_str_clean = house_str.strip() if house_str else "Default House"
+
+                # Defensively find or create Farm
+                farm = Farm.query.filter(Farm.name.ilike(farm_str_clean)).first()
+                if not farm:
+                    farm = Farm(name=farm_str_clean, department='Broiler')
+                    db.session.add(farm)
+                    db.session.flush()
+
+                # Defensively find or create House
+                house = House.query.filter(House.name.ilike(house_str_clean), House.farm_id == farm.id).first()
+                if not house:
+                    house = House(name=house_str_clean, farm_id=farm.id)
+                    db.session.add(house)
+                    db.session.flush()
+
                 # Find or create flock
                 flock = BroilerFlock.query.filter_by(
-                    farm_name=farm_str,
-                    house_name=house_str,
+                    farm_id=farm.id,
+                    house_id=house.id,
                     intake_date=intake_date
                 ).first()
 
                 if not flock:
                     flock = BroilerFlock(
-                        farm_name=farm_str,
-                        house_name=house_str,
+                        farm_id=farm.id,
+                        house_id=house.id,
+                        farm_name=farm_str_clean,
+                        house_name=house_str_clean,
                         source=str(source) if pd.notna(source) else "",
                         breed=str(breed) if pd.notna(breed) else "",
                         intake_birds=intake_birds,
                         intake_date=intake_date,
-                        arrival_weight_g=arrival_weight_g
+                        arrival_weight_g=arrival_weight_g,
+                        is_active=True
                     )
                     db.session.add(flock)
                     db.session.flush() # flush to get flock.id

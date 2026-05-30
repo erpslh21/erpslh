@@ -2,70 +2,147 @@
 
 {% block content %}
 <div class="container-xl">
-    <div class="row align-items-center mb-3">
+    <!-- Page Header -->
+    <div class="row align-items-center mb-4">
         <div class="col">
-            <h2 class="page-title">New Broiler Flock</h2>
+            <div class="page-pretitle">Broiler Operations</div>
+            <h2 class="page-title text-primary">Create New Broiler Flock</h2>
         </div>
         <div class="col-auto ms-auto d-print-none">
-            <a href="{{ url_for('broiler.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+            <a href="{{ url_for('broiler.dashboard') }}" class="btn btn-outline-secondary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="18" y1="6" x2="6" y2="12" /><line x1="6" y1="6" x2="18" y2="12" /></svg>
+                Cancel
+            </a>
         </div>
     </div>
 
-    <div class="card">
+    <!-- Create Form -->
+    <div class="card shadow-sm border-0">
         <div class="card-body">
             <form method="POST" action="{{ url_for('broiler.new_flock') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
                 <div class="row row-cards">
+                    <!-- Farm Selection -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label required">Farm Name</label>
-                            <input type="text" class="form-control" name="farm_name" required>
+                            <label class="form-label required fw-bold text-secondary">Farm Setup</label>
+                            <select class="form-select border-2" name="farm_id" id="farmSelect" required>
+                                <option value="" disabled selected>-- Select Farm --</option>
+                                {% for farm in farms %}
+                                <option value="{{ farm.id }}">{{ farm.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-hint text-muted">Select the physical farm location for this batch.</small>
                         </div>
                     </div>
+
+                    <!-- House Selection -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label required">House Name</label>
-                            <input type="text" class="form-control" name="house_name" required>
+                            <label class="form-label required fw-bold text-secondary">House Assignment</label>
+                            <select class="form-select border-2" name="house_id" id="houseSelect" required disabled>
+                                <option value="" disabled selected>-- Select Farm First --</option>
+                            </select>
+                            <small class="form-hint text-muted">Assigned houses fetch automatically based on the selected farm.</small>
                         </div>
                     </div>
+
+                    <!-- Source -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label">Source</label>
-                            <input type="text" class="form-control" name="source">
+                            <label class="form-label fw-bold text-secondary">Source / Hatchery</label>
+                            <input type="text" class="form-control border-2" name="source" placeholder="e.g. SLH Hatchery Batch A">
                         </div>
                     </div>
+
+                    <!-- Breed -->
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label">Breed</label>
-                            <input type="text" class="form-control" name="breed">
+                            <label class="form-label fw-bold text-secondary">Breed Type</label>
+                            <input type="text" class="form-control border-2" name="breed" placeholder="e.g. Cobb 500, Arbor Acres">
                         </div>
                     </div>
+
+                    <!-- Intake Birds -->
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label class="form-label required">Intake Birds</label>
-                            <input type="number" class="form-control" name="intake_birds" min="0" required>
+                            <label class="form-label required fw-bold text-secondary">Intake Birds (DOC)</label>
+                            <input type="number" class="form-control border-2" name="intake_birds" min="1" placeholder="e.g. 20000" required>
                         </div>
                     </div>
+
+                    <!-- Intake Date -->
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label class="form-label required">Intake Date</label>
-                            <input type="date" class="form-control" name="intake_date" required>
+                            <label class="form-label required fw-bold text-secondary">Intake Date</label>
+                            <input type="date" class="form-control border-2" name="intake_date" id="intakeDate" required>
                         </div>
                     </div>
+
+                    <!-- Arrival Weight -->
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label class="form-label required">Arrival Weight (g)</label>
-                            <input type="number" step="0.01" class="form-control" name="arrival_weight_g" value="0.0" required>
+                            <label class="form-label required fw-bold text-secondary">Arrival Weight (g)</label>
+                            <input type="number" step="0.01" class="form-control border-2" name="arrival_weight_g" value="42.0" required>
+                            <small class="form-hint text-muted">Prefilled with standard 42.0g for Day Old Chick (DOC).</small>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-footer">
-                    <button type="submit" class="btn btn-primary w-100">Create Flock</button>
+                <div class="form-footer mt-4">
+                    <button type="submit" class="btn btn-primary w-100 py-2">Create & Launch Broiler Batch</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Cascading Select Javascript -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const farmSelect = document.getElementById("farmSelect");
+    const houseSelect = document.getElementById("houseSelect");
+    
+    // Set default intake date to today
+    document.getElementById("intakeDate").value = new Date().toISOString().substring(0, 10);
+
+    farmSelect.addEventListener("change", function () {
+        const farmId = this.value;
+        if (!farmId) {
+            houseSelect.disabled = true;
+            houseSelect.innerHTML = '<option value="" disabled selected>-- Select Farm First --</option>';
+            return;
+        }
+
+        // Enable select with loading state
+        houseSelect.disabled = true;
+        houseSelect.innerHTML = '<option value="" disabled selected>Loading Houses...</option>';
+
+        // Fetch houses for selected farm
+        fetch(`/api/houses_by_farm/${farmId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.length === 0) {
+                    houseSelect.innerHTML = '<option value="" disabled selected>No houses configured for this farm</option>';
+                    houseSelect.disabled = true;
+                } else {
+                    houseSelect.innerHTML = '<option value="" disabled selected>-- Select House --</option>';
+                    data.forEach(house => {
+                        const option = document.createElement("option");
+                        option.value = house.id;
+                        option.textContent = house.name;
+                        houseSelect.appendChild(option);
+                    });
+                    houseSelect.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error("Error loading houses: ", err);
+                houseSelect.innerHTML = '<option value="" disabled selected>Error loading houses</option>';
+                houseSelect.disabled = true;
+            });
+    });
+});
+</script>
 {% endblock %}

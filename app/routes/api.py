@@ -636,6 +636,78 @@ def register_api_routes(app):
 
         return jsonify(response_data)
 
+    @app.route('/api/broiler/compare_metrics', methods=['GET'])
+    @login_required
+    def compare_broiler_metrics():
+        farm_id = request.args.get('farm_id')
+        metric_name = request.args.get('metric') # 'body_weight_g', 'fcr', 'mortality_pct'
+        
+        if not farm_id or not metric_name:
+            return jsonify({'error': 'Missing parameters'}), 400
+            
+        from app.models.models import BroilerFlock, BroilerStandard
+        from metrics import calculate_broiler_metrics
+        
+        active_flocks = BroilerFlock.query.filter_by(farm_id=farm_id, is_active=True).all()
+        
+        # We need a shared x-axis of days, say from 1 to 42 initially
+        max_days = 42
+        
+        series = {}
+        for flock in active_flocks:
+            metrics = calculate_broiler_metrics(flock.id)
+            label = flock.house_name or f"House {flock.house_id}"
+            
+            day_map = {}
+            for m in metrics:
+                day_num = m['day_number']
+                if day_num > max_days:
+                    max_days = day_num
+                    
+                if metric_name == 'body_weight_g':
+                    val = m.get('body_weight_g') or 0.0
+                elif metric_name == 'fcr':
+                    val = m.get('cumulative_fcr') or 0.0
+                elif metric_name == 'mortality_pct':
+                    # Balance represents live birds, intake_birds is initial
+                    intake = flock.intake_birds or 1
+                    dead = flock.intake_birds - m.get('balance', flock.intake_birds)
+                    val = (dead / intake * 100.0) if intake > 0 else 0.0
+                else:
+                    val = 0.0
+                day_map[day_num] = val
+                
+            series[label] = day_map
+            
+        # Standard values lookup from BroilerStandard
+        standards_query = BroilerStandard.query.order_by(BroilerStandard.age_days.asc()).all()
+        standard_map = {}
+        for std in standards_query:
+            if metric_name == 'body_weight_g':
+                val = std.live_weight or 0.0
+            elif metric_name == 'fcr':
+                val = std.fcr or 0.0
+            elif metric_name == 'mortality_pct':
+                val = std.cum_depletion_rate or 0.0
+            else:
+                val = 0.0
+            standard_map[std.age_days] = val
+            
+        # Format for output
+        days = list(range(1, max_days + 1))
+        
+        formatted_series = {}
+        for label, day_map in series.items():
+            formatted_series[label] = [day_map.get(d, None) for d in days]
+            
+        formatted_standards = [standard_map.get(d, None) for d in days]
+        
+        return jsonify({
+            'days': days,
+            'standards': formatted_standards,
+            'series': formatted_series
+        })
+
     @app.route('/api/metrics')
     def get_metrics_list():
         return json.dumps(METRICS_REGISTRY)

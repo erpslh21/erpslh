@@ -547,15 +547,29 @@ class Hatchability(VersionedMixin, db.Model):
         return (self.rotten_eggs / self.egg_set * 100) if self.egg_set > 0 else 0.0
 class BroilerFlock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    farm_id = db.Column(db.Integer, db.ForeignKey('farm.id'), nullable=False, index=True)
+    house_id = db.Column(db.Integer, db.ForeignKey('house.id'), nullable=False, index=True)
+    
+    # Retain name fields as fallbacks
     farm_name = db.Column(db.String(100), nullable=True)
     house_name = db.Column(db.String(100), nullable=True)
+    
     source = db.Column(db.String(100), nullable=True)
     breed = db.Column(db.String(50), nullable=True)
     intake_birds = db.Column(db.Integer, default=0, nullable=False)
     intake_date = db.Column(db.Date, nullable=False, default=date.today)
     arrival_weight_g = db.Column(db.Float, default=0.0)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=True, index=True)
 
+    # Harvesting details
+    harvest_date = db.Column(db.Date, nullable=True)
+    harvested_birds = db.Column(db.Integer, nullable=True)
+    harvest_fcr = db.Column(db.Float, nullable=True)
+    harvest_avg_weight = db.Column(db.Float, nullable=True)
+
+    # Relationships
+    farm = db.relationship('Farm', backref='broiler_flocks', lazy=True)
+    house = db.relationship('House', backref='broiler_flocks', lazy=True)
     logs = db.relationship('BroilerDailyLog', backref='flock', lazy=True, cascade="all, delete-orphan")
 
 class BroilerStandard(db.Model):
