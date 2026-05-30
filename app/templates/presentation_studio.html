@@ -1,52 +1,185 @@
 {% extends 'base_tabler.html' %}
 
 {% block content %}
-<div class="page-header d-print-none">
-    <div class="container-xl">
-        <div class="row g-2 align-items-center">
-            <div class="col">
-                <div class="page-pretitle">Presentation Studio</div>
-                <h2 class="page-title">
-                    {{ flock.name }} - {{ flock.house.name }}
-                </h2>
-            </div>
-            <div class="col-auto ms-auto d-print-none">
-                <div class="btn-list">
-                    <a href="{{ url_for('view_flock', id=flock.id) }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i> Back to Flock
-                    </a>
-                </div>
-            </div>
+<style>
+/* Fullscreen Carousel Wrapper - Matching flock_detail.html */
+#chartsWrapper:fullscreen, #chartsWrapper:-webkit-full-screen {
+    display: flex !important;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    padding: 0;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#chartsWrapper:fullscreen .card, #chartsWrapper:-webkit-full-screen .card {
+    min-width: 100vw;
+    width: 100vw;
+    height: 100vh;
+    border: none;
+    border-radius: 0;
+    scroll-snap-align: start;
+    margin: 0 !important;
+    display: flex;
+    flex-direction: column;
+}
+
+#chartsWrapper:fullscreen .card-header, #chartsWrapper:-webkit-full-screen .card-header {
+    flex-shrink: 0;
+    padding: 0.5rem;
+    font-size: 1rem;
+    min-height: 40px;
+    top: 0 !important;
+    z-index: 1050;
+}
+
+#chartsWrapper:fullscreen .card-body, #chartsWrapper:-webkit-full-screen .card-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+#chartsWrapper:fullscreen .chart-container-inner, #chartsWrapper:-webkit-full-screen .chart-container-inner {
+    flex-grow: 1;
+    height: 100% !important;
+    width: 100% !important;
+    overflow-x: auto;
+    padding-top: 5px;
+}
+
+/* Drawing toolbar drag handle */
+#drawingToolbar .drag-handle { cursor: move; }
+
+/* Fabric overlay z-index management */
+.fabric-inactive .upper-canvas { pointer-events: none !important; }
+.fabric-active .upper-canvas { pointer-events: auto !important; }
+</style>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 row-gap-2">
+    <h2>Presentation Studio: {{ flock.house.name }}{% if flock.farm %} ({{ flock.farm.name }}){% endif %}</h2>
+    <div class="d-flex align-items-center gap-2">
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownFlockSelector" data-bs-toggle="dropdown" aria-expanded="false">
+                Switch House
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="dropdownFlockSelector" style="z-index: 1050;">
+                {% for f in active_flocks %}
+                <li><a class="dropdown-item" href="{{ url_for('presentation_views.presentation_studio', flock_id=f.id) }}">{{ f.house.name }}</a></li>
+                {% endfor %}
+            </ul>
         </div>
+        <a href="{{ url_for('view_flock', id=flock.id) }}" class="btn btn-outline-secondary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-arrow-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M5 12l6 6" /><path d="M5 12l6 -6" /></svg>
+            Back to Flock
+        </a>
     </div>
 </div>
 
-<div class="page-body">
-    <div class="container-xl">
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="card-title">Studio Toolbar</h3>
-                <div>
-                    <button class="btn btn-sm btn-outline-primary" id="addTextBtn"><i class="fas fa-font"></i> Add Text</button>
-                    <button class="btn btn-sm btn-outline-primary" id="addArrowBtn"><i class="fas fa-long-arrow-alt-right"></i> Add Arrow</button>
-                    <button class="btn btn-sm btn-outline-primary" id="addRectBtn"><i class="fas fa-square"></i> Add Rect</button>
-                    <button class="btn btn-sm btn-danger d-none" id="deleteSelectedBtn"><i class="fas fa-trash"></i> Delete Selected</button>
+<!-- Filter Control Bar - Matching flock_detail.html -->
+<div class="bg-light-subtle p-2 mb-3 rounded d-flex align-items-center flex-wrap gap-2 shadow-sm border" style="position: relative; z-index: 1;">
+    <div class="btn-group btn-group-sm" role="group">
+        <input type="radio" class="btn-check" name="studioChartMode" id="studioModeDaily" autocomplete="off" checked>
+        <label class="btn btn-outline-secondary" for="studioModeDaily" title="Daily View"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2z" /></svg></label>
+
+        <input type="radio" class="btn-check" name="studioChartMode" id="studioModeWeekly" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="studioModeWeekly" title="Weekly View"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-stats" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 22l4 -4" /><path d="M19 22l4 -4" /><path d="M11.5 16h-3.5v-1" /></svg></label>
+    </div>
+
+    <!-- Date Pickers (shown in daily mode) -->
+    <div class="input-group" id="globalDatePickerContainer" style="max-width: 400px;">
+        <span class="input-group-text bg-body"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2z" /></svg> Start</span>
+        <input type="date" id="globalStartDate" class="form-control" placeholder="Start Date">
+        <span class="input-group-text bg-body"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-event" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M16 3l0 4" /><path d="M8 3l0 4" /><path d="M4 11l16 0" /><path d="M8 15h2v2h-2z" /></svg> End</span>
+        <input type="date" id="globalEndDate" class="form-control" placeholder="End Date">
+    </div>
+
+    <!-- Week Pickers (shown in weekly mode) -->
+    <div class="input-group d-none" id="globalWeekPickerContainer" style="max-width: 350px;">
+        <span class="input-group-text bg-body"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-stats" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 22l4 -4" /><path d="M19 22l4 -4" /><path d="M11.5 16h-3.5v-1" /></svg> Start Week</span>
+        <select id="globalStartWeek" class="form-select"></select>
+        <span class="input-group-text bg-body">End Week</span>
+        <select id="globalEndWeek" class="form-select"></select>
+    </div>
+
+    <span id="ageRangeDisplay" class="fw-bold text-primary small ms-2"></span>
+</div>
+
+<div id="chartsWrapper">
+    <!-- Charts will be rendered dynamically via JS -->
+</div>
+
+<!-- Floating Drawing Toolbar (PPT Studio Tools) -->
+<div id="drawingToolbar" class="card shadow-lg border-0 bg-dark text-white p-2 d-none" style="position: fixed; z-index: 1050; border-radius: 12px; width: 340px;">
+    <div class="card-body p-2">
+        <div class="d-flex align-items-center justify-content-between border-bottom border-secondary pb-2 mb-2 drag-handle">
+            <span class="fs-4 fw-bold text-info"><i class="fas fa-paint-brush me-1"></i> Annotate</span>
+            <button class="btn btn-sm btn-link text-white-50 p-0" id="closeToolbarBtn"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label text-white-50 small mb-1">Add Material</label>
+            <div class="row g-1">
+                <div class="col-4">
+                    <button class="btn btn-xs btn-outline-light w-100 text-start py-2 px-2" id="toolAddText"><i class="fas fa-font me-1"></i> Text</button>
                 </div>
-            </div>
-            <div class="card-body">
-                <div class="text-muted small">Select a shape to drag, resize, rotate, or delete it. Saving happens automatically. Double click text to edit.</div>
+                <div class="col-4">
+                    <button class="btn btn-xs btn-outline-light w-100 text-start py-2 px-2" id="toolAddArrow"><i class="fas fa-long-arrow-alt-right me-1"></i> Arrow</button>
+                </div>
+                <div class="col-4">
+                    <button class="btn btn-xs btn-outline-light w-100 text-start py-2 px-2" id="toolAddRect"><i class="fas fa-square me-1"></i> Rect</button>
+                </div>
+                <div class="col-6 mt-1">
+                    <button class="btn btn-xs btn-outline-light w-100 text-start py-2 px-2" id="toolAddCircle"><i class="fas fa-circle me-1"></i> Circle</button>
+                </div>
+                <div class="col-6 mt-1">
+                    <button class="btn btn-xs btn-outline-light w-100 text-start py-2 px-2" id="toolAddCallout"><i class="fas fa-comment-alt me-1"></i> Callout</button>
+                </div>
             </div>
         </div>
 
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">General Performance Chart</h3>
+        <div class="mb-3">
+            <label class="form-label text-white-50 small mb-1">Palette & Styling</label>
+            <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                <span class="color-swatch bg-blue" data-color="#206bc4" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: inline-block; border: 2px solid white;"></span>
+                <span class="color-swatch bg-red" data-color="#d63939" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: inline-block; border: 2px solid transparent;"></span>
+                <span class="color-swatch bg-green" data-color="#2fb344" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: inline-block; border: 2px solid transparent;"></span>
+                <span class="color-swatch bg-yellow" data-color="#f59f00" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: inline-block; border: 2px solid transparent;"></span>
+                <span class="color-swatch bg-dark" data-color="#182433" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: inline-block; border: 2px solid transparent;"></span>
+                <span class="color-swatch bg-white" data-color="#ffffff" style="width: 24px; height: 24px; border-radius: 50%; cursor: pointer; display: inline-block; border: 2px solid transparent;"></span>
+                <input type="color" id="customColorInput" class="form-control form-control-color border-0 p-0 bg-transparent" style="width: 28px; height: 28px;" title="Custom Color">
             </div>
-            <div class="card-body">
-                <div id="chartContainer" style="position: relative; width: 100%; height: 500px;">
-                    <canvas id="generalChart" style="position: absolute; top: 0; left: 0; z-index: 1;"></canvas>
-                    <canvas id="fabricCanvas" style="position: absolute; top: 0; left: 0; z-index: 2; pointer-events: none;"></canvas>
+            
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="text-white-50 small mb-1">Opacity: <span id="opacityVal">90%</span></label>
+                    <input type="range" class="form-range" id="objectOpacityRange" min="10" max="100" value="90">
                 </div>
+                <div class="col-6">
+                    <label class="text-white-50 small mb-1">Font Size</label>
+                    <div class="input-group input-group-sm">
+                        <button class="btn btn-outline-light py-0 px-2" id="fontSizeDec">-</button>
+                        <input type="text" id="fontSizeDisplay" class="form-control form-control-sm text-center bg-transparent text-white border-light-subtle" value="16px" disabled style="width: 45px;">
+                        <button class="btn btn-outline-light py-0 px-2" id="fontSizeInc">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-top border-secondary pt-2">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-xs btn-outline-light" id="layerBackBtn" title="Send to Back"><i class="fas fa-layer-group"></i> Back</button>
+                    <button class="btn btn-xs btn-outline-light" id="layerFrontBtn" title="Bring to Front"><i class="fas fa-layer-group"></i> Front</button>
+                </div>
+                <button class="btn btn-sm btn-danger px-3 py-1" id="toolDeleteBtn">
+                    <i class="fas fa-trash-alt me-1"></i> Delete
+                </button>
             </div>
         </div>
     </div>
@@ -55,245 +188,548 @@
 
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <script>
     const FLOCK_ID = {{ flock.id }};
-    const CHART_IDENTIFIER = 'generalChart';
-
-    let chartInstance = null;
-    let canvas = null;
-    let annotationsMap = new Map(); // Map annotation DB ID -> fabric object
-    let objectToDbIdMap = new Map(); // Map fabric object -> DB ID
-
-    // UI Elements
-    const addTextBtn = document.getElementById('addTextBtn');
-    const addArrowBtn = document.getElementById('addArrowBtn');
-    const addRectBtn = document.getElementById('addRectBtn');
-    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
-
-    // Fetch CSRF Token
     const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-    // Chart.js init mock data since we need actual data
+    // Global state
+    let chartDataDaily = null;
+    let chartDataWeekly = null;
+    let currentMode = 'daily';
+    const chartsMap = new Map();     // chartId -> Chart instance
+    const canvasesMap = new Map();   // chartId -> Fabric Canvas instance
+    const objectToDbIdMap = new Map();
+    const dbIdToObjectMap = new Map();
+
+    let activeChartId = null;
+    let currentColor = '#206bc4';
+
+    // Chart Configuration Schema (matches original 6 charts)
+    const chartConfigs = [
+        {
+            id: 'depletion_f_egg',
+            title: 'Female Depletion & Egg Production %',
+            yLeftTitle: 'Egg Prod %',
+            yRightTitle: 'Depletion %',
+            datasets: [
+                { label: 'Egg Production %', key: 'egg_prod_pct', type: 'line', borderColor: '#206bc4', yAxisID: 'y' },
+                { label: 'Std Egg Prod %', key: 'std_egg_prod', type: 'line', borderColor: '#a8aeb7', borderDash: [5, 5], yAxisID: 'y' },
+                { label: 'Female Depletion %', key: 'mortality_f_pct', type: 'bar', backgroundColor: 'rgba(214, 57, 57, 0.15)', borderColor: '#d63939', yAxisID: 'y1' }
+            ]
+        },
+        {
+            id: 'depletion_m',
+            title: 'Male Depletion %',
+            yLeftTitle: 'Depletion %',
+            datasets: [
+                { label: 'Male Depletion %', key: 'mortality_m_pct', type: 'bar', backgroundColor: 'rgba(247, 103, 7, 0.15)', borderColor: '#f76707', yAxisID: 'y' }
+            ]
+        },
+        {
+            id: 'cull_hatch',
+            title: 'Culls & Hatch Eggs %',
+            yLeftTitle: 'Hatch Egg %',
+            yRightTitle: 'Culls %',
+            datasets: [
+                { label: 'Hatch Egg %', key: 'hatch_egg_pct', type: 'line', borderColor: '#4299e1', yAxisID: 'y' },
+                { label: 'Female Culls %', key: 'culls_f_pct', type: 'bar', backgroundColor: 'rgba(214, 57, 57, 0.15)', borderColor: '#d63939', yAxisID: 'y1' }
+            ]
+        },
+        {
+            id: 'water_feed',
+            title: 'Water & Feed Consumption',
+            yLeftTitle: 'Water (ml)',
+            yRightTitle: 'Feed (g)',
+            datasets: [
+                { label: 'Water per Bird (ml)', key: 'water_per_bird', type: 'line', borderColor: '#0054a6', yAxisID: 'y' },
+                { label: 'Feed Female (g)', key: 'feed_f', type: 'line', borderColor: '#2fb344', yAxisID: 'y1' },
+                { label: 'Feed Male (g)', key: 'feed_m', type: 'line', borderColor: '#f76707', yAxisID: 'y1' }
+            ]
+        },
+        {
+            id: 'bw_female',
+            title: 'Female Body Weight & Uniformity',
+            yLeftTitle: 'Body Weight (g)',
+            yRightTitle: 'Uniformity %',
+            datasets: [
+                { label: 'BW Female (g)', key: 'bw_f', type: 'line', borderColor: '#2fb344', yAxisID: 'y' },
+                { label: 'Uniformity Female %', key: 'uni_f', type: 'line', borderColor: '#f76707', yAxisID: 'y1' }
+            ]
+        },
+        {
+            id: 'bw_male',
+            title: 'Male Body Weight & Uniformity',
+            yLeftTitle: 'Body Weight (g)',
+            yRightTitle: 'Uniformity %',
+            datasets: [
+                { label: 'BW Male (g)', key: 'bw_m', type: 'line', borderColor: '#2fb344', yAxisID: 'y' },
+                { label: 'Uniformity Male %', key: 'uni_m', type: 'line', borderColor: '#f76707', yAxisID: 'y1' }
+            ]
+        }
+    ];
+
     document.addEventListener('DOMContentLoaded', () => {
-        initChartJs();
+        fetchAllChartData();
+        setupModeToggle();
+        setupDrawingToolbar();
     });
 
-    function initChartJs() {
-        // Fetch real chart data from the same endpoint used in dashboard
-        fetch(`/api/chart_data/${FLOCK_ID}?mode=daily`)
-            .then(response => response.json())
-            .then(data => {
-                const ctx = document.getElementById('generalChart').getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.dates,
-                        datasets: [
-                            {
-                                label: 'Egg Production %',
-                                data: data.metrics.egg_prod_pct,
-                                borderColor: 'blue',
-                                yAxisID: 'y',
-                            },
-                            {
-                                label: 'Mortality %',
-                                data: data.metrics.mortality_m,
-                                borderColor: 'red',
-                                type: 'bar',
-                                yAxisID: 'y1'
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: {
-                            onComplete: () => {
-                                // Once chart is rendered, initialize/sync FabricJS
-                                if (!canvas) {
-                                    initFabricJs();
-                                } else {
-                                    syncDataToPixels();
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                display: true
-                            },
-                            y: {
-                                type: 'linear',
-                                display: true,
-                                position: 'left',
-                            },
-                            y1: {
-                                type: 'linear',
-                                display: true,
-                                position: 'right',
-                            }
+    // ========================================
+    // DATA FETCHING
+    // ========================================
+    function fetchAllChartData() {
+        // Fetch both daily and weekly in parallel
+        Promise.all([
+            fetch(`/api/chart_data/${FLOCK_ID}?mode=daily`).then(r => r.json()),
+            fetch(`/api/chart_data/${FLOCK_ID}?mode=weekly`).then(r => r.json())
+        ]).then(([daily, weekly]) => {
+            chartDataDaily = daily;
+            chartDataWeekly = weekly;
+
+            // Set global date range
+            if (daily.dates.length > 0) {
+                document.getElementById('globalStartDate').value = daily.dates[0];
+                document.getElementById('globalEndDate').value = daily.dates[daily.dates.length - 1];
+            }
+
+            // Populate week selectors
+            if (weekly.weeks && weekly.weeks.length > 0) {
+                populateWeekSelectors(weekly.weeks);
+            }
+
+            renderChartBoard();
+        }).catch(err => console.error("Error fetching studio chart data", err));
+    }
+
+    function populateWeekSelectors(weeks) {
+        const startSel = document.getElementById('globalStartWeek');
+        const endSel = document.getElementById('globalEndWeek');
+        startSel.innerHTML = '';
+        endSel.innerHTML = '';
+
+        weeks.forEach((w, idx) => {
+            const optS = document.createElement('option');
+            optS.value = w;
+            optS.textContent = `Week ${w}`;
+            if (idx === 0) optS.selected = true;
+            startSel.appendChild(optS);
+
+            const optE = document.createElement('option');
+            optE.value = w;
+            optE.textContent = `Week ${w}`;
+            if (idx === weeks.length - 1) optE.selected = true;
+            endSel.appendChild(optE);
+        });
+
+        // Listen for week changes
+        startSel.addEventListener('change', () => renderChartBoard());
+        endSel.addEventListener('change', () => renderChartBoard());
+    }
+
+    // ========================================
+    // MODE TOGGLE (Daily/Weekly)
+    // ========================================
+    function setupModeToggle() {
+        document.getElementById('studioModeDaily').addEventListener('change', () => {
+            currentMode = 'daily';
+            document.getElementById('globalDatePickerContainer').classList.remove('d-none');
+            document.getElementById('globalWeekPickerContainer').classList.add('d-none');
+            renderChartBoard();
+        });
+        document.getElementById('studioModeWeekly').addEventListener('change', () => {
+            currentMode = 'weekly';
+            document.getElementById('globalDatePickerContainer').classList.add('d-none');
+            document.getElementById('globalWeekPickerContainer').classList.remove('d-none');
+            renderChartBoard();
+        });
+
+        // Date range change listeners
+        document.getElementById('globalStartDate').addEventListener('change', () => renderChartBoard());
+        document.getElementById('globalEndDate').addEventListener('change', () => renderChartBoard());
+    }
+
+    // ========================================
+    // CHART RENDERING
+    // ========================================
+    function renderChartBoard() {
+        const rawData = currentMode === 'daily' ? chartDataDaily : chartDataWeekly;
+        if (!rawData) return;
+
+        // Apply date/week filter
+        const filteredData = getFilteredData(rawData);
+
+        const container = document.getElementById('chartsWrapper');
+        container.innerHTML = '';
+
+        chartConfigs.forEach(cfg => {
+            const cardId = `card_${cfg.id}`;
+            const col = document.createElement('div');
+            col.className = 'card mb-4';
+            col.id = cardId;
+            col.innerHTML = `
+                <div class="card-header sticky-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                    <span class="fw-bold mb-2 mb-md-0">${cfg.title}</span>
+                    <div class="d-flex flex-wrap gap-2 align-items-center ms-auto">
+                        <!-- Data Labels Toggle -->
+                        <button class="btn btn-lg btn-secondary" onclick="toggleDataLabels('${cfg.id}', this)" title="Toggle Data Labels">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-eye" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
+                        </button>
+                        <!-- Draw/Annotate Toggle -->
+                        <button class="btn btn-lg btn-outline-primary" onclick="toggleAnnotateMode('${cfg.id}', this)" title="Draw / Annotate">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" /><path d="M13.5 6.5l4 4" /></svg>
+                        </button>
+                        <!-- Fullscreen Toggle -->
+                        <button class="btn btn-lg btn-outline-secondary" onclick="toggleFullScreenWrapper('${cardId}')" title="Fullscreen">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-maximize" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 8v-2a2 2 0 0 1 2 -2h2" /><path d="M4 16v2a2 2 0 0 0 2 2h2" /><path d="M16 4h2a2 2 0 0 1 2 2v2" /><path d="M16 20h2a2 2 0 0 0 2 -2v-2" /></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body" style="overflow-x: auto;">
+                    <div id="container_${cfg.id}" class="chart-container-inner fabric-inactive position-relative" style="height: 500px; max-height: 60vh; width: 100%; min-width: max(100%, 800px);">
+                        <canvas id="chart_${cfg.id}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;"></canvas>
+                        <canvas id="fabric_${cfg.id}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;"></canvas>
+                    </div>
+                </div>
+            `;
+            container.appendChild(col);
+
+            initSingleChart(cfg, filteredData);
+        });
+
+        // Theme change listener
+        window.addEventListener('themeChanged', () => {
+            chartsMap.forEach(chart => adjustChartTheme(chart));
+        });
+    }
+
+    function getFilteredData(rawData) {
+        if (currentMode === 'daily') {
+            const start = document.getElementById('globalStartDate').value;
+            const end = document.getElementById('globalEndDate').value;
+            if (!start || !end) return rawData;
+
+            const filteredDates = [];
+            const indexMap = [];
+            rawData.dates.forEach((d, idx) => {
+                if (d >= start && d <= end) {
+                    filteredDates.push(d);
+                    indexMap.push(idx);
+                }
+            });
+
+            const filteredMetrics = {};
+            Object.keys(rawData.metrics).forEach(key => {
+                filteredMetrics[key] = indexMap.map(idx => rawData.metrics[key][idx]);
+            });
+
+            return { ...rawData, dates: filteredDates, metrics: filteredMetrics, _indexMap: indexMap };
+        } else {
+            // Weekly filter by week selector
+            const startWeek = parseInt(document.getElementById('globalStartWeek').value);
+            const endWeek = parseInt(document.getElementById('globalEndWeek').value);
+            if (isNaN(startWeek) || isNaN(endWeek)) return rawData;
+
+            const filteredDates = [];
+            const indexMap = [];
+            (rawData.weeks || []).forEach((w, idx) => {
+                if (w >= startWeek && w <= endWeek) {
+                    filteredDates.push(rawData.dates[idx]);
+                    indexMap.push(idx);
+                }
+            });
+
+            const filteredMetrics = {};
+            Object.keys(rawData.metrics).forEach(key => {
+                filteredMetrics[key] = indexMap.map(idx => rawData.metrics[key][idx]);
+            });
+
+            const filteredWeeks = indexMap.map(idx => rawData.weeks[idx]);
+            return { ...rawData, dates: filteredDates, weeks: filteredWeeks, metrics: filteredMetrics, _indexMap: indexMap };
+        }
+    }
+
+    function initSingleChart(cfg, data) {
+        // Destroy existing chart if re-rendering
+        if (chartsMap.has(cfg.id)) {
+            chartsMap.get(cfg.id).destroy();
+        }
+        // Destroy existing fabric canvas if re-rendering
+        if (canvasesMap.has(cfg.id)) {
+            canvasesMap.get(cfg.id).dispose();
+            canvasesMap.delete(cfg.id);
+        }
+
+        const ctx = document.getElementById(`chart_${cfg.id}`).getContext('2d');
+        const defaultDates = data.dates || [];
+
+        const datasetsPayload = cfg.datasets.map(ds => {
+            const seriesData = (data.metrics || {})[ds.key] || [];
+            return {
+                label: ds.label,
+                data: [...seriesData],
+                type: ds.type,
+                borderColor: ds.borderColor,
+                backgroundColor: ds.backgroundColor || ds.borderColor,
+                borderDash: ds.borderDash || [],
+                yAxisID: ds.yAxisID || 'y',
+                borderWidth: ds.type === 'line' ? 2.5 : 1,
+                pointRadius: ds.type === 'line' ? 2 : 0,
+                tension: 0.2
+            };
+        });
+
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)';
+        const textColor = isDark ? '#f6f8fb' : '#182433';
+
+        const chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [...defaultDates],
+                datasets: datasetsPayload
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                spanGaps: true,
+                interaction: { mode: 'index', intersect: true },
+                hover: { mode: null },
+                animation: {
+                    onComplete: () => {
+                        const fCanvas = canvasesMap.get(cfg.id);
+                        if (!fCanvas) {
+                            initSingleFabric(cfg.id);
+                        } else {
+                            syncCanvasObjects(cfg.id);
                         }
                     }
-                });
-            })
-            .catch(error => console.error("Error fetching chart data:", error));
-    }
-
-    function initFabricJs() {
-        const chartCanvas = document.getElementById('generalChart');
-        const fabricCanvasEl = document.getElementById('fabricCanvas');
-
-        // Match fabric canvas size to chart canvas
-        fabricCanvasEl.width = chartCanvas.width;
-        fabricCanvasEl.height = chartCanvas.height;
-
-        canvas = new fabric.Canvas('fabricCanvas');
-        // Let fabric handle pointer events when objects are present
-        fabricCanvasEl.style.pointerEvents = 'auto';
-
-        // Load existing annotations from server
-        loadAnnotations();
-
-        // Handle window resize to re-sync coordinates
-        window.addEventListener('resize', () => {
-            if (chartInstance && canvas) {
-                setTimeout(() => {
-                    canvas.setWidth(chartCanvas.width);
-                    canvas.setHeight(chartCanvas.height);
-                    syncDataToPixels();
-                }, 300); // Wait for chart resize
+                },
+                scales: {
+                    x: {
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { size: 11 } }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: { color: gridColor },
+                        ticks: { color: textColor },
+                        title: { display: !!cfg.yLeftTitle, text: cfg.yLeftTitle || '', color: textColor }
+                    },
+                    ...(cfg.yRightTitle ? {
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            ticks: { color: textColor },
+                            title: { display: true, text: cfg.yRightTitle, color: textColor }
+                        }
+                    } : {})
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: textColor, boxWidth: 15, font: { weight: 'bold' } }
+                    },
+                    datalabels: {
+                        _showLabels: true,
+                        display: function(context) {
+                            return context.chart.options.plugins.datalabels._showLabels ? 'auto' : false;
+                        },
+                        color: function() {
+                            return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#f6f8fb' : '#182433';
+                        },
+                        anchor: 'end',
+                        align: 'top',
+                        font: { size: 10 },
+                        formatter: function(val) {
+                            if (val === null || val === undefined) return '';
+                            return val;
+                        }
+                    }
+                }
             }
         });
 
-        setupToolbar();
-        setupCanvasEvents();
+        // 1.1x Y-axis max buffer for depletion/culls charts
+        adjustYScaleBuffer(cfg.id, chartInstance);
+        chartInstance.update();
+
+        chartsMap.set(cfg.id, chartInstance);
     }
 
-    function loadAnnotations() {
-        fetch(`/api/presentation_studio/${FLOCK_ID}/${CHART_IDENTIFIER}`)
-            .then(response => response.json())
-            .then(annotations => {
-                annotations.forEach(ann => {
-                    fabric.util.enlivenObjects([JSON.parse(ann.fabric_json)], function(objects) {
-                        const obj = objects[0];
-                        obj.set({
-                            hasControls: true,
-                            hasBorders: true
-                        });
-
-                        // Store the DB anchor data on the object itself for reference
-                        obj.anchor_data_x = ann.anchor_data_x;
-                        obj.anchor_data_y = ann.anchor_data_y;
-
-                        annotationsMap.set(ann.id, obj);
-                        objectToDbIdMap.set(obj, ann.id);
-
-                        canvas.add(obj);
-                        syncObjectPosition(obj);
-                    });
-                });
-                canvas.renderAll();
-            })
-            .catch(error => console.error("Error loading annotations:", error));
-    }
-
-    function syncDataToPixels() {
-        if (!chartInstance || !canvas) return;
-
-        // Iterate over all fabric objects and update their position based on their anchor data
-        canvas.getObjects().forEach(obj => {
-            syncObjectPosition(obj);
-        });
-        canvas.renderAll();
-    }
-
-    function syncObjectPosition(obj) {
-        if (!obj.anchor_data_x || obj.anchor_data_y === undefined) return;
-
-        const xScale = chartInstance.scales.x;
-        const yScale = chartInstance.scales.y; // Use main Y axis for syncing height
-
-        const pxX = xScale.getPixelForValue(obj.anchor_data_x);
-        const pxY = yScale.getPixelForValue(obj.anchor_data_y);
-
-        if (pxX !== undefined && pxY !== undefined) {
-            obj.set({
-                left: pxX,
-                top: pxY
-            });
-            obj.setCoords();
-        }
-    }
-
-    function saveOrUpdateObject(obj) {
+    // ========================================
+    // DATA LABELS TOGGLE (Matching flock_detail)
+    // ========================================
+    function toggleDataLabels(chartId, btnElement) {
+        const chartInstance = chartsMap.get(chartId);
         if (!chartInstance) return;
 
-        const xScale = chartInstance.scales.x;
-        const yScale = chartInstance.scales.y;
+        let currentDisplay = chartInstance.options.plugins.datalabels._showLabels;
+        if (currentDisplay === undefined) currentDisplay = true;
+        const newDisplay = !currentDisplay;
+        chartInstance.options.plugins.datalabels._showLabels = newDisplay;
 
-        // Get the value corresponding to the current pixel center
-        const dataX = xScale.getValueForPixel(obj.left);
-        const dataY = yScale.getValueForPixel(obj.top);
-
-        // Update anchor info on the object
-        obj.anchor_data_x = dataX;
-        obj.anchor_data_y = dataY;
-
-        const payload = {
-            flock_id: FLOCK_ID,
-            chart_identifier: CHART_IDENTIFIER,
-            anchor_data_x: dataX,
-            anchor_data_y: dataY,
-            fabric_json: JSON.stringify(obj.toJSON())
-        };
-
-        const dbId = objectToDbIdMap.get(obj);
-
-        if (dbId) {
-            // Update
-            fetch(`/api/presentation_studio/update/${dbId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify(payload)
-            }).catch(e => console.error("Update failed", e));
+        if (newDisplay) {
+            btnElement.classList.remove('btn-outline-secondary');
+            btnElement.classList.add('btn-secondary');
         } else {
-            // Create
-            fetch('/api/presentation_studio/create', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(res => {
-                if (res.id) {
-                    objectToDbIdMap.set(obj, res.id);
-                    annotationsMap.set(res.id, obj);
-                }
-            })
-            .catch(e => console.error("Create failed", e));
+            btnElement.classList.remove('btn-secondary');
+            btnElement.classList.add('btn-outline-secondary');
+        }
+
+        chartInstance.update();
+    }
+
+    // ========================================
+    // FULLSCREEN (Matching flock_detail)
+    // ========================================
+    function toggleFullScreenWrapper(targetCardId) {
+        const wrapper = document.getElementById('chartsWrapper');
+        if (!document.fullscreenElement) {
+            wrapper.requestFullscreen().then(() => {
+                const target = document.getElementById(targetCardId);
+                if (target) target.scrollIntoView({behavior: "smooth", inline: "start"});
+            }).catch(err => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            document.exitFullscreen();
         }
     }
 
-    function setupCanvasEvents() {
-        canvas.on('object:modified', function(e) {
-            if (e.target) {
-                saveOrUpdateObject(e.target);
+    // ========================================
+    // ANNOTATE MODE TOGGLE
+    // ========================================
+    function toggleAnnotateMode(chartId, btnElement) {
+        const containerEl = document.getElementById(`container_${chartId}`);
+        const toolbarEl = document.getElementById('drawingToolbar');
+        const isActive = containerEl.classList.contains('fabric-active');
+
+        if (isActive) {
+            // Deactivate
+            containerEl.classList.remove('fabric-active');
+            containerEl.classList.add('fabric-inactive');
+            btnElement.classList.remove('btn-primary');
+            btnElement.classList.add('btn-outline-primary');
+
+            if (activeChartId === chartId) {
+                toolbarEl.classList.add('d-none');
+                activeChartId = null;
+            }
+        } else {
+            // Deactivate any other active chart first
+            chartConfigs.forEach(cfg => {
+                const otherContainer = document.getElementById(`container_${cfg.id}`);
+                if (otherContainer) {
+                    otherContainer.classList.remove('fabric-active');
+                    otherContainer.classList.add('fabric-inactive');
+                }
+            });
+            document.querySelectorAll('[onclick^="toggleAnnotateMode"]').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+            });
+
+            // Activate this chart
+            containerEl.classList.remove('fabric-inactive');
+            containerEl.classList.add('fabric-active');
+            btnElement.classList.remove('btn-outline-primary');
+            btnElement.classList.add('btn-primary');
+
+            activeChartId = chartId;
+            positionToolbar(chartId);
+            toolbarEl.classList.remove('d-none');
+        }
+    }
+
+    function positionToolbar(chartId) {
+        const cardContainer = document.getElementById(`container_${chartId}`);
+        const rect = cardContainer.getBoundingClientRect();
+        const toolbarEl = document.getElementById('drawingToolbar');
+        toolbarEl.style.top = `${rect.top + window.scrollY + 15}px`;
+        toolbarEl.style.left = `${rect.right + window.scrollX - 355}px`;
+    }
+
+    // ========================================
+    // Y-AXIS BUFFER (AGENTS.md Rule: 1.1x max)
+    // ========================================
+    function adjustYScaleBuffer(chartId, chart) {
+        const isDepletionOrCull = ['depletion_f_egg', 'depletion_m', 'cull_hatch'].includes(chartId);
+        if (!isDepletionOrCull) return;
+
+        chart.data.datasets.forEach(dataset => {
+            if (dataset.label.includes('Depletion') || dataset.label.includes('Culls')) {
+                const values = dataset.data.filter(val => val !== null && val !== undefined);
+                if (values.length > 0) {
+                    const maxVal = Math.max(...values);
+                    const bufferMax = maxVal > 0 ? maxVal * 1.1 : 10;
+                    const axisID = dataset.yAxisID || 'y';
+                    if (chart.options.scales[axisID]) {
+                        chart.options.scales[axisID].max = parseFloat(bufferMax.toFixed(2));
+                    }
+                }
             }
         });
+    }
 
-        canvas.on('selection:created', toggleDeleteBtn);
-        canvas.on('selection:updated', toggleDeleteBtn);
-        canvas.on('selection:cleared', toggleDeleteBtn);
+    // ========================================
+    // THEME ADAPTATION (AGENTS.md Rule)
+    // ========================================
+    function adjustChartTheme(chart) {
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+        const colorGrid = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+        const colorText = isDark ? '#f6f8fb' : '#182433';
 
-        // Double click to edit text
-        canvas.on('mouse:dblclick', function(e) {
+        chart.options.scales.x.grid.color = colorGrid;
+        chart.options.scales.x.ticks.color = colorText;
+        
+        if (chart.options.scales.y) {
+            chart.options.scales.y.grid.color = colorGrid;
+            chart.options.scales.y.ticks.color = colorText;
+        }
+        if (chart.options.scales.y1) {
+            chart.options.scales.y1.grid.color = colorGrid;
+            chart.options.scales.y1.ticks.color = colorText;
+        }
+        chart.update();
+    }
+
+    // ========================================
+    // FABRIC.JS ANNOTATION SYSTEM
+    // ========================================
+    function initSingleFabric(chartId) {
+        const chartEl = document.getElementById(`chart_${chartId}`);
+        const fabricEl = document.getElementById(`fabric_${chartId}`);
+
+        fabricEl.width = chartEl.width;
+        fabricEl.height = chartEl.height;
+
+        const fCanvas = new fabric.Canvas(`fabric_${chartId}`);
+        canvasesMap.set(chartId, fCanvas);
+
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                fCanvas.setWidth(chartEl.width);
+                fCanvas.setHeight(chartEl.height);
+                syncCanvasObjects(chartId);
+            }, 300);
+        });
+
+        loadCanvasAnnotations(chartId, fCanvas);
+
+        fCanvas.on('object:modified', (e) => {
+            if (e.target) saveOrUpdateAnnotation(chartId, e.target);
+        });
+
+        fCanvas.on('selection:created', () => syncToolbarObjectSelection(fCanvas));
+        fCanvas.on('selection:updated', () => syncToolbarObjectSelection(fCanvas));
+        fCanvas.on('selection:cleared', () => syncToolbarObjectSelection(fCanvas));
+
+        fCanvas.on('mouse:dblclick', (e) => {
             if (e.target && e.target.type === 'i-text') {
                 e.target.enterEditing();
                 e.target.selectAll();
@@ -301,91 +737,431 @@
         });
     }
 
-    function toggleDeleteBtn() {
-        const activeObj = canvas.getActiveObject();
-        if (activeObj) {
-            deleteSelectedBtn.classList.remove('d-none');
+    function loadCanvasAnnotations(chartId, fCanvas) {
+        fetch(`/api/presentation_studio/${FLOCK_ID}/${chartId}`)
+            .then(res => res.json())
+            .then(annotations => {
+                annotations.forEach(ann => {
+                    fabric.util.enlivenObjects([JSON.parse(ann.fabric_json)], (objects) => {
+                        const obj = objects[0];
+                        obj.set({ hasControls: true, hasBorders: true, originX: 'center', originY: 'center' });
+                        obj.anchor_data_x = ann.anchor_data_x;
+                        obj.anchor_data_y = ann.anchor_data_y;
+                        objectToDbIdMap.set(obj, ann.id);
+                        dbIdToObjectMap.set(ann.id, obj);
+                        fCanvas.add(obj);
+                        syncObjectPosition(chartId, obj);
+                    });
+                });
+                fCanvas.renderAll();
+            })
+            .catch(err => console.error("Error loading annotations for chart", chartId, err));
+    }
+
+    function syncCanvasObjects(chartId) {
+        const fCanvas = canvasesMap.get(chartId);
+        if (!fCanvas) return;
+        fCanvas.getObjects().forEach(obj => syncObjectPosition(chartId, obj));
+        fCanvas.renderAll();
+    }
+
+    function syncObjectPosition(chartId, obj) {
+        if (!obj.anchor_data_x || obj.anchor_data_y === undefined) return;
+        const chart = chartsMap.get(chartId);
+        if (!chart) return;
+
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+
+        const isDateVisible = chart.data.labels.includes(obj.anchor_data_x);
+        if (!isDateVisible) {
+            obj.set({ visible: false });
+            obj.setCoords();
+            return;
+        }
+
+        const pxX = xScale.getPixelForValue(obj.anchor_data_x);
+        const pxY = yScale.getPixelForValue(obj.anchor_data_y);
+
+        const isInsideX = pxX >= chart.chartArea.left && pxX <= chart.chartArea.right;
+        const isInsideY = pxY >= chart.chartArea.top && pxY <= chart.chartArea.bottom;
+
+        if (isInsideX && isInsideY) {
+            obj.set({ left: pxX, top: pxY, visible: true });
+            obj.setCoords();
         } else {
-            deleteSelectedBtn.classList.add('d-none');
+            obj.set({ visible: false });
+            obj.setCoords();
         }
     }
 
-    function setupToolbar() {
-        addTextBtn.addEventListener('click', () => {
-            const text = new fabric.IText('New Text', {
-                left: chartInstance.chartArea ? chartInstance.chartArea.left + 50 : 100,
-                top: chartInstance.chartArea ? chartInstance.chartArea.top + 50 : 100,
-                fontFamily: 'Arial',
-                fill: '#000',
-                fontSize: 20
-            });
-            canvas.add(text);
-            canvas.setActiveObject(text);
-            saveOrUpdateObject(text);
+    function saveOrUpdateAnnotation(chartId, obj) {
+        const chart = chartsMap.get(chartId);
+        if (!chart) return;
+
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+
+        const decimalIndex = xScale.getValueForPixel(obj.left);
+        const roundedIndex = Math.min(Math.max(Math.round(decimalIndex), 0), chart.data.labels.length - 1);
+        const dateStr = chart.data.labels[roundedIndex];
+        const valY = yScale.getValueForPixel(obj.top);
+
+        obj.anchor_data_x = dateStr;
+        obj.anchor_data_y = valY;
+
+        const payload = {
+            flock_id: FLOCK_ID,
+            chart_identifier: chartId,
+            anchor_data_x: dateStr,
+            anchor_data_y: valY,
+            fabric_json: JSON.stringify(obj.toJSON())
+        };
+
+        const dbId = objectToDbIdMap.get(obj);
+        if (dbId) {
+            fetch(`/api/presentation_studio/update/${dbId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            }).catch(e => console.error("Update annotation failed", e));
+        } else {
+            fetch('/api/presentation_studio/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.id) {
+                    objectToDbIdMap.set(obj, res.id);
+                    dbIdToObjectMap.set(res.id, obj);
+                }
+            })
+            .catch(e => console.error("Create annotation failed", e));
+        }
+    }
+
+    function syncToolbarObjectSelection(fCanvas) {
+        const obj = fCanvas.getActiveObject();
+        if (!obj) return;
+        if (obj.fill && typeof obj.fill === 'string') {
+            document.getElementById('customColorInput').value = obj.fill;
+        }
+        if (obj.opacity !== undefined) {
+            document.getElementById('objectOpacityRange').value = Math.round(obj.opacity * 100);
+            document.getElementById('opacityVal').textContent = `${Math.round(obj.opacity * 100)}%`;
+        }
+        if (obj.fontSize) {
+            document.getElementById('fontSizeDisplay').value = `${obj.fontSize}px`;
+        }
+    }
+
+    // ========================================
+    // DRAWING TOOLBAR SETUP
+    // ========================================
+    function setupDrawingToolbar() {
+        document.getElementById('closeToolbarBtn').addEventListener('click', () => {
+            if (activeChartId) {
+                const btn = document.querySelector(`[onclick="toggleAnnotateMode('${activeChartId}', this)"]`);
+                if (btn) toggleAnnotateMode(activeChartId, btn);
+            }
+            document.getElementById('drawingToolbar').classList.add('d-none');
+            activeChartId = null;
         });
 
-        addArrowBtn.addEventListener('click', () => {
-            // Create a simple arrow using a line and a triangle
-            const line = new fabric.Line([0, 0, 100, 0], {
-                stroke: 'red',
-                strokeWidth: 3
+        // Add Text
+        document.getElementById('toolAddText').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            const chart = chartsMap.get(activeChartId);
+            if (!fCanvas || !chart) return;
+
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const textObj = new fabric.IText('Double Click to Edit', {
+                left: chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2,
+                top: chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2,
+                fontFamily: 'Outfit, Inter, sans-serif',
+                fontSize: 16,
+                fill: isDark ? '#ffffff' : '#000000',
+                backgroundColor: isDark ? 'rgba(24, 36, 51, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                borderColor: currentColor,
+                editingBorderColor: currentColor,
+                padding: 6, rx: 6, ry: 6,
+                originX: 'center', originY: 'center',
+                hasControls: true, hasBorders: true
+            });
+
+            fCanvas.add(textObj);
+            fCanvas.setActiveObject(textObj);
+            saveOrUpdateAnnotation(activeChartId, textObj);
+            fCanvas.renderAll();
+        });
+
+        // Add Arrow
+        document.getElementById('toolAddArrow').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            const chart = chartsMap.get(activeChartId);
+            if (!fCanvas || !chart) return;
+
+            const line = new fabric.Line([-40, 0, 40, 0], {
+                stroke: currentColor, strokeWidth: 3, originX: 'center', originY: 'center'
             });
             const triangle = new fabric.Triangle({
-                width: 15,
-                height: 15,
-                fill: 'red',
-                left: 100,
-                top: 0,
-                originX: 'center',
-                originY: 'center',
-                angle: 90
+                width: 14, height: 14, fill: currentColor,
+                left: 40, top: 0, originX: 'center', originY: 'center', angle: 90
             });
 
-            const group = new fabric.Group([line, triangle], {
-                left: chartInstance.chartArea ? chartInstance.chartArea.left + 50 : 100,
-                top: chartInstance.chartArea ? chartInstance.chartArea.top + 50 : 100,
+            const arrowGroup = new fabric.Group([line, triangle], {
+                left: chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2,
+                top: chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2,
+                originX: 'center', originY: 'center',
+                hasControls: true, hasBorders: true
             });
 
-            canvas.add(group);
-            canvas.setActiveObject(group);
-            saveOrUpdateObject(group);
+            fCanvas.add(arrowGroup);
+            fCanvas.setActiveObject(arrowGroup);
+            saveOrUpdateAnnotation(activeChartId, arrowGroup);
+            fCanvas.renderAll();
         });
 
-        addRectBtn.addEventListener('click', () => {
+        // Add Rect
+        document.getElementById('toolAddRect').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            const chart = chartsMap.get(activeChartId);
+            if (!fCanvas || !chart) return;
+
             const rect = new fabric.Rect({
-                left: chartInstance.chartArea ? chartInstance.chartArea.left + 50 : 100,
-                top: chartInstance.chartArea ? chartInstance.chartArea.top + 50 : 100,
-                fill: 'rgba(0,0,255,0.3)',
-                width: 100,
-                height: 50,
-                stroke: 'blue',
-                strokeWidth: 2
+                width: 110, height: 60,
+                fill: hexToRgbA(currentColor, 0.25), stroke: currentColor, strokeWidth: 2,
+                rx: 5, ry: 5,
+                left: chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2,
+                top: chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2,
+                originX: 'center', originY: 'center',
+                hasControls: true, hasBorders: true
             });
-            canvas.add(rect);
-            canvas.setActiveObject(rect);
-            saveOrUpdateObject(rect);
+
+            fCanvas.add(rect);
+            fCanvas.setActiveObject(rect);
+            saveOrUpdateAnnotation(activeChartId, rect);
+            fCanvas.renderAll();
         });
 
-        deleteSelectedBtn.addEventListener('click', () => {
-            const activeObj = canvas.getActiveObject();
+        // Add Circle
+        document.getElementById('toolAddCircle').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            const chart = chartsMap.get(activeChartId);
+            if (!fCanvas || !chart) return;
+
+            const circle = new fabric.Circle({
+                radius: 40,
+                fill: hexToRgbA(currentColor, 0.25), stroke: currentColor, strokeWidth: 2,
+                left: chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2,
+                top: chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2,
+                originX: 'center', originY: 'center',
+                hasControls: true, hasBorders: true
+            });
+
+            fCanvas.add(circle);
+            fCanvas.setActiveObject(circle);
+            saveOrUpdateAnnotation(activeChartId, circle);
+            fCanvas.renderAll();
+        });
+
+        // Add Callout
+        document.getElementById('toolAddCallout').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            const chart = chartsMap.get(activeChartId);
+            if (!fCanvas || !chart) return;
+
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+            const bubbleBody = new fabric.Rect({
+                width: 130, height: 55,
+                fill: isDark ? '#1b2a3a' : '#f1f5f9',
+                stroke: currentColor, strokeWidth: 2, rx: 8, ry: 8,
+                originX: 'center', originY: 'center'
+            });
+            const pointer = new fabric.Triangle({
+                width: 15, height: 15,
+                fill: isDark ? '#1b2a3a' : '#f1f5f9',
+                stroke: currentColor, strokeWidth: 2,
+                left: 0, top: 27, angle: 180,
+                originX: 'center', originY: 'center'
+            });
+            const labelText = new fabric.IText('Notice!', {
+                fontSize: 13, fontFamily: 'Outfit, Inter, sans-serif',
+                fill: isDark ? '#ffffff' : '#000000',
+                originX: 'center', originY: 'center'
+            });
+
+            const calloutGroup = new fabric.Group([bubbleBody, pointer, labelText], {
+                left: chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2,
+                top: chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2,
+                originX: 'center', originY: 'center',
+                hasControls: true, hasBorders: true
+            });
+
+            fCanvas.add(calloutGroup);
+            fCanvas.setActiveObject(calloutGroup);
+            saveOrUpdateAnnotation(activeChartId, calloutGroup);
+            fCanvas.renderAll();
+        });
+
+        // Color swatches
+        document.querySelectorAll('.color-swatch').forEach(swatch => {
+            swatch.addEventListener('click', (e) => {
+                document.querySelectorAll('.color-swatch').forEach(s => s.style.borderColor = 'transparent');
+                e.target.style.borderColor = '#fff';
+                currentColor = e.target.getAttribute('data-color');
+                applyStyleToActiveObject('color', currentColor);
+            });
+        });
+
+        document.getElementById('customColorInput').addEventListener('input', (e) => {
+            currentColor = e.target.value;
+            applyStyleToActiveObject('color', currentColor);
+        });
+
+        // Opacity slider
+        document.getElementById('objectOpacityRange').addEventListener('input', (e) => {
+            const val = e.target.value;
+            document.getElementById('opacityVal').textContent = `${val}%`;
+            applyStyleToActiveObject('opacity', parseFloat(val) / 100);
+        });
+
+        // Font size
+        document.getElementById('fontSizeInc').addEventListener('click', () => adjustActiveFont(2));
+        document.getElementById('fontSizeDec').addEventListener('click', () => adjustActiveFont(-2));
+
+        // Layer controls
+        document.getElementById('layerFrontBtn').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            if (!fCanvas) return;
+            const obj = fCanvas.getActiveObject();
+            if (obj) {
+                fCanvas.bringToFront(obj);
+                fCanvas.renderAll();
+                saveOrUpdateAnnotation(activeChartId, obj);
+            }
+        });
+
+        document.getElementById('layerBackBtn').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            if (!fCanvas) return;
+            const obj = fCanvas.getActiveObject();
+            if (obj) {
+                fCanvas.sendToBack(obj);
+                fCanvas.renderAll();
+                saveOrUpdateAnnotation(activeChartId, obj);
+            }
+        });
+
+        // Delete
+        document.getElementById('toolDeleteBtn').addEventListener('click', () => {
+            const fCanvas = canvasesMap.get(activeChartId);
+            if (!fCanvas) return;
+            const activeObj = fCanvas.getActiveObject();
             if (activeObj) {
                 const dbId = objectToDbIdMap.get(activeObj);
                 if (dbId) {
                     fetch(`/api/presentation_studio/delete/${dbId}`, {
                         method: 'DELETE',
-                        headers: {
-                            'X-CSRFToken': csrfToken
-                        }
+                        headers: { 'X-CSRFToken': csrfToken }
                     }).then(() => {
                         objectToDbIdMap.delete(activeObj);
-                        annotationsMap.delete(dbId);
-                        canvas.remove(activeObj);
-                    }).catch(e => console.error("Delete failed", e));
+                        dbIdToObjectMap.delete(dbId);
+                        fCanvas.remove(activeObj);
+                        fCanvas.renderAll();
+                    }).catch(e => console.error("Failed to delete annotation record", e));
                 } else {
-                    canvas.remove(activeObj);
+                    fCanvas.remove(activeObj);
+                    fCanvas.renderAll();
                 }
             }
         });
+
+        // Make toolbar draggable
+        makeDraggable(document.getElementById('drawingToolbar'), document.querySelector('.drag-handle'));
+    }
+
+    function applyStyleToActiveObject(prop, value) {
+        const fCanvas = canvasesMap.get(activeChartId);
+        if (!fCanvas) return;
+        const obj = fCanvas.getActiveObject();
+        if (!obj) return;
+
+        if (prop === 'color') {
+            if (obj.type === 'i-text') {
+                obj.set({ fill: value });
+            } else if (obj.type === 'group') {
+                obj.forEachObject(child => {
+                    if (child.type === 'line' || child.type === 'path') {
+                        child.set({ stroke: value });
+                    } else if (child.type === 'triangle' || child.type === 'rect') {
+                        child.set({ fill: value });
+                    }
+                });
+            } else {
+                if (obj.fill && obj.fill.includes('rgba')) {
+                    obj.set({ fill: hexToRgbA(value, obj.opacity), stroke: value });
+                } else {
+                    obj.set({ stroke: value });
+                }
+            }
+        } else if (prop === 'opacity') {
+            obj.set({ opacity: value });
+        }
+
+        fCanvas.renderAll();
+        saveOrUpdateAnnotation(activeChartId, obj);
+    }
+
+    function adjustActiveFont(delta) {
+        const fCanvas = canvasesMap.get(activeChartId);
+        if (!fCanvas) return;
+        const obj = fCanvas.getActiveObject();
+        if (!obj || obj.type !== 'i-text') return;
+
+        const currentSize = obj.fontSize || 16;
+        const newSize = Math.max(10, Math.min(80, currentSize + delta));
+        obj.set({ fontSize: newSize });
+        document.getElementById('fontSizeDisplay').value = `${newSize}px`;
+        fCanvas.renderAll();
+        saveOrUpdateAnnotation(activeChartId, obj);
+    }
+
+    // ========================================
+    // HELPERS
+    // ========================================
+    function hexToRgbA(hex, opacity) {
+        let c;
+        if(/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)){
+            c = hex.substring(1).split('');
+            if(c.length == 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+            c = '0x' + c.join('');
+            return 'rgba('+[(c>>16)&255, (c>>8)&255, c&255].join(',')+','+opacity+')';
+        }
+        return 'rgba(32,107,196,'+opacity+')';
+    }
+
+    function makeDraggable(el, handle) {
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        handle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - el.getBoundingClientRect().left;
+            offsetY = e.clientY - el.getBoundingClientRect().top;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            el.style.left = `${e.clientX - offsetX}px`;
+            el.style.top = `${e.clientY - offsetY}px`;
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
     }
 </script>
 {% endblock %}

@@ -539,6 +539,8 @@ def aggregate_weekly_metrics(daily_stats):
                 'count': 0,
                 'stock_male_start': d['stock_male_start'], # Take start of week
                 'stock_female_start': d['stock_female_start'],
+                'date_start': d['date'],
+                'date_end': d['date'],
 
                 # Sums
                 'mortality_male': 0, 'mortality_female': 0,
@@ -572,6 +574,13 @@ def aggregate_weekly_metrics(daily_stats):
         if d.get('has_cull_eggs'):
             ws['has_cull_eggs'] = True
         ws['count'] += 1
+        
+        # Track start/end date for weekly aggregation
+        if d['date'] < ws['date_start']:
+            ws['date_start'] = d['date']
+        if d['date'] > ws['date_end']:
+            ws['date_end'] = d['date']
+
         ws['mortality_male'] += d['mortality_male']
         ws['mortality_female'] += d['mortality_female']
         ws['culls_male'] += d['culls_male']

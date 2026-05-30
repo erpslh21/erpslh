@@ -369,6 +369,14 @@
                 </div>
               </div>
             </div>
+            <div class="row mb-3">
+              <div class="col-12">
+                  <div class="form-check form-switch form-switch-lg mt-2">
+                      <input class="form-check-input" type="checkbox" role="switch" id="no_feed_given" name="no_feed_given">
+                      <label class="form-check-label fw-bold text-danger" for="no_feed_given">No Feed Given Today (Fasting Day)</label>
+                  </div>
+              </div>
+            </div>
             <div class="row">
               <div class="col-12 col-md-6 mb-2">
                 <div class="form-floating">
@@ -464,6 +472,9 @@
                 <div class="col-12 col-md-6 mb-3">
                   <label class="form-label fw-bold">Eggs Collected</label>
                   <input type="number" class="form-control form-control-lg" name="eggs_collected" id="eggs_collected" value="{{ log.eggs_collected if log else 0 }}">
+                  <div class="mt-1 small px-1 d-flex justify-content-between align-items-center">
+                      <span class="text-muted">Egg Production: <span id="live-egg-prod-pct" class="fw-bold text-primary">0.00%</span></span>
+                  </div>
                 </div>
                 <div class="col-12 col-md-6 mb-3">
                   <label class="form-label fw-bold">Egg Weight (g - avg)</label>
@@ -471,12 +482,105 @@
                 </div>
             </div>
             
-            <label class="form-label fw-bold mb-2">Cull Eggs Classification</label>
-            <div class="row mb-2">
-              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_jumbo" placeholder="Jumbo" value="{{ log.cull_eggs_jumbo if log else '' }}"><div class="text-muted small text-center mt-1">Jumbo</div></div>
-              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_small" placeholder="Small" value="{{ log.cull_eggs_small if log else '' }}"><div class="text-muted small text-center mt-1">Small</div></div>
-              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_abnormal" placeholder="Abnormal" value="{{ log.cull_eggs_abnormal if log else '' }}"><div class="text-muted small text-center mt-1">Abnormal</div></div>
-              <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_crack" placeholder="Crack" value="{{ log.cull_eggs_crack if log else '' }}"><div class="text-muted small text-center mt-1">Crack</div></div>
+            <div class="mb-3">
+              <button class="btn btn-outline-secondary btn-sm w-100 mb-3 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#cullEggsCollapse" aria-expanded="false" aria-controls="cullEggsCollapse">
+                  <span><i class="fas fa-egg me-2"></i>Toggle Cull Eggs Classification</span>
+                  <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="collapse" id="cullEggsCollapse">
+                  <div class="card card-body bg-light-subtle p-3 border">
+                      <div class="row">
+                        <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_jumbo" placeholder="Jumbo" value="{{ log.cull_eggs_jumbo if log else '' }}"><div class="text-muted small text-center mt-1">Jumbo</div></div>
+                        <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_small" placeholder="Small" value="{{ log.cull_eggs_small if log else '' }}"><div class="text-muted small text-center mt-1">Small</div></div>
+                        <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_abnormal" placeholder="Abnormal" value="{{ log.cull_eggs_abnormal if log else '' }}"><div class="text-muted small text-center mt-1">Abnormal</div></div>
+                        <div class="col-6 col-md-3 mb-2"><input type="number" class="form-control form-control-sm" name="cull_eggs_crack" placeholder="Crack" value="{{ log.cull_eggs_crack if log else '' }}"><div class="text-muted small text-center mt-1">Crack</div></div>
+                      </div>
+                  </div>
+              </div>
+            </div>
+
+            <hr class="my-3">
+            <h4 class="fw-bold mb-3"><i class="ti ti-pill me-2"></i>Medications Used Today</h4>
+            <div id="medications-container">
+                {% set ns = namespace(meds=[]) %}
+                {% if log and log.flock %}
+                    {% for m in log.flock.medications %}
+                        {% if m.start_date == log.date %}
+                            {% set ns.meds = ns.meds + [m] %}
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if ns.meds %}
+                    {% for m in ns.meds %}
+                        <div class="medication-row border p-3 mb-3 rounded position-relative bg-light-subtle">
+                            <input type="hidden" name="med_start_date[]" class="med-start-date" value="{{ log.date.strftime('%Y-%m-%d') if log else selected_date }}">
+                            <input type="hidden" name="med_end_date[]" class="med-end-date" value="{{ log.date.strftime('%Y-%m-%d') if log else selected_date }}">
+                            
+                            <div class="row align-items-end">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label required">Drug Name (From Masterlist)</label>
+                                    <select name="med_inventory_id[]" class="form-select drug-select" required>
+                                        <option value="" disabled>-- Select Medication --</option>
+                                        {% set ns_match = namespace(found=false) %}
+                                        {% for item in medication_inventory %}
+                                            <option value="{{ item.id }}" {% if m.inventory_item_id == item.id %}{% set ns_match.found = true %}selected{% endif %}>{{ item.name }}</option>
+                                        {% endfor %}
+                                        <option value="Other" {% if not ns_match.found %}selected{% endif %}>Other (Specify manually)</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-6 drug-manual-container {% if ns_match.found %}d-none{% endif %}">
+                                    <label class="form-label required">Specify Drug Name</label>
+                                    <input type="text" class="form-control drug-manual-input" placeholder="Type Drug Name" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed" value="{% if not ns_match.found %}{{ m.drug_name }}{% endif %}" {% if not ns_match.found %}required{% endif %}>
+                                </div>
+                                <input type="hidden" name="med_drug_name[]" class="drug-name-hidden" value="{{ m.drug_name }}">
+                            </div>
+
+                            <input type="hidden" name="med_dosage[]" value="{{ m.dosage or 'N/A' }}">
+                            <input type="hidden" name="med_amount_qty[]" class="amount-qty-input" value="{{ m.amount_used_qty or 0 }}">
+                            <input type="hidden" name="med_amount_used[]" class="amount-text-hidden" value="{{ m.amount_used or 0 }}">
+                            <input type="hidden" name="med_remarks[]" value="{{ m.remarks or '' }}">
+                            
+                            <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-medication-btn" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="medication-row border p-3 mb-3 rounded position-relative bg-light-subtle">
+                        <input type="hidden" name="med_start_date[]" class="med-start-date" value="{{ log.date.strftime('%Y-%m-%d') if log else selected_date }}">
+                        <input type="hidden" name="med_end_date[]" class="med-end-date" value="{{ log.date.strftime('%Y-%m-%d') if log else selected_date }}">
+                        
+                        <div class="row align-items-end">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label required">Drug Name (From Masterlist)</label>
+                                <select name="med_inventory_id[]" class="form-select drug-select" required>
+                                    <option value="" disabled selected>-- Select Medication --</option>
+                                    {% for item in medication_inventory %}
+                                        <option value="{{ item.id }}">{{ item.name }}</option>
+                                    {% endfor %}
+                                    <option value="Other">Other (Specify manually)</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-6 drug-manual-container d-none">
+                                <label class="form-label required">Specify Drug Name</label>
+                                <input type="text" class="form-control drug-manual-input" placeholder="Type Drug Name" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed">
+                            </div>
+                            <input type="hidden" name="med_drug_name[]" class="drug-name-hidden">
+                        </div>
+
+                        <input type="hidden" name="med_dosage[]" value="N/A">
+                        <input type="hidden" name="med_amount_qty[]" class="amount-qty-input" value="0">
+                        <input type="hidden" name="med_amount_used[]" class="amount-text-hidden" value="0">
+                        <input type="hidden" name="med_remarks[]" value="">
+                        
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-2 remove-medication-btn" aria-label="Close" style="display: none;"></button>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <button type="button" id="add-medication-btn" class="btn btn-outline-secondary btn-sm">
+                    <i class="ti ti-plus"></i> Add Medication
+                </button>
             </div>
           </div>
         </div>
@@ -1282,6 +1386,105 @@
     // Initialize layout and state
     window.onload = function() {
         updateHouseNameDisplay();
+
+        // Medication Row Handling
+        const container = document.getElementById('medications-container');
+        const addBtn = document.getElementById('add-medication-btn');
+
+        function bindRowEvents(row) {
+            const select = row.querySelector('.drug-select');
+            const manualContainer = row.querySelector('.drug-manual-container');
+            const manualInput = row.querySelector('.drug-manual-input');
+            const hiddenInput = row.querySelector('.drug-name-hidden');
+
+            if (select) {
+                select.addEventListener('change', function() {
+                    if (this.value === 'Other') {
+                        manualContainer.classList.remove('d-none');
+                        manualInput.setAttribute('required', 'required');
+                        hiddenInput.value = manualInput.value.trim();
+                    } else {
+                        manualContainer.classList.add('d-none');
+                        manualInput.removeAttribute('required');
+                        if (this.selectedIndex >= 0) {
+                            hiddenInput.value = this.options[this.selectedIndex].text.trim();
+                        } else {
+                            hiddenInput.value = '';
+                        }
+                    }
+                });
+            }
+
+            if (manualInput) {
+                manualInput.addEventListener('input', function() {
+                    if (select.value === 'Other') {
+                        hiddenInput.value = this.value.trim();
+                    }
+                });
+            }
+        }
+
+        const initialRow = container ? container.querySelector('.medication-row') : null;
+        if (initialRow) {
+            bindRowEvents(initialRow);
+        }
+
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                const firstRow = container.querySelector('.medication-row');
+                const newRow = firstRow.cloneNode(true);
+
+                // Clear inputs
+                newRow.querySelectorAll('input, select').forEach(input => {
+                    if (input.name === 'med_dosage[]') {
+                        input.value = 'N/A';
+                    } else if (input.name === 'med_amount_qty[]' || input.name === 'med_amount_used[]') {
+                        input.value = '0';
+                    } else if (input.name === 'med_remarks[]' || input.name === 'med_drug_name[]') {
+                        input.value = '';
+                    } else if (input.type !== 'hidden') {
+                        input.value = '';
+                    }
+                    if (input.classList.contains('drug-manual-input')) {
+                        input.removeAttribute('required');
+                    }
+                });
+
+                // Hide specify field on clone
+                newRow.querySelector('.drug-manual-container').classList.add('d-none');
+
+                // Show remove button
+                newRow.querySelector('.remove-medication-btn').style.display = 'block';
+
+                // Add event listener to select in the new row
+                bindRowEvents(newRow);
+
+                container.appendChild(newRow);
+                updateRemoveButtons();
+            });
+        }
+
+        function updateRemoveButtons() {
+            if (!container) return;
+            const rows = container.querySelectorAll('.medication-row');
+            if (rows.length > 1) {
+                rows.forEach(row => {
+                    row.querySelector('.remove-medication-btn').style.display = 'block';
+                });
+            } else {
+                if(rows[0]) rows[0].querySelector('.remove-medication-btn').style.display = 'none';
+            }
+
+            // Add event listeners to remove buttons
+            container.querySelectorAll('.remove-medication-btn').forEach(btn => {
+                btn.onclick = function() {
+                    this.closest('.medication-row').remove();
+                    updateRemoveButtons();
+                };
+            });
+        }
+        updateRemoveButtons();
+
         prefillPreviousData(); // Always call to get global validation state
         {% if not log %}
         fetchLatestLogDate();
@@ -1361,12 +1564,14 @@
     }
 
     function calculateLiveFeed() {
+        let noFeedGiven = document.getElementById('no_feed_given') && document.getElementById('no_feed_given').checked;
+
         let maleGpBird = parseFloat(document.getElementById('feed_male_gp_bird') ? document.getElementById('feed_male_gp_bird').value : 0) || 0;
         let femaleGpBird = parseFloat(document.getElementById('feed_female_gp_bird') ? document.getElementById('feed_female_gp_bird').value : 0) || 0;
         let multiplier = getMultiplier();
 
-        let maleTotalKg = (maleGpBird * multiplier * currentStockM) / 1000.0;
-        let femaleTotalKg = (femaleGpBird * multiplier * currentStockF) / 1000.0;
+        let maleTotalKg = noFeedGiven ? 0 : (maleGpBird * multiplier * currentStockM) / 1000.0;
+        let femaleTotalKg = noFeedGiven ? 0 : (femaleGpBird * multiplier * currentStockF) / 1000.0;
 
         document.getElementById('live-feed-calc-male').innerText = maleTotalKg.toFixed(2) + ' kg';
         document.getElementById('live-feed-calc-female').innerText = femaleTotalKg.toFixed(2) + ' kg';
@@ -1593,6 +1798,10 @@
         document.getElementById('feed_male_gp_bird').addEventListener('input', calculateLiveFeed);
         document.getElementById('feed_female_gp_bird').addEventListener('input', calculateLiveFeed);
         document.querySelector('[name="feed_program"]').addEventListener('change', calculateLiveFeed);
+        let noFeedCheckbox = document.getElementById('no_feed_given');
+        if (noFeedCheckbox) {
+            noFeedCheckbox.addEventListener('change', calculateLiveFeed);
+        }
         
         // Step 4 Listeners
         document.getElementsByName('water_reading_1')[0].addEventListener('input', calculateWater);
@@ -1618,6 +1827,13 @@
         
         document.getElementById('live-mort-pct-male').innerText = mPct.toFixed(2) + '%';
         document.getElementById('live-mort-pct-female').innerText = fPct.toFixed(2) + '%';
+        
+        let eggsVal = parseInt(document.getElementById('eggs_collected').value) || 0;
+        let eggPct = currentStockF > 0 ? (eggsVal / currentStockF) * 100 : 0;
+        let liveEggElem = document.getElementById('live-egg-prod-pct');
+        if (liveEggElem) {
+            liveEggElem.innerText = eggPct.toFixed(2) + '%';
+        }
         
         let mortCard = document.getElementById('step-section-2').querySelector('.card');
         let mInput = document.getElementById('mortality_male');
@@ -1705,9 +1921,10 @@
     window.checkFastingDay = function() {
         let progElem = document.querySelector('[name="feed_program"]');
         let program = progElem ? progElem.value : '';
+        let noFeedGiven = document.getElementById('no_feed_given') && document.getElementById('no_feed_given').checked;
         let maleGpBird = parseFloat(document.getElementById('feed_male_gp_bird') ? document.getElementById('feed_male_gp_bird').value : 0) || 0;
         let femaleGpBird = parseFloat(document.getElementById('feed_female_gp_bird') ? document.getElementById('feed_female_gp_bird').value : 0) || 0;
-        let isFeedingAttempt = (maleGpBird > 0 || femaleGpBird > 0);
+        let isFeedingAttempt = !noFeedGiven && (maleGpBird > 0 || femaleGpBird > 0);
 
         if (!isFeedingAttempt) return false;
 

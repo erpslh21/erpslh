@@ -1138,10 +1138,10 @@ def check_daily_log_completion(farm_id, selected_date):
     # Get active flocks for the given farm
     query = Flock.query.join(House).filter(Flock.status == 'Active')
     if farm_id is not None:
-        query = query.filter(Flock.farm_id == farm_id)
+        query = query.filter(House.farm_id == farm_id)
     else:
         # If farm_id is None, explicitly filter for None to prevent showing all houses across all farms
-        query = query.filter(Flock.farm_id == None)
+        query = query.filter(House.farm_id == None)
 
     active_flocks = query.order_by(House.name).all()
 
@@ -1216,6 +1216,11 @@ def update_log_from_request(log, req):
 
     log.feed_male_gp_bird = float(req.form.get('feed_male_gp_bird') or 0)
     log.feed_female_gp_bird = float(req.form.get('feed_female_gp_bird') or 0)
+
+    # Process no_feed_given checkbox
+    if req.form.get('no_feed_given') == 'on':
+        log.feed_male_gp_bird = 0.0
+        log.feed_female_gp_bird = 0.0
 
     # Fetch logs before today to sum mortality
     # We query once and sum in Python to avoid N+1 and slow sum queries
@@ -1351,6 +1356,12 @@ def update_log_from_request(log, req):
     # Feed Guardian Validation
     override = req.form.get('override_validation') == 'true'
     is_feeding_attempt = log.feed_male_gp_bird > 0 or log.feed_female_gp_bird > 0
+
+    if log.feed_male_gp_bird == 0 and log.feed_female_gp_bird == 0:
+        from datetime import timedelta
+        yesterday_log_check = DailyLog.query.filter_by(flock_id=log.flock_id, date=log.date - timedelta(days=1)).first()
+        if yesterday_log_check and yesterday_log_check.feed_male_gp_bird == 0 and yesterday_log_check.feed_female_gp_bird == 0:
+            raise ValueError("Invalid Entry: Cannot have 0g feed for two or more consecutive days.")
 
     if log.feed_program == 'Full Feed':
         if log.feed_male_gp_bird <= 0 or log.feed_female_gp_bird <= 0:
@@ -1865,7 +1876,7 @@ def calculate_grading_stats(weights):
 
     # Bins: Floor lowest to 100, ceil highest to 100
     bin_min = int(math.floor(lowest / 100.0)) * 100
-    bin_max = int(math.ceil(highest / 100.0)) * 100
+    bin_max = int(math.floor(highest / 100.0)) * 100
 
     # Initialize bins with zero counts to ensure they're ordered
     bins = {}
@@ -1878,7 +1889,7 @@ def calculate_grading_stats(weights):
         # Normally, a bin like 1500 means [1450, 1550) or [1500, 1600)?
         # Looking at standard distributions, usually round to nearest 100
         # If w = 1530, round(1530/100)*100 = 1500. Let's use standard rounding.
-        b_key = str(int(round(w / 100.0)) * 100)
+        b_key = str(int(math.floor(w / 100.0)) * 100)
         if b_key in bins:
             bins[b_key] += 1
         else:
