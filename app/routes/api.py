@@ -722,6 +722,8 @@ def register_api_routes(app):
         data = {
             'current_stock_m': current_stock_m,
             'current_stock_f': current_stock_f,
+            'y_stock_m': y_stock_m,
+            'y_stock_f': y_stock_f,
             'yesterday_feed_m': yesterday_log.feed_male_gp_bird if yesterday_log else 0,
             'yesterday_feed_f': yesterday_log.feed_female_gp_bird if yesterday_log else 0,
             'day_minus_2_feed_m': day_minus_2_log.feed_male_gp_bird if day_minus_2_log else 0,

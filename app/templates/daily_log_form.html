@@ -1290,6 +1290,103 @@
     // Initialize layout and state
     window.onload = function() {
         updateHouseNameDisplay();
+
+        // Medication Row Handling
+        const container = document.getElementById('medications-container');
+        const addBtn = document.getElementById('add-medication-btn');
+
+        function bindRowEvents(row) {
+            const select = row.querySelector('.drug-select');
+            const manualContainer = row.querySelector('.drug-manual-container');
+            const manualInput = row.querySelector('.drug-manual-input');
+            const hiddenInput = row.querySelector('.drug-name-hidden');
+
+            if (select) {
+                select.addEventListener('change', function() {
+                    if (this.value === 'Other') {
+                        manualContainer.classList.remove('d-none');
+                        manualInput.setAttribute('required', 'required');
+                        hiddenInput.value = manualInput.value.trim();
+                    } else {
+                        manualContainer.classList.add('d-none');
+                        manualInput.removeAttribute('required');
+                        if (this.selectedIndex >= 0) {
+                            hiddenInput.value = this.options[this.selectedIndex].text.trim();
+                        } else {
+                            hiddenInput.value = '';
+                        }
+                    }
+                });
+            }
+
+            if (manualInput) {
+                manualInput.addEventListener('input', function() {
+                    if (select.value === 'Other') {
+                        hiddenInput.value = this.value.trim();
+                    }
+                });
+            }
+        }
+
+        const initialRow = container ? container.querySelector('.medication-row') : null;
+        if (initialRow) {
+            bindRowEvents(initialRow);
+        }
+
+        if (addBtn) {
+            addBtn.addEventListener('click', function() {
+                const firstRow = container.querySelector('.medication-row');
+                const newRow = firstRow.cloneNode(true);
+
+                // Clear inputs
+                newRow.querySelectorAll('input, select').forEach(input => {
+                    if (input.name === 'med_dosage[]') {
+                        input.value = 'N/A';
+                    } else if (input.name === 'med_amount_qty[]' || input.name === 'med_amount_used[]') {
+                        input.value = '0';
+                    } else if (input.type !== 'hidden') {
+                        input.value = '';
+                    }
+                    if (input.classList.contains('drug-manual-input')) {
+                        input.removeAttribute('required');
+                    }
+                });
+
+                // Hide specify field on clone
+                newRow.querySelector('.drug-manual-container').classList.add('d-none');
+
+                // Show remove button
+                newRow.querySelector('.remove-medication-btn').style.display = 'block';
+
+                // Add event listener to select in the new row
+                bindRowEvents(newRow);
+
+                container.appendChild(newRow);
+                updateRemoveButtons();
+            });
+        }
+
+        function updateRemoveButtons() {
+            if (!container) return;
+            const rows = container.querySelectorAll('.medication-row');
+            if (rows.length > 1) {
+                rows.forEach(row => {
+                    row.querySelector('.remove-medication-btn').style.display = 'block';
+                });
+            } else {
+                if(rows[0]) rows[0].querySelector('.remove-medication-btn').style.display = 'none';
+            }
+
+            // Add event listeners to remove buttons
+            container.querySelectorAll('.remove-medication-btn').forEach(btn => {
+                btn.onclick = function() {
+                    this.closest('.medication-row').remove();
+                    updateRemoveButtons();
+                };
+            });
+        }
+        updateRemoveButtons();
+
         prefillPreviousData(); // Always call to get global validation state
         {% if not log %}
         fetchLatestLogDate();
