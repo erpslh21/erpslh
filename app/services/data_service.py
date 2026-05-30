@@ -1876,7 +1876,7 @@ def calculate_grading_stats(weights):
 
     # Bins: Floor lowest to 100, ceil highest to 100
     bin_min = int(math.floor(lowest / 100.0)) * 100
-    bin_max = int(math.ceil(highest / 100.0)) * 100
+    bin_max = int(math.floor(highest / 100.0)) * 100
 
     # Initialize bins with zero counts to ensure they're ordered
     bins = {}
@@ -1889,7 +1889,7 @@ def calculate_grading_stats(weights):
         # Normally, a bin like 1500 means [1450, 1550) or [1500, 1600)?
         # Looking at standard distributions, usually round to nearest 100
         # If w = 1530, round(1530/100)*100 = 1500. Let's use standard rounding.
-        b_key = str(int(round(w / 100.0)) * 100)
+        b_key = str(int(math.floor(w / 100.0)) * 100)
         if b_key in bins:
             bins[b_key] += 1
         else:
