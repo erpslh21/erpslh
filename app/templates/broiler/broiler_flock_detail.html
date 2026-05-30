@@ -586,11 +586,7 @@
               },
             },
           });
-
       }
-
-      // Fix blank chart issue by resizing when tab is shown
-      } // Ends bodyweight chart if
 
       // Fix blank chart issue by resizing when tab is shown
       const chartTabButton = document.querySelector('a[href="#tabs-performance-charts"]');
@@ -746,7 +742,7 @@
         }
 
         // Filter data to last 10 days for the PDF charts
-        const takeLast10 = (arr) => (arr ? arr.slice(-10) : []);
+        var takeLast10 = function(arr) { return arr ? arr.slice(-10) : []; };
         data.charts.days = takeLast10(data.charts.days);
         data.charts.mortality_actual = takeLast10(data.charts.mortality_actual);
         data.charts.cull_actual = takeLast10(data.charts.cull_actual);
@@ -774,40 +770,37 @@
         Chart.defaults.font.weight = "bold";
 
         // PAGE 1 HTML
-        let htmlPage1 = `
-                <div style="width: 297mm; height: 210mm; background: white; padding: 15mm; border: 1px solid #ddd; font-family: sans-serif; box-sizing: border-box; display: flex; flex-direction: column; font-weight: bold;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                        <div>
-                            <h2 style="margin: 0; font-weight: bold;">${data.farm_name} (${data.house_name}) - AGE: ${data.charts.days.length > 0 ? data.charts.days[data.charts.days.length - 1] : 0}</h2>
-                            <h4 style="margin: 5px 0 0 0; color: #666; font-weight: bold;">Intake Date: ${data.intake_date}</h4>
-                            <h4 style="margin: 5px 0 0 0; color: #666; font-weight: bold;">Live Count: ${data.live_count}</h4>
-                        </div>
-                        <div style="text-align: right;">
-                            <h3 style="margin: 5px 0 0 0; font-weight: bold;">${data.report_date}</h3>
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 20px; flex: 1;">
-                        <div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">
-                            <h4 style="text-align: center; margin-top: 0; font-weight: bold;">Mortality & Cull</h4>
-                            <div style="flex: 1; position: relative;">
-                                <canvas id="pdfChartMortCull"></canvas>
-                            </div>
-                        </div>
-                        <div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">
-                            <h4 style="text-align: center; margin-top: 0; font-weight: bold;">Bodyweight</h4>
-                            <div style="flex: 1; position: relative;">
-                                <canvas id="pdfChartBW"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; display: flex; flex-direction: column; gap: 5px; font-weight: bold;">
-                        <div><strong>Feed:</strong> ${data.feed_kg} kg</div>
-                        <div><strong>Medication:</strong> ${data.medication}</div>
-                    </div>
-                </div>
-                `;
+        var lastDayVal = data.charts.days.length > 0 ? data.charts.days[data.charts.days.length - 1] : 0;
+        var htmlPage1 = '<div style="width: 297mm; height: 210mm; background: white; padding: 15mm; border: 1px solid #ddd; font-family: sans-serif; box-sizing: border-box; display: flex; flex-direction: column; font-weight: bold;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">' +
+                '<div>' +
+                    '<h2 style="margin: 0; font-weight: bold;">' + data.farm_name + ' (' + data.house_name + ') - AGE: ' + lastDayVal + '</h2>' +
+                    '<h4 style="margin: 5px 0 0 0; color: #666; font-weight: bold;">Intake Date: ' + data.intake_date + '</h4>' +
+                    '<h4 style="margin: 5px 0 0 0; color: #666; font-weight: bold;">Live Count: ' + data.live_count + '</h4>' +
+                '</div>' +
+                '<div style="text-align: right;">' +
+                    '<h3 style="margin: 5px 0 0 0; font-weight: bold;">' + data.report_date + '</h3>' +
+                '</div>' +
+            '</div>' +
+            '<div style="display: flex; gap: 20px; flex: 1;">' +
+                '<div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">' +
+                    '<h4 style="text-align: center; margin-top: 0; font-weight: bold;">Mortality & Cull</h4>' +
+                    '<div style="flex: 1; position: relative;">' +
+                        '<canvas id="pdfChartMortCull"></canvas>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">' +
+                    '<h4 style="text-align: center; margin-top: 0; font-weight: bold;">Bodyweight</h4>' +
+                    '<div style="flex: 1; position: relative;">' +
+                        '<canvas id="pdfChartBW"></canvas>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+            '<div style="margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f9f9f9; display: flex; flex-direction: column; gap: 5px; font-weight: bold;">' +
+                '<div><strong>Feed:</strong> ' + data.feed_kg + ' kg</div>' +
+                '<div><strong>Medication:</strong> ' + data.medication + '</div>' +
+            '</div>' +
+        '</div>';
 
         container.innerHTML = htmlPage1;
 
@@ -835,8 +828,9 @@
                 data: data.charts.mortality_actual,
                 backgroundColor: "rgba(255, 99, 132, 0.6)",
                 datalabels: {
-                  formatter: (value) =>
-                    value !== null ? value.toFixed(2) : "",
+                  formatter: function(value) {
+                    return value !== null ? value.toFixed(2) : "";
+                  },
                   font: { weight: "bold" },
                 },
               },
@@ -846,8 +840,9 @@
                 data: data.charts.cull_actual,
                 backgroundColor: "rgba(54, 162, 235, 0.6)",
                 datalabels: {
-                  formatter: (value) =>
-                    value !== null ? value.toFixed(2) : "",
+                  formatter: function(value) {
+                    return value !== null ? value.toFixed(2) : "";
+                  },
                   font: { weight: "bold" },
                 },
               },
@@ -900,8 +895,9 @@
                 fill: false,
                 datalabels: {
                   display: true,
-                  formatter: (value) =>
-                    value !== null ? value.toFixed(1) : "",
+                  formatter: function(value) {
+                    return value !== null ? value.toFixed(1) : "";
+                  },
                   align: "top",
                   anchor: "end",
                   font: { weight: "bold" },
@@ -913,8 +909,9 @@
                 data: data.charts.weight_gain_standard,
                 backgroundColor: "rgba(255, 159, 64, 0.3)",
                 datalabels: {
-                  formatter: (value) =>
-                    value !== null ? value.toFixed(1) : "",
+                  formatter: function(value) {
+                    return value !== null ? value.toFixed(1) : "";
+                  },
                   font: { weight: "bold" },
                 },
               },
@@ -924,8 +921,9 @@
                 data: data.charts.weight_gain_actual,
                 backgroundColor: "rgba(75, 192, 192, 0.6)",
                 datalabels: {
-                  formatter: (value) =>
-                    value !== null ? value.toFixed(1) : "",
+                  formatter: function(value) {
+                    return value !== null ? value.toFixed(1) : "";
+                  },
                   font: { weight: "bold" },
                 },
               },
@@ -945,7 +943,7 @@
           },
         });
 
-        await new Promise((r) => setTimeout(r, 500)); // wait for rendering
+        await new Promise(function(r) { setTimeout(r, 500); }); // wait for rendering
         const canvasPage1 = await html2canvas(container.firstElementChild, {
           scale: 2,
         });
@@ -957,71 +955,66 @@
         // PAGE 2
         pdf.addPage();
 
-        let tableRows = (data.weekly_summary || [])
-          .map(
-            (w) => `
-                    <tr>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Week ${w.week}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${w.death_count}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.mortality_pct || 0).toFixed(2)}%</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.total_feed_kg || 0).toFixed(0)}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.avg_bodyweight_g || 0).toFixed(2)}</td>
-                        <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(w.fcr || 0).toFixed(2)}</td>
-                    </tr>
-                `,
-          )
-          .join("");
-
-        // Add cumulative row
-        let cum = data.cumulative_summary;
-        if (cum) {
-          tableRows += `
-                        <tr style="background-color: #f0f0f0;">
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Cumulative</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${cum.death_count}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.mortality_pct || 0).toFixed(2)}%</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.total_feed_kg || 0).toFixed(0)}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.avg_bodyweight_g || 0).toFixed(2)}</td>
-                            <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">${(cum.fcr || 0).toFixed(2)}</td>
-                        </tr>
-                    `;
+        var tableRows = "";
+        if (data.weekly_summary) {
+            for (var i = 0; i < data.weekly_summary.length; i++) {
+                var w = data.weekly_summary[i];
+                tableRows += '<tr>' +
+                    '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Week ' + w.week + '</td>' +
+                    '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + w.death_count + '</td>' +
+                    '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (w.mortality_pct || 0).toFixed(2) + '%</td>' +
+                    '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (w.total_feed_kg || 0).toFixed(0) + '</td>' +
+                    '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (w.avg_bodyweight_g || 0).toFixed(2) + '</td>' +
+                    '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (w.fcr || 0).toFixed(2) + '</td>' +
+                    '</tr>';
+            }
         }
 
-        let htmlPage2 = `
-                <div style="width: 297mm; height: 210mm; background: white; padding: 15mm; border: 1px solid #ddd; font-family: sans-serif; box-sizing: border-box; display: flex; flex-direction: column; font-weight: bold;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                        <h2 style="margin: 0; font-weight: bold;">${data.farm_name} (${data.house_name}) - Page 2</h2>
-                        <h3 style="margin: 0; font-weight: bold;">${data.report_date}</h3>
-                    </div>
+        // Add cumulative row
+        var cum = data.cumulative_summary;
+        if (cum) {
+          tableRows += '<tr style="background-color: #f0f0f0;">' +
+              '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Cumulative</td>' +
+              '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + cum.death_count + '</td>' +
+              '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (cum.mortality_pct || 0).toFixed(2) + '%</td>' +
+              '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (cum.total_feed_kg || 0).toFixed(0) + '</td>' +
+              '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (cum.avg_bodyweight_g || 0).toFixed(2) + '</td>' +
+              '<td style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">' + (cum.fcr || 0).toFixed(2) + '</td>' +
+              '</tr>';
+        }
 
-                    <div style="display: flex; gap: 20px; flex: 1;">
-                        <div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">
-                            <h4 style="text-align: center; margin-top: 0; font-weight: bold;">FCR</h4>
-                            <div style="flex: 1; position: relative;">
-                                <canvas id="pdfChartFCR"></canvas>
-                            </div>
-                        </div>
-                        <div style="flex: 1; display: flex; flex-direction: column;">
-                            <h4 style="text-align: center; margin-top: 0; font-weight: bold;">Weekly Summary</h4>
-                            <table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;">
-                                <thead>
-                                    <tr style="background: #eee;">
-                                        <th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Week</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">No of Death</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Mortality%</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Total Feed (kg)</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Avg BW (g)</th>
-                                        <th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">FCR</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${tableRows}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                `;
+        var htmlPage2 = '<div style="width: 297mm; height: 210mm; background: white; padding: 15mm; border: 1px solid #ddd; font-family: sans-serif; box-sizing: border-box; display: flex; flex-direction: column; font-weight: bold;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 10px;">' +
+                '<h2 style="margin: 0; font-weight: bold;">' + data.farm_name + ' (' + data.house_name + ') - Page 2</h2>' +
+                '<h3 style="margin: 0; font-weight: bold;">' + data.report_date + '</h3>' +
+            '</div>' +
+            '<div style="display: flex; gap: 20px; flex: 1;">' +
+                '<div style="flex: 1; border: 1px solid #ddd; padding: 10px; display: flex; flex-direction: column;">' +
+                    '<h4 style="text-align: center; margin-top: 0; font-weight: bold;">FCR</h4>' +
+                    '<div style="flex: 1; position: relative;">' +
+                        '<canvas id="pdfChartFCR"></canvas>' +
+                    '</div>' +
+                '</div>' +
+                '<div style="flex: 1; display: flex; flex-direction: column;">' +
+                    '<h4 style="text-align: center; margin-top: 0; font-weight: bold;">Weekly Summary</h4>' +
+                    '<table style="width: 100%; border-collapse: collapse; font-size: 14px; text-align: center;">' +
+                        '<thead>' +
+                            '<tr style="background: #eee;">' +
+                                '<th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Week</th>' +
+                                '<th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">No of Death</th>' +
+                                '<th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Mortality%</th>' +
+                                '<th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Total Feed (kg)</th>' +
+                                '<th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">Avg BW (g)</th>' +
+                                '<th style="border: 1px solid #ddd; padding: 8px; font-weight: bold;">FCR</th>' +
+                            '</tr>' +
+                        '</thead>' +
+                        '<tbody>' +
+                            tableRows +
+                        '</tbody>' +
+                    '</table>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
 
         container.innerHTML = htmlPage2;
 
@@ -1045,8 +1038,9 @@
                 fill: false,
                 datalabels: {
                   display: true,
-                  formatter: (value) =>
-                    value !== null ? value.toFixed(2) : "",
+                  formatter: function(value) {
+                    return value !== null ? value.toFixed(2) : "";
+                  },
                   align: "top",
                   anchor: "end",
                   font: { weight: "bold" },
@@ -1068,7 +1062,7 @@
           },
         });
 
-        await new Promise((r) => setTimeout(r, 500));
+        await new Promise(function(r) { setTimeout(r, 500); });
         const canvasPage2 = await html2canvas(container.firstElementChild, {
           scale: 2,
         });
@@ -1077,7 +1071,7 @@
         pdf.addImage(imgData2, "JPEG", 0, 0, 297, 210);
 
         pdf.save(
-          `Broiler_Daily_House_Report_${data.house_name}_${data.report_date}.pdf`,
+          "Broiler_Daily_House_Report_" + data.house_name + "_" + data.report_date + ".pdf",
         );
       } catch (err) {
         console.error(err);

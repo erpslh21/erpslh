@@ -121,14 +121,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Fetch houses for selected farm
         fetch(`/api/houses_by_farm/${farmId}`)
-            .then(response => response.json())
-            .then(data => {
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
                 if (data.length === 0) {
                     houseSelect.innerHTML = '<option value="" disabled selected>No houses configured for this farm</option>';
                     houseSelect.disabled = true;
                 } else {
                     houseSelect.innerHTML = '<option value="" disabled selected>-- Select House --</option>';
-                    data.forEach(house => {
+                    data.forEach(function (house) {
                         const option = document.createElement("option");
                         option.value = house.id;
                         option.textContent = house.name;
@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     houseSelect.disabled = false;
                 }
             })
-            .catch(err => {
+            .catch(function (err) {
                 console.error("Error loading houses: ", err);
                 houseSelect.innerHTML = '<option value="" disabled selected>Error loading houses</option>';
                 houseSelect.disabled = true;

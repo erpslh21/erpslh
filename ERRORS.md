@@ -19,3 +19,18 @@ This file tracks production/development errors, their root causes, and preventio
 - **Status**: Fixed
 
 ---
+
+## [2026-05-30 07:35] - Uncaught SyntaxError: missing ) after argument list in Broiler Flock Detail JS
+
+- **Type**: Syntax
+- **Severity**: Critical
+- **File**: `app/templates/broiler/broiler_flock_detail.html:593`
+- **Agent**: Antigravity
+- **Root Cause**: An extra mismatched closing curly brace `}` was present in the inline script block within `broiler_flock_detail.html` right before the tab-resizing listener, causing the JS parser to fail with a `SyntaxError: missing ) after argument list` when loading the page. Additionally, arrow functions and ES6 template literals were present inside template script tags, which can trigger parsing/compatibility errors in certain mobile browsers/stages.
+- **Error Message**: 
+  ```
+  Uncaught SyntaxError: missing ) after argument list
+  ```
+- **Fix Applied**: Removed the extra mismatched curly brace `}` at line 593. Rewrote all arrow functions (`=>`) and ES6 template literals to fully compatible ES5 compliant functions and string concatenations. Also cleaned up similar arrow functions in `broiler_new_flock.html`.
+- **Prevention**: Enforce ES5 function patterns for inline templates and write-to-file code scripts in non-transpiled templates.
+- **Status**: Fixed
