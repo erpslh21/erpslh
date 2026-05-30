@@ -25,6 +25,13 @@ This document is the system prompt and knowledge base for any AI agent interacti
   - Broiler bodyweight remains integrated strictly within the `BroilerDailyLog` table.
 - **Data Transfer Scripts:** When extracting legacy data from decoupled columns, use raw SQL via `db.session.execute(text('...')).mappings().fetchall()` to prevent `AttributeError` on SQLAlchemy 2.0+ row objects.
 - **Bypassing Bad Migrations:** If an Alembic migration fails but the chain needs to be preserved, neutralize it by replacing the `upgrade()` and `downgrade()` logic with `pass`.
+- **Divergent & Out-of-Sync Revision Safeguards:**
+  - If a migration file is deleted or replaced after it was already executed in a production/staging database, Alembic will crash with `Error: Can't locate revision identified by '...'`.
+  - To prevent this, never delete executed migrations without a synchronization plan. If it happens, you must synchronize the database's version pointer to the new active branch equivalent using:
+    `sqlite3 <db_path> "UPDATE alembic_version SET version_num = '<active_revision_id>';"`
+- **Mandatory Defensive Migration Scripts:**
+  - All custom or hand-written migrations must defensively verify the state of the database schema before executing changes.
+  - Use SQLAlchemy's `Inspector` to check if a table or column already exists before creating or adding it (e.g., using `inspector.has_table()` or `inspector.get_columns()`), preventing crashes on partially migrated databases.
 
 ## 4. Coding Style & UI/UX Preferences
 - **Dark Mode Implementation:** We use Tabler's native `data-bs-theme`. User preferences are stored in `localStorage`.
