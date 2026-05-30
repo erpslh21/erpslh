@@ -684,6 +684,7 @@
                         <div class="dropdown-menu">
                             <a class="dropdown-item" href="{{ url_for('executive_dashboard') }}">Dashboard</a>
                             <a class="dropdown-item" href="{{ url_for('flock_detail_readonly_select' ) }}">Flock Detail</a>
+                            <a class="dropdown-item" href="{{ url_for('presentation_views.presentation_studio') }}">Presentation Studio</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -723,6 +724,7 @@
                                 {% endif %}
                             {% endfor %}
                             <a class="dropdown-item" href="{{ url_for('history') }}">History</a>
+                            <a class="dropdown-item" href="{{ url_for('presentation_views.presentation_studio') }}">Presentation Studio</a>
                         </div>
                     </li>
                     <li class="nav-item dropdown">
@@ -778,6 +780,7 @@
                             {% endif %}
                         {% endfor %}
                         <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('history') }}"><span class="nav-link-title">History</span></a></li>
+                        <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('presentation_views.presentation_studio') }}"><span class="nav-link-title">Presentation Studio</span></a></li>
                     {% else %}
                         <li class="nav-item role-restricted" data-allowed-roles="Breeder"><a class="nav-link" href="{{ url_for('daily_log') }}"><span class="nav-link-title">Daily Entry</span></a></li>
                     {% endif %}
@@ -797,6 +800,7 @@
                 {% elif user_role == 'Management' or user_dept == 'Management' %}
                     <li class="nav-item role-restricted" data-allowed-roles="Management"><a class="nav-link" href="{{ url_for('executive_dashboard') }}"><span class="nav-link-title">Executive Dashboard</span></a></li>
                     <li class="nav-item role-restricted" data-allowed-roles="Management"><a class="nav-link" href="{{ url_for('flock_detail_readonly_select') }}"><span class="nav-link-title">Flock Detail</span></a></li>
+                    <li class="nav-item role-restricted" data-allowed-roles="Management"><a class="nav-link" href="{{ url_for('presentation_views.presentation_studio') }}"><span class="nav-link-title">Presentation Studio</span></a></li>
                 {% endif %}
               </ul>
             </div>
