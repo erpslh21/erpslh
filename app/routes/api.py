@@ -1057,6 +1057,13 @@ def register_api_routes(app):
     @login_required
     @dept_required('Breeder')
     def get_chart_data(flock_id):
+        def safe_round(val, decimals=2):
+            if val is None: return None
+            try:
+                return round(float(val), decimals)
+            except (ValueError, TypeError):
+                return None
+
         flock = Flock.query.get_or_404(flock_id)
 
         start_date_str = request.args.get('start_date')
@@ -1110,19 +1117,21 @@ def register_api_routes(app):
                 mort_f = d['mortality_female_pct'] + d['culls_female_pct']
                 mort_m = d['mortality_male_pct'] + d['culls_male_pct']
 
-                data['metrics']['mortality_f_pct'].append(round(mort_f, 2))
-                data['metrics']['mortality_m_pct'].append(round(mort_m, 2))
-                data['metrics']['egg_prod_pct'].append(round(d['egg_prod_pct'], 2))
-                data['metrics'].setdefault('std_egg_prod', []).append(round(d.get('std_egg_prod', 0.0), 2))
-                data['metrics']['hatch_egg_pct'].append(round(d['hatch_egg_pct'], 2))
-                data['metrics']['bw_f'].append(d['body_weight_female'])
-                data['metrics']['bw_m'].append(d['body_weight_male'])
-                data['metrics']['uni_f'].append(d['uniformity_female'])
-                data['metrics']['uni_m'].append(d['uniformity_male'])
-                data['metrics']['feed_f'].append(d['feed_female_gp_bird'])
-                data['metrics']['feed_m'].append(d['feed_male_gp_bird'])
-                data['metrics']['water_per_bird'].append(round(d['water_per_bird'], 1) if d['water_per_bird'] >= 0 else None)
-                data['metrics']['water_feed_ratio'].append(round(d.get('water_feed_ratio'), 2) if d.get('water_feed_ratio') is not None and d.get('water_feed_ratio') >= 0 else None)
+                data['metrics']['mortality_f_pct'].append(safe_round(mort_f, 2))
+                data['metrics']['mortality_m_pct'].append(safe_round(mort_m, 2))
+                data['metrics']['culls_f_pct'].append(safe_round(d.get('culls_female_pct'), 2))
+                data['metrics']['culls_m_pct'].append(safe_round(d.get('culls_male_pct'), 2))
+                data['metrics']['egg_prod_pct'].append(safe_round(d.get('egg_prod_pct'), 2))
+                data['metrics'].setdefault('std_egg_prod', []).append(safe_round(d.get('std_egg_prod', 0.0), 2))
+                data['metrics']['hatch_egg_pct'].append(safe_round(d.get('hatch_egg_pct'), 2))
+                data['metrics']['bw_f'].append(d.get('body_weight_female'))
+                data['metrics']['bw_m'].append(d.get('body_weight_male'))
+                data['metrics']['uni_f'].append(d.get('uniformity_female'))
+                data['metrics']['uni_m'].append(d.get('uniformity_male'))
+                data['metrics']['feed_f'].append(d.get('feed_female_gp_bird'))
+                data['metrics']['feed_m'].append(d.get('feed_male_gp_bird'))
+                data['metrics']['water_per_bird'].append(safe_round(d.get('water_per_bird'), 1) if d.get('water_per_bird') is not None and d.get('water_per_bird') >= 0 else None)
+                data['metrics']['water_feed_ratio'].append(safe_round(d.get('water_feed_ratio'), 2) if d.get('water_feed_ratio') is not None and d.get('water_feed_ratio') >= 0 else None)
 
                 log = d['log']
 
@@ -1199,15 +1208,17 @@ def register_api_routes(app):
                 mort_f = a['mortality_female_pct'] + a['culls_female_pct']
                 mort_m = a['mortality_male_pct'] + a['culls_male_pct']
 
-                data['metrics']['mortality_f_pct'].append(round(mort_f, 2))
-                data['metrics']['mortality_m_pct'].append(round(mort_m, 2))
-                data['metrics']['egg_prod_pct'].append(round(a['egg_prod_pct'], 2))
-                data['metrics'].setdefault('std_egg_prod', []).append(round(a.get('std_egg_prod', 0.0), 2))
-                data['metrics']['hatch_egg_pct'].append(round(a['hatch_egg_pct'], 2))
-                data['metrics']['bw_f'].append(round(a['body_weight_female'], 0))
-                data['metrics']['bw_m'].append(round(a['body_weight_male'], 0))
-                data['metrics']['uni_f'].append(round(a['uniformity_female'], 2))
-                data['metrics']['uni_m'].append(round(a['uniformity_male'], 2))
+                data['metrics']['mortality_f_pct'].append(safe_round(mort_f, 2))
+                data['metrics']['mortality_m_pct'].append(safe_round(mort_m, 2))
+                data['metrics']['culls_f_pct'].append(safe_round(a.get('culls_female_pct'), 2))
+                data['metrics']['culls_m_pct'].append(safe_round(a.get('culls_male_pct'), 2))
+                data['metrics']['egg_prod_pct'].append(safe_round(a.get('egg_prod_pct'), 2))
+                data['metrics'].setdefault('std_egg_prod', []).append(safe_round(a.get('std_egg_prod', 0.0), 2))
+                data['metrics']['hatch_egg_pct'].append(safe_round(a.get('hatch_egg_pct'), 2))
+                data['metrics']['bw_f'].append(safe_round(a.get('body_weight_female'), 0))
+                data['metrics']['bw_m'].append(safe_round(a.get('body_weight_male'), 0))
+                data['metrics']['uni_f'].append(safe_round(a.get('uniformity_female'), 2))
+                data['metrics']['uni_m'].append(safe_round(a.get('uniformity_male'), 2))
                 # Feed in agg is total kg? Or average g/bird?
                 # aggregate_weekly_metrics does NOT return avg g/bird. It returns total_kg.
                 # But the chart expects g/bird.
@@ -1226,10 +1237,10 @@ def register_api_routes(app):
                 # I should iterate daily stats inside aggregation to get average feed/bird?
                 # Or just update metrics.py.
 
-                data['metrics']['feed_f'].append(round(a['feed_female_gp_bird'], 2))
-                data['metrics']['feed_m'].append(round(a['feed_male_gp_bird'], 2))
-                data['metrics']['water_per_bird'].append(round(a['water_per_bird'], 1) if a.get('water_per_bird', 0) >= 0 else None)
-                data['metrics']['water_feed_ratio'].append(round(a.get('water_feed_ratio'), 2) if a.get('water_feed_ratio') is not None and a.get('water_feed_ratio') >= 0 else None)
+                data['metrics']['feed_f'].append(safe_round(a.get('feed_female_gp_bird'), 2))
+                data['metrics']['feed_m'].append(safe_round(a.get('feed_male_gp_bird'), 2))
+                data['metrics']['water_per_bird'].append(safe_round(a.get('water_per_bird'), 1) if a.get('water_per_bird') is not None and a.get('water_per_bird') >= 0 else None)
+                data['metrics']['water_feed_ratio'].append(safe_round(a.get('water_feed_ratio'), 2) if a.get('water_feed_ratio') is not None and a.get('water_feed_ratio') >= 0 else None)
 
         return data
 
