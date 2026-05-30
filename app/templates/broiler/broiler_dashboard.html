@@ -365,7 +365,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const harvestForm = document.getElementById("harvestForm");
     const modalHouseName = document.getElementById("modalHouseName");
     
-    harvestButtons.forEach(btn => {
+    for (let i = 0; i < harvestButtons.length; i++) {
+        const btn = harvestButtons[i];
         btn.addEventListener("click", function () {
             const flockId = this.getAttribute("data-id");
             const houseName = this.getAttribute("data-name");
@@ -374,7 +375,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const weight = this.getAttribute("data-weight");
             
             modalHouseName.textContent = houseName;
-            harvestForm.action = `/broiler/flock/${flockId}/harvest`;
+            harvestForm.action = "/broiler/flock/" + flockId + "/harvest";
             
             // Prefill values
             document.getElementById("harvestDate").value = new Date().toISOString().substring(0, 10);
@@ -384,7 +385,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             harvestModal.show();
         });
-    });
+    }
 
     // Chart logic
     function getThemeColors() {
@@ -401,22 +402,23 @@ document.addEventListener("DOMContentLoaded", function () {
         // Visual row filtering based on selected farm
         const rows = document.querySelectorAll(".flock-row");
         let activeCount = 0;
-        rows.forEach(row => {
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
             if (row.getAttribute("data-farm-id") === farmId) {
                 row.style.display = "";
                 activeCount++;
             } else {
                 row.style.display = "none";
             }
-        });
+        }
 
         // Trigger dynamic API fetch
-        fetch(`/api/broiler/compare_metrics?farm_id=${farmId}&metric=${currentMetric}`)
-            .then(res => res.json())
-            .then(data => {
+        fetch("/api/broiler/compare_metrics?farm_id=" + farmId + "&metric=" + currentMetric)
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
                 renderChart(data);
             })
-            .catch(err => console.error("Error loading comparison series: ", err));
+            .catch(function (err) { console.error("Error loading comparison series: ", err); });
     }
 
     function renderChart(data) {
@@ -437,18 +439,21 @@ document.addEventListener("DOMContentLoaded", function () {
         ];
         let colorIdx = 0;
 
-        for (const [houseLabel, points] of Object.entries(data.series)) {
-            const color = colors[colorIdx % colors.length];
-            datasets.push({
-                label: houseLabel,
-                data: points,
-                borderColor: color,
-                backgroundColor: color + "1a",
-                borderWidth: 3,
-                tension: 0.3,
-                fill: false
-            });
-            colorIdx++;
+        for (const houseLabel in data.series) {
+            if (data.series.hasOwnProperty(houseLabel)) {
+                const points = data.series[houseLabel];
+                const color = colors[colorIdx % colors.length];
+                datasets.push({
+                    label: houseLabel,
+                    data: points,
+                    borderColor: color,
+                    backgroundColor: color + "1a",
+                    borderWidth: 3,
+                    tension: 0.3,
+                    fill: false
+                });
+                colorIdx++;
+            }
         }
 
         // 2. Draw standard reference line (Dashed)
@@ -467,17 +472,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
         // Calculate max Y value for buffering Y-axis padding
         let maxVal = 0;
-        datasets.forEach(d => {
-            d.data.forEach(val => {
+        for (let i = 0; i < datasets.length; i++) {
+            const d = datasets[i];
+            for (let j = 0; j < d.data.length; j++) {
+                const val = d.data[j];
                 if (val !== null && val > maxVal) maxVal = val;
-            });
-        });
+            }
+        }
         const yMaxBuffer = maxVal > 0 ? maxVal * 1.1 : undefined;
 
         chartInstance = new Chart(ctx, {
             type: "line",
             data: {
-                labels: data.days.map(d => `Day ${d}`),
+                labels: data.days.map(function (d) { return "Day " + d; }),
                 datasets: datasets
             },
             options: {
@@ -512,14 +519,17 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // Toggle Metric listeners
-    metricButtons.forEach(btn => {
+    for (let i = 0; i < metricButtons.length; i++) {
+        const btn = metricButtons[i];
         btn.addEventListener("click", function () {
-            metricButtons.forEach(b => b.classList.remove("active"));
+            for (let j = 0; j < metricButtons.length; j++) {
+                metricButtons[j].classList.remove("active");
+            }
             this.classList.add("active");
             currentMetric = this.getAttribute("data-metric");
             fetchAndRenderChart();
         });
-    });
+    }
 
     // Farm change listener
     farmSelect.addEventListener("change", fetchAndRenderChart);
