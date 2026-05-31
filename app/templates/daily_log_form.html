@@ -519,9 +519,9 @@
                             
                             <div class="row align-items-end">
                                 <div class="col-12 col-md-6">
-                                    <label class="form-label required">Drug Name (From Masterlist)</label>
-                                    <select name="med_inventory_id[]" class="form-select drug-select" required>
-                                        <option value="" disabled>-- Select Medication --</option>
+                                    <label class="form-label">Drug Name (From Masterlist)</label>
+                                    <select name="med_inventory_id[]" class="form-select drug-select">
+                                        <option value="">-- Select Medication --</option>
                                         {% set ns_match = namespace(found=false) %}
                                         {% for item in medication_inventory %}
                                             <option value="{{ item.id }}" {% if m.inventory_item_id == item.id %}{% set ns_match.found = true %}selected{% endif %}>{{ item.name }}</option>
@@ -530,8 +530,8 @@
                                     </select>
                                 </div>
                                 <div class="col-12 col-md-6 drug-manual-container {% if ns_match.found %}d-none{% endif %}">
-                                    <label class="form-label required">Specify Drug Name</label>
-                                    <input type="text" class="form-control drug-manual-input" placeholder="Type Drug Name" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed" value="{% if not ns_match.found %}{{ m.drug_name }}{% endif %}" {% if not ns_match.found %}required{% endif %}>
+                                    <label class="form-label">Specify Drug Name</label>
+                                    <input type="text" class="form-control drug-manual-input" placeholder="Type Drug Name" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed" value="{% if not ns_match.found %}{{ m.drug_name }}{% endif %}">
                                 </div>
                                 <input type="hidden" name="med_drug_name[]" class="drug-name-hidden" value="{{ m.drug_name }}">
                             </div>
@@ -551,9 +551,9 @@
                         
                         <div class="row align-items-end">
                             <div class="col-12 col-md-6">
-                                <label class="form-label required">Drug Name (From Masterlist)</label>
-                                <select name="med_inventory_id[]" class="form-select drug-select" required>
-                                    <option value="" disabled selected>-- Select Medication --</option>
+                                <label class="form-label">Drug Name (From Masterlist)</label>
+                                <select name="med_inventory_id[]" class="form-select drug-select">
+                                    <option value="" selected>-- Select Medication --</option>
                                     {% for item in medication_inventory %}
                                         <option value="{{ item.id }}">{{ item.name }}</option>
                                     {% endfor %}
@@ -561,7 +561,7 @@
                                 </select>
                             </div>
                             <div class="col-12 col-md-6 drug-manual-container d-none">
-                                <label class="form-label required">Specify Drug Name</label>
+                                <label class="form-label">Specify Drug Name</label>
                                 <input type="text" class="form-control drug-manual-input" placeholder="Type Drug Name" pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces are allowed">
                             </div>
                             <input type="hidden" name="med_drug_name[]" class="drug-name-hidden">
@@ -1404,11 +1404,9 @@
                 select.addEventListener('change', function() {
                     if (this.value === 'Other') {
                         manualContainer.classList.remove('d-none');
-                        manualInput.setAttribute('required', 'required');
                         hiddenInput.value = manualInput.value.trim();
                     } else {
                         manualContainer.classList.add('d-none');
-                        manualInput.removeAttribute('required');
                         if (this.selectedIndex >= 0) {
                             hiddenInput.value = this.options[this.selectedIndex].text.trim();
                         } else {
@@ -1447,9 +1445,6 @@
                         input.value = '';
                     } else if (input.type !== 'hidden') {
                         input.value = '';
-                    }
-                    if (input.classList.contains('drug-manual-input')) {
-                        input.removeAttribute('required');
                     }
                 });
 
